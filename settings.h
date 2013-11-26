@@ -4,7 +4,8 @@
 #include <stdint.h>
 
 typedef double real;
-const unsigned int dimension = 1;
-const unsigned int levels[dimension] = {10};
+#define DIMENSION 1
+
+#include <cstdint>
 
 #endif // SETTINGS_H
