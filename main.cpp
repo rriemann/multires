@@ -43,26 +43,17 @@ int main()
     }
     */
 
-    std::shared_ptr<node<int> >         nodes(new node<int>(42));
-    std::shared_ptr<node<std::string> > node2(new node<std::string>(" is greater than "));
-    std::shared_ptr<node<int> >         node3(new node<int>(13));
-    nodes->append(node2);
-    nodes->append(node3);
+    node_tp no_parent(NULL);
+    node_tp left  = node_t::factory(no_parent, node_t::posLeft);
+    node_tp right = node_t::factory(no_parent, node_t::posRight);
+
+    node_tp root  = node_t::factory(no_parent, node_t::posRoot);
+    root->setNeighbour(left);
+    root->setNeighbour(right);
 
     std::copy(
-        node_iterator(nodes), node_iterator()
-      , std::ostream_iterator<node_base>(std::cout, " ")
-    );
-    std::cout << std::endl;
-
-    std::for_each(
-        node_iterator(nodes), node_iterator()
-      , std::mem_fun_ref(&node_base::double_me)
-    );
-
-    std::copy(
-        node_iterator(nodes), node_iterator()
-      , std::ostream_iterator<node_base>(std::cout, "/")
+        node_iterator(left), node_iterator()
+      , std::ostream_iterator<node_base>(std::cout, " : ")
     );
     std::cout << std::endl;
 

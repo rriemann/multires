@@ -24,15 +24,24 @@
 template <class T>
 struct node : node_base
 {
-    node(T x)
-        : m_value(x)
+
+    void print(std::ostream& s) const
+    { s << "< property: " << this->m_property << this->node_base::print(s) << " >" << std::endl; }
+
+    static std::shared_ptr<node> factory(const node_p &parent, position_t position, uint level = 0)
+    { return std::shared_ptr<node>(new node(parent, position, level)); }
+
+protected:
+    node(const node_p &parent, position_t position, uint level = 0)
+        : node_base(parent, position, level)
     {}
 
-    void print(std::ostream& s) const { s << this->m_value; }
-    void double_me() { m_value += m_value; }
 
 private:
-    T m_value;
+    T m_property;
 };
+
+typedef node<real> node_t;
+typedef std::shared_ptr<node_t> node_tp;
 
 #endif // NODE_HPP
