@@ -55,10 +55,14 @@ struct node_base
         , posBottomLeftFront
         */
     };
+    enum level_t {
+          lvlBoundary = -1
+        , lvlRoot     =  0
+    };
     static const unsigned int dimension = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
 
-    // virtual static node_ptr factory(const node_ptr &parent, Position position, uint level = 0) = 0;
+    // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
     node_p next() const
     {
@@ -68,7 +72,7 @@ struct node_base
     void print(std::ostream& s) const
     { s << "< level: " << m_level << " pos: " << m_position << " >"; }
 
-    static node_p factory(const node_p parent, position_t position, uint level = 0)
+    static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
 
     inline position_t position() const
@@ -82,7 +86,7 @@ struct node_base
 
     inline void setNeighbour(node_p node)
     {
-        m_neighbours[node->position()] = node;
+        this->setNeighbour(node,                       node->position() );
         node->setNeighbour(shared_from_this(), reverse(node->position()));
     }
 
@@ -90,7 +94,6 @@ struct node_base
     {
         // attention: this doesn't make sense for posRoot = -1
         assert(position != posRoot);
-        std::cout << "pos: " << position << std::endl;
         if(position % 2 == 0) { // if position is even
             return position_t(position + 1);
         } else {
@@ -99,8 +102,12 @@ struct node_base
     }
 
 
+    void setupChild(const position_t position);
+    void setupChildren(level_t level);
+
+
 protected:
-    node_base(const node_p &parent, position_t position, uint level = 0)
+    node_base(const node_p &parent, position_t position, level_t level)
         : m_parent(parent), m_position(position), m_level(level)
     {}
 
@@ -108,11 +115,11 @@ private:
     static const position_t direction = posRight;
 
     node_p m_parent;
-    position_t m_position;
-    uint m_level;
+    const position_t m_position;
+    level_t m_level;
 
     node_p m_neighbours[dimension];
-    // node_p m_childs[childsByDimension];
+    node_p m_childs[childsByDimension];
 };
 
 inline std::ostream& operator<<(std::ostream& s, node_base const& n)

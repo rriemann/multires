@@ -44,17 +44,19 @@ int main()
     */
 
     node_tp no_parent(NULL);
-    node_tp left  = node_t::factory(no_parent, node_t::posLeft);
-    node_tp right = node_t::factory(no_parent, node_t::posRight);
+    node_tp left  = node_t::factory(no_parent, node_t::posLeft,  node_t::lvlBoundary);
+    node_tp right = node_t::factory(no_parent, node_t::posRight, node_t::lvlBoundary);
 
-    node_tp root  = node_t::factory(no_parent, node_t::posRoot);
+    node_tp root  = node_t::factory(no_parent, node_t::posRoot, node_t::lvlRoot);
     root->setNeighbour(left);
     root->setNeighbour(right);
 
+    root->setupChildren(node_t::level_t(1));
+
     std::copy(
-        node_iterator(left), node_iterator()
-      , std::ostream_iterator<node_base>(std::cout, " : ")
-    );
+                node_iterator(left), node_iterator(),
+                std::ostream_iterator<node_base>(std::cout, "\n")
+                );
     std::cout << std::endl;
 
     return 0;

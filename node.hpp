@@ -28,11 +28,11 @@ struct node : node_base
     void print(std::ostream& s) const
     { s << "< property: " << this->m_property << this->node_base::print(s) << " >" << std::endl; }
 
-    static std::shared_ptr<node> factory(const node_p &parent, position_t position, uint level = 0)
+    static std::shared_ptr<node> factory(const node_p &parent, position_t position, level_t level = 0)
     { return std::shared_ptr<node>(new node(parent, position, level)); }
 
 protected:
-    node(const node_p &parent, position_t position, uint level = 0)
+    node(const node_p &parent, position_t position, level_t level = 0)
         : node_base(parent, position, level)
     {}
 
