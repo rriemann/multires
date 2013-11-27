@@ -68,29 +68,30 @@ struct node_base
     void print(std::ostream& s) const
     { s << "< level: " << m_level << " pos: " << m_position << " >"; }
 
-    static node_p factory(const node_p &parent, position_t position, uint level = 0)
+    static node_p factory(const node_p parent, position_t position, uint level = 0)
     { return node_p(new node_base(parent, position, level)); }
 
     inline position_t position() const
     { return m_position; }
 
-    inline const node_p &neighbour(const position_t position) const
+    inline const node_p neighbour(const position_t position) const
     { return m_neighbours[position]; }
 
-    inline void setNeighbour(const node_p &node, const position_t &position)
+    inline void setNeighbour(const node_p node, const position_t position)
     { m_neighbours[position] = node; }
 
-    inline void setNeighbour(node_p &node)
+    inline void setNeighbour(node_p node)
     {
         m_neighbours[node->position()] = node;
-        node->setNeighbour(shared_from_this(), reverse(position()));
+        node->setNeighbour(shared_from_this(), reverse(node->position()));
     }
 
     static position_t reverse(position_t position)
     {
         // attention: this doesn't make sense for posRoot = -1
         assert(position != posRoot);
-        if(position % 2) { // if position is even
+        std::cout << "pos: " << position << std::endl;
+        if(position % 2 == 0) { // if position is even
             return position_t(position + 1);
         } else {
             return position_t(position - 1);
@@ -111,7 +112,7 @@ private:
     uint m_level;
 
     node_p m_neighbours[dimension];
-    node_p m_childs[childsByDimension];
+    // node_p m_childs[childsByDimension];
 };
 
 inline std::ostream& operator<<(std::ostream& s, node_base const& n)
