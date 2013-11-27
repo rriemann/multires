@@ -28,16 +28,8 @@ typedef std::shared_ptr<node_base> node_ptr;
 
 struct node_base : public std::enable_shared_from_this<node_base>
 {
-    node_base() : m_next(0) {}
 
-    /*
-    virtual ~node_base()
-    {
-        delete m_next;
-    }
-    */
-
-    node_base* next() const
+    node_base *next() const
     {
         return m_next.get();
     }

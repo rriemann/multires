@@ -16,5 +16,6 @@ HEADERS += \
     node_iterator.hpp
 
 
-QMAKE_CXXFLAGS += -std=c++11
 QMAKE_LFLAGS   += -std=c++11
+QMAKE_CXXFLAGS += -std=c++11
+QMAKE_CXXFLAGS += -Wold-style-cast
