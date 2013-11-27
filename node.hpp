@@ -14,6 +14,25 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "node.hpp"
+#ifndef NODE_HPP
+#define NODE_HPP
 
+#include "node_base.hpp"
 
+// inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
+
+template <class T>
+struct node : node_base
+{
+    node(T x)
+        : m_value(x)
+    {}
+
+    void print(std::ostream& s) const { s << this->m_value; }
+    void double_me() { m_value += m_value; }
+
+private:
+    T m_value;
+};
+
+#endif // NODE_HPP

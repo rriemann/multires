@@ -14,6 +14,4 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "node.hpp"
-
-
+#include "node_base.hpp"

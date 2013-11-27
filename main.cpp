@@ -1,19 +1,68 @@
+/***************************************************************************************
+ * Copyright (c) 2013 Robert Riemann <robert@riemann.cc>                                *
+ *                                                                                      *
+ * This program is free software; you can redistribute it and/or modify it under        *
+ * the terms of the GNU General Public License as published by the Free Software        *
+ * Foundation; either version 2 of the License, or (at your option) any later           *
+ * version.                                                                             *
+ *                                                                                      *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY      *
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A      *
+ * PARTICULAR PURPOSE. See the GNU General Public License for more details.             *
+ *                                                                                      *
+ * You should have received a copy of the GNU General Public License along with         *
+ * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
+ ****************************************************************************************/
+
+#include <string>
+#include <memory>
 #include <iostream>
+#include <algorithm>
+#include <functional>
 
 // using namespace std;
 
-#include "property.h"
-#include "node.h"
+#include "node_iterator.hpp"
 
 int main()
 {
+    /*
     // RealVector data = {0, 1, 2, 3, 4, 5, 6, 7, 8};
     Node_ptr no_parent(NULL);
-    Node_ptr root = Node::factory(no_parent, Node::posRoot, 1);
-    Property_ptr front(new Property(0));
-    root->setNeighbour(Node::posTopRightFront, front);
-    Property_ptr back (new Property(1));
-    root->setNeighbour(Node::posTopRightBack,  back);
+    Node_ptr front = Node::factory(no_parent, Node::posTopRightFront);
+    front->setProperty(0);
+    Node_ptr back  = Node::factory(no_parent, Node::posTopRightBack);
+    back ->setProperty(1);
+    Node_ptr root  = Node::factory(no_parent, Node::posRoot, 4);
+
     root->setupChildren();
+
+    NodeIterator it(front);
+    for(; it < back.get(); ++it) {
+        std::cout << (*it) << std::endl;
+    }
+    */
+
+    std::auto_ptr<node<int> > nodes(new node<int>(42));
+    nodes->append(new node<std::string>(" is greater than "));
+    nodes->append(new node<int>(13));
+
+    std::copy(
+        node_iterator(nodes.get()), node_iterator()
+      , std::ostream_iterator<node_base>(std::cout, " ")
+    );
+    std::cout << std::endl;
+
+    std::for_each(
+        node_iterator(nodes.get()), node_iterator()
+      , std::mem_fun_ref(&node_base::double_me)
+    );
+
+    std::copy(
+        node_iterator(nodes.get()), node_iterator()
+      , std::ostream_iterator<node_base>(std::cout, "/")
+    );
+    std::cout << std::endl;
+
     return 0;
 }

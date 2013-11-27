@@ -14,6 +14,47 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
+#ifndef NODE_ITERATOR_HPP
+#define NODE_ITERATOR_HPP
+
+// inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
+
 #include "node.hpp"
+#include <boost/iterator/iterator_facade.hpp>
 
+class node_iterator
+        : public boost::iterator_facade<
+        node_iterator
+        , node_base
+        , boost::forward_traversal_tag
+        >
+{
+public:
+    node_iterator()
+        : m_node(0)
+    {}
 
+    explicit node_iterator(node_base* p)
+        : m_node(p)
+    {}
+
+    explicit node_iterator(node_ptr p)
+        : m_node(p.get())
+    {}
+
+private:
+    friend class boost::iterator_core_access;
+
+    void increment()
+    { m_node = m_node->next(); }
+
+    bool equal(node_iterator const &other) const
+    { return this->m_node == other.m_node; }
+
+    node_base& dereference() const
+    { return *m_node; }
+
+    node_base* m_node;
+};
+
+#endif // NODE_ITERATOR_HPP

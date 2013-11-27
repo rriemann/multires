@@ -4,15 +4,16 @@ CONFIG -= app_bundle
 CONFIG -= qt
 
 SOURCES += main.cpp \
-    property.cpp \
-    node.cpp \
-    nodeiterator.cpp
+#    node-bak.cpp \
+    node_base.cpp \
+    node.cpp
 
 HEADERS += \
     settings.h \
-    property.h \
-    node.h \
-    nodeiterator.h
+#    node-bak.h \
+    node_base.hpp \
+    node.hpp \
+    node_iterator.hpp
 
 
 QMAKE_CXXFLAGS += -std=c++11

@@ -8,8 +8,7 @@
 // #include <boost/enable_shared_from_this.hpp>
 
 #include <memory>
-
-#include "property.h"
+#include <iostream>
 
 using std::enable_shared_from_this;
 using std::shared_ptr;
@@ -47,8 +46,8 @@ public:
     static Node_ptr factory(const Node_ptr &parent, Position position, unsigned int level = 0);
     ~Node();
     inline Node_ptr sharedPointer() { return shared_from_this(); }
-    inline const Property_ptr &neighbour(const Position position) const { return m_neighbours[position]; }
-    inline void setNeighbour(const Position &position, const Property_ptr &property) { m_neighbours[position] = property; }
+    inline const Node_ptr &neighbour(const Position position) const { return m_neighbours[position]; }
+    inline void setNeighbour(const Position &position, const Node_ptr &node) { m_neighbours[position] = node; }
     // void setNeighbours(const PropertyVector &neighbours);
     // const PropertyVector &neighbors() const { return m_neighbours; }
 
@@ -57,7 +56,8 @@ public:
 
     inline void setLevel(const unsigned int &level) { m_level = level; }
     inline void setParent(const Node_ptr &parent) { m_parent = parent; }
-    inline Property_ptr property() const { return m_property; }
+    inline real property() const { return m_property; }
+    inline void setProperty(real property) { m_property = property; }
 
 private:
     Node(const Node_ptr &parent, Position position, unsigned int level = 0);
@@ -65,10 +65,15 @@ private:
     Node_ptr m_parent;
     Position m_position;
     unsigned int m_level;
-    Property_ptr m_property;
 
-    Property_ptr m_neighbours[dimension];
+    Node_ptr m_neighbours[dimension];
     Node_ptr m_childs[childsByDimension];
+
+    real m_property;
 };
+
+inline std::ostream& operator<< (std::ostream &stream, const Node &obj) {
+    return stream << "(" << obj.property() << ")";
+}
 
 #endif // NODE_H

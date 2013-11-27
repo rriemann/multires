@@ -14,6 +14,53 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "node.hpp"
+#ifndef NODE_BASE_HPP
+#define NODE_BASE_HPP
 
+# include <iostream>
+# include <memory>
 
+// Polymorphic list node base class
+// inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
+
+struct node_base;
+typedef std::shared_ptr<node_base> node_ptr;
+
+struct node_base : public std::enable_shared_from_this<node_base>
+{
+    node_base() : m_next(0) {}
+
+    /*
+    virtual ~node_base()
+    {
+        delete m_next;
+    }
+    */
+
+    node_base* next() const
+    {
+        return m_next.get();
+    }
+
+    virtual void print(std::ostream& s) const = 0;
+    virtual void double_me() = 0;
+
+    void append(node_base* p)
+    {
+        if (m_next.get())
+            m_next->append(p);
+        else
+            m_next = node_ptr(p);
+    }
+
+private:
+    node_ptr m_next;
+};
+
+inline std::ostream& operator<<(std::ostream& s, node_base const& n)
+{
+    n.print(s);
+    return s;
+}
+
+#endif // NODE_BASE_HPP
