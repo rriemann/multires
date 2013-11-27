@@ -48,7 +48,7 @@ int main()
     node_tp right = node_t::factory(no_parent, node_t::posRight);
 
     node_tp root  = node_t::factory(no_parent, node_t::posRoot);
-    root->setNeighbour(left);
+    root->node_base::setNeighbour(left);
     root->setNeighbour(right);
 
     std::copy(

@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <memory>
+#include <cassert>
 
 // Polymorphic list node base class
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
@@ -61,19 +62,12 @@ struct node_base
 
     node_p next() const
     {
-        return m_next;
+        return neighbour(direction);
     }
 
     void print(std::ostream& s) const
     { s << "< level: " << m_level << " pos: " << m_position << " >"; }
 
-    void append(node_p p)
-    {
-        if (m_next.get())
-            m_next->append(p);
-        else
-            m_next = p;
-    }
     static node_p factory(const node_p &parent, position_t position, uint level = 0)
     { return node_p(new node_base(parent, position, level)); }
 
@@ -86,8 +80,22 @@ struct node_base
     inline void setNeighbour(const node_p &node, const position_t &position)
     { m_neighbours[position] = node; }
 
-    inline void setNeighbour(const node_p &node)
-    { m_neighbours[node->position()] = node; }
+    inline void setNeighbour(node_p &node)
+    {
+        m_neighbours[node->position()] = node;
+        node->setNeighbour(shared_from_this(), reverse(position()));
+    }
+
+    static position_t reverse(position_t position)
+    {
+        // attention: this doesn't make sense for posRoot = -1
+        assert(position != posRoot);
+        if(position % 2) { // if position is even
+            return position_t(position + 1);
+        } else {
+            return position_t(position - 1);
+        }
+    }
 
 
 protected:
@@ -96,7 +104,7 @@ protected:
     {}
 
 private:
-    node_p m_next;
+    static const position_t direction = posRight;
 
     node_p m_parent;
     position_t m_position;
