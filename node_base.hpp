@@ -119,7 +119,7 @@ private:
     level_t m_level;
 
     node_p m_neighbours[dimension];
-    node_p m_childs[childsByDimension];
+    node_p m_childs[2];
 };
 
 inline std::ostream& operator<<(std::ostream& s, node_base const& n)

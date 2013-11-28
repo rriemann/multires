@@ -27,6 +27,7 @@ void node_base::setupChild(const position_t position)
     this->setNeighbour(child, position);
     */
 
+    /*
     position_t reversed_position = reverse(position);
     const node_p &boundary = this->neighbour(position);
     // transfer ownership of boundary
@@ -37,7 +38,9 @@ void node_base::setupChild(const position_t position)
     this ->setNeighbour(child, position);
     // e.g. the left child has its parent to the right
     child->setNeighbour(shared_from_this(), reversed_position);
+    */
 
+    // PROBLEM: neighbours get mixed up somehow
     m_childs[position] = child;
 }
 
