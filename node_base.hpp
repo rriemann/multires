@@ -28,6 +28,8 @@
 
 struct node_base;
 typedef std::shared_ptr<node_base> node_p;
+typedef node_p node_tp;
+typedef node_base node_t;
 
 struct node_base
         : public std::enable_shared_from_this<node_base>
@@ -68,9 +70,8 @@ struct node_base
     {
         return neighbour(direction);
     }
-
     void print(std::ostream& s) const
-    { s << "< level: " << m_level << " pos: " << m_position << " >"; }
+    { s << "< property: " << m_property << " < level: " << m_level << " pos: " << m_position << " >" << " >"; }
 
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
@@ -109,7 +110,8 @@ struct node_base
 protected:
     node_base(const node_p &parent, position_t position, level_t level)
         : m_parent(parent), m_position(position), m_level(level)
-    {}
+    {
+    }
 
 private:
     static const position_t direction = posRight;
@@ -118,8 +120,10 @@ private:
     const position_t m_position;
     level_t m_level;
 
-    node_p m_neighbours[dimension];
+    node_p m_neighbours[2];
     node_p m_childs[2];
+
+    real m_property;
 };
 
 inline std::ostream& operator<<(std::ostream& s, node_base const& n)

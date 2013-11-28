@@ -5,14 +5,12 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
 #    node-bak.cpp \
-    node_base.cpp \
-    node.cpp
+    node_base.cpp
 
 HEADERS += \
     settings.h \
 #    node-bak.h \
     node_base.hpp \
-    node.hpp \
     node_iterator.hpp
 
 

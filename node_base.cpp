@@ -46,20 +46,23 @@ void node_base::setupChild(const position_t position)
 
 void node_base::setupChildren(level_t level)
 {
+    std::cout << "present childs: " << m_childs[0] << "; " << m_childs[1] << std::endl;
+    if(m_childs[0].get())
+        std::cout << "#0: " << m_childs[0]->position() << std::endl;
+    /*
     if(level > m_level) { // there is still a need of children ;)
         assert(dimension == 1); // only support 1D
         // child front
         for(size_t position = int(posLeft); position <= int(posRight); ++position) {
             setupChild(position_t(position));
         }
-        /*
-        for(size_t i = 0; i < childsByDimension; ++i) {
-            if(m_childs[i].get()) {
-                m_childs[i]->setupChildren();
-            }
-        }
-        */
+//        for(size_t i = 0; i < childsByDimension; ++i) {
+//            if(m_childs[i].get()) {
+//                m_childs[i]->setupChildren();
+//            }
+//        }
     }
+    */
 }
 
 #include "node_base.hpp"

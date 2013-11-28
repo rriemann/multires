@@ -17,7 +17,7 @@
 #ifndef NODE_ITERATOR_HPP
 #define NODE_ITERATOR_HPP
 
-#include "node.hpp"
+#include "node_base.hpp"
 #include <boost/iterator/iterator_facade.hpp>
 
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
