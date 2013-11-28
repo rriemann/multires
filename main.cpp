@@ -24,25 +24,20 @@
 
 #include "node_iterator.hpp"
 
+real f_eval(real x) {
+    if(x < -0.5) {
+        return 0;
+    } else if (x < 0) {
+        return 1;
+    } else if (x < 0.5) {
+        return 4*(x-0.5)*(x-0.5);
+    } else {
+        return 2*(x-0.5);
+    }
+}
+
 int main()
 {
-    /*
-    // RealVector data = {0, 1, 2, 3, 4, 5, 6, 7, 8};
-    Node_ptr no_parent(NULL);
-    Node_ptr front = Node::factory(no_parent, Node::posTopRightFront);
-    front->setProperty(0);
-    Node_ptr back  = Node::factory(no_parent, Node::posTopRightBack);
-    back ->setProperty(1);
-    Node_ptr root  = Node::factory(no_parent, Node::posRoot, 4);
-
-    root->setupChildren();
-
-    NodeIterator it(front);
-    for(; it < back.get(); ++it) {
-        std::cout << (*it) << std::endl;
-    }
-    */
-
     node_tp no_parent(NULL);
     node_tp left  = node_t::factory(no_parent, node_t::posLeft,  node_t::lvlBoundary);
     node_tp right = node_t::factory(no_parent, node_t::posRight, node_t::lvlBoundary);
@@ -51,12 +46,27 @@ int main()
     root->setNeighbour(left);
     root->setNeighbour(right);
 
-    root->setupChildren(node_t::level_t(2));
+    // generation of childrens, e.g.: only root = 0, grand-children = 2
+    int level = 2;
+    // total number of nodes, including (childsbyDimension) boundary elements
+    uint N     = pow(2, level + 1) - 1 + node_t::childsByDimension;
+    real x0    = -1.0;
+    real x1    = +1.0;
 
-    std::copy(
-                node_iterator(left), node_iterator(),
-                std::ostream_iterator<node_base>(std::cout, "\n")
-                );
+    real width = x1 - x0;
+    real dx    = width / (N-1);
+
+    // create children in memory
+    root->setupChildren(node_t::level_t(level));
+
+    int i = 0;
+    std::for_each(node_iterator(left), node_iterator(), [&i,x0,dx](node_base &node) {
+        node.m_property = f_eval(x0+i*dx);
+        ++i;
+    });
+
+    std::copy(node_iterator(left), node_iterator(),
+              std::ostream_iterator<node_base>(std::cout, "\n"));
     std::cout << std::endl;
 
     return 0;

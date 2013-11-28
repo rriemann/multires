@@ -106,6 +106,8 @@ struct node_base
     void setupChild(const position_t position);
     void setupChildren(level_t level);
 
+    real m_property;
+
 
 protected:
     node_base(const node_p &parent, position_t position, level_t level)
@@ -122,8 +124,6 @@ private:
 
     node_p m_neighbours[childsByDimension];
     node_p m_childs[childsByDimension];
-
-    real m_property;
 };
 
 inline std::ostream& operator<<(std::ostream& s, node_base const& n)
