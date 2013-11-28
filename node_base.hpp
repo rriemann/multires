@@ -120,8 +120,8 @@ private:
     const position_t m_position;
     level_t m_level;
 
-    node_p m_neighbours[2];
-    node_p m_childs[2];
+    node_p m_neighbours[childsByDimension];
+    node_p m_childs[childsByDimension];
 
     real m_property;
 };

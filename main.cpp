@@ -51,7 +51,7 @@ int main()
     root->setNeighbour(left);
     root->setNeighbour(right);
 
-    root->setupChildren(node_t::level_t(1));
+    root->setupChildren(node_t::level_t(2));
 
     std::copy(
                 node_iterator(left), node_iterator(),
