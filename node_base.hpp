@@ -22,6 +22,7 @@
 #include <iostream>
 #include <memory>
 #include <cassert>
+#include <boost/format.hpp>
 
 // Polymorphic list node base class
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
@@ -63,6 +64,7 @@ struct node_base
     };
     static const unsigned int dimension = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
+    static real epsilon;
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
@@ -70,8 +72,6 @@ struct node_base
     {
         return neighbour(direction);
     }
-    void print(std::ostream& s) const
-    { s << "< property: " << m_property << " < level: " << m_level << " pos: " << m_position << " >" << " >"; }
 
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
@@ -102,16 +102,36 @@ struct node_base
         }
     }
 
+    bool active() const
+    { return m_active; }
+
+    inline void setActive(bool active = true);
+
+    level_t level() const
+    { return m_level; }
+
+    real property() const
+    { return m_property; }
+
+    inline const node_p& parent() const
+    { return m_parent; }
+
+    inline real detail() const
+    { return (m_property - interpolation()); }
+
 
     void setupChild(const position_t position);
     void setupChildren(level_t level);
+
+    void multiResolutionTrafo();
+    real interpolation() const;
 
     real m_property;
 
 
 protected:
     node_base(const node_p &parent, position_t position, level_t level)
-        : m_parent(parent), m_position(position), m_level(level)
+        : m_parent(parent), m_position(position), m_level(level), m_active(true)
     {
     }
 
@@ -121,15 +141,16 @@ private:
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
+    bool m_active;
 
     node_p m_neighbours[childsByDimension];
     node_p m_childs[childsByDimension];
 };
 
-inline std::ostream& operator<<(std::ostream& s, node_base const& n)
+inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    n.print(s);
-    return s;
+    stream << boost::format("< < level: % 2d, pos: % 2d, act: %s> property: % 3.3f >") % node.level() % node.position() % node.active() % node.property();
+    return stream;
 }
 
 #endif // NODE_BASE_HPP

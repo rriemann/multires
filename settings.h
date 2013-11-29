@@ -5,6 +5,7 @@
 
 typedef double real;
 #define DIMENSION 1
+#define EPSILON 0.001
 
 #include <cstdint>
 
