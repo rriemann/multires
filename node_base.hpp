@@ -29,6 +29,7 @@
 
 struct node_base;
 typedef std::shared_ptr<node_base> node_p;
+typedef std::weak_ptr<node_base> node_w;
 typedef node_p node_tp;
 typedef node_base node_t;
 
@@ -60,6 +61,7 @@ struct node_base
     };
     enum level_t {
           lvlBoundary = -1
+        , lvlNoChilds =  0
         , lvlRoot     =  0
     };
     static const unsigned int dimension = DIMENSION;
@@ -68,10 +70,8 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
-    node_p next() const
-    {
-        return neighbour(direction);
-    }
+    inline node_p next() const
+    { return neighbour(direction); }
 
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
@@ -105,7 +105,11 @@ struct node_base
     bool active() const
     { return m_active; }
 
-    inline void setActive(bool active = true);
+    inline void setActive(bool active = true)
+    { m_active = active; }
+
+    bool interpolatable();
+    void shortCircuit();
 
     level_t level() const
     { return m_level; }
@@ -120,10 +124,14 @@ struct node_base
     { return (m_property - interpolation()); }
 
 
-    void setupChild(const position_t position);
-    void setupChildren(level_t level);
+    void setupChild(const position_t position, const level_t level = lvlNoChilds);
+    void unpack(const level_t level);
 
-    void multiResolutionTrafo();
+    const node_p deepNeighbour(const position_t position) const;
+    void detachChild(const position_t position);
+    void detach();
+
+    void pack();
     real interpolation() const;
 
     real m_property;
@@ -131,7 +139,10 @@ struct node_base
 
 protected:
     node_base(const node_p &parent, position_t position, level_t level)
-        : m_parent(parent), m_position(position), m_level(level), m_active(true)
+        : m_parent(parent)
+        , m_position(position)
+        , m_level(level)
+        // , m_active(true)
     {
     }
 
@@ -141,7 +152,7 @@ private:
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
-    bool m_active;
+    // bool m_active;
 
     node_p m_neighbours[childsByDimension];
     node_p m_childs[childsByDimension];
@@ -149,7 +160,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 2d, pos: % 2d, act: %s> property: % 3.3f >") % node.level() % node.position() % node.active() % node.property();
+    stream << boost::format("< < level: % 2d, pos: % 2d, act: %s> property: % 3.3f >") % node.level() % node.position() % "always" % node.property();
     return stream;
 }
 

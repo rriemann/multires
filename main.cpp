@@ -47,7 +47,7 @@ int main()
     root->setNeighbour(right);
 
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 2;
+    int level = 1;
     // total number of nodes, including (childsbyDimension) boundary elements
     uint N     = pow(2, level + 1) - 1 + node_t::childsByDimension;
     real x0    = -1.0;
@@ -57,7 +57,7 @@ int main()
     real dx    = width / (N-1);
 
     // create children in memory
-    root->setupChildren(node_t::level_t(level));
+    root->unpack(node_t::level_t(level));
 
     int i = 0;
     std::for_each(node_iterator(left), node_iterator(), [&i,x0,dx](node_base &node) {
