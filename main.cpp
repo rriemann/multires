@@ -16,6 +16,7 @@
 
 #include <string>
 #include <memory>
+#include <fstream>
 #include <iostream>
 #include <algorithm>
 #include <functional>
@@ -36,38 +37,60 @@ real f_eval(real x) {
     }
 }
 
+real f_eval2(real x) {
+    if(x > 0.3 && x < 0.7) {
+        return 1.0;
+    } else {
+        return 0.0;
+    }
+}
+
 int main()
 {
-    node_tp no_parent(NULL);
-    node_tp left  = node_t::factory(no_parent, node_t::posLeft,  node_t::lvlBoundary);
-    node_tp right = node_t::factory(no_parent, node_t::posRight, node_t::lvlBoundary);
-
-    node_tp root  = node_t::factory(no_parent, node_t::posRoot, node_t::lvlRoot);
-    root->setNeighbour(left);
-    root->setNeighbour(right);
-
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 1;
+    int level = 2;
     // total number of nodes, including (childsbyDimension) boundary elements
     uint N     = pow(2, level + 1) - 1 + node_t::childsByDimension;
     real x0    = -1.0;
     real x1    = +1.0;
 
     real width = x1 - x0;
+    node_t::setRange(x0, x1);
+
     real dx    = width / (N-1);
+
+    node_tp no_parent(NULL);
+    node_tp left  = node_t::factory(no_parent, node_t::posLeft,  node_t::lvlBoundary);
+    node_tp right = node_t::factory(no_parent, node_t::posRight, node_t::lvlBoundary);
+
+    left ->setCenter(x0, node_t::dimX);
+    right->setCenter(x1, node_t::dimX);
+
+    node_tp root  = node_t::factory(no_parent, node_t::posRoot, node_t::lvlRoot);
+    root->setNeighbour(left);
+    root->setNeighbour(right);
+    root->setCenter((x0+x1)/2, node_t::dimX);
 
     // create children in memory
     root->unpack(node_t::level_t(level));
 
     int i = 0;
     std::for_each(node_iterator(left), node_iterator(), [&i,x0,dx](node_base &node) {
-        node.m_property = f_eval(x0+i*dx);
+        node.m_property = f_eval2(x0+i*dx);
         ++i;
     });
+
+
+    // root->isActive();
 
     std::copy(node_iterator(left), node_iterator(),
               std::ostream_iterator<node_base>(std::cout, "\n"));
     std::cout << std::endl;
 
+    std::ofstream file("/tmp/output.txt");
+    std::for_each(node_iterator(left), node_iterator(), [&file](node_base &node) {
+         file << boost::format("%e %e %d\n") % node.center() % node.m_property % node.active();
+    });
+    file.close();
     return 0;
 }
