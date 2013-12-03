@@ -17,3 +17,4 @@ HEADERS += \
 QMAKE_LFLAGS   += -std=c++11
 QMAKE_CXXFLAGS += -std=c++11
 QMAKE_CXXFLAGS += -Wold-style-cast
+QMAKE_CXXFLAGS += -funroll-loops # unroll short, iterative for-loops

@@ -18,6 +18,30 @@
 
 #include <cmath>
 
+node_p node_base::next() const
+{
+    position_t reversed = reverse(direction);
+    if((m_level == lvlBoundary) && (m_position == reversed)) {
+        // we start at the boundary and need to find the closest child
+        node_t *close = root().get();
+        node_t *closer;
+        while((closer = close->child(m_position).get())) {
+            close = closer;
+        }
+        return close->shared_from_this();
+    } else if(m_childs[direction].get() == NULL) {
+        // go go up in the tree, we can use the neighbour pointers
+        return m_neighbours[direction];
+    } else {
+        // to go down the tree, we have to find the closest child
+        node_t *close     = child(direction).get();
+        node_t *closer;
+        while((closer = close->child(reversed).get())) {
+            close = closer;
+        }
+        return close->shared_from_this();
+    }
+}
 
 void node_base::setActive(tribool active)
 {
@@ -25,26 +49,6 @@ void node_base::setActive(tribool active)
         return;
     }
     m_active = active;
-    /*
-      so the status changed, we have to
-       - take this element out of iteration if m_active == false
-       - take it into iteration if m_active != false
-    */
-    /*
-    if(m_level == lvlRoot) {
-        return;
-    }
-    assert(dimension == 1); // neighbour handling is more complicated in dim>1
-    if(m_active == false) { // not active
-        parent()->setNeighbour(deepNeighbour(m_position));
-    } else { // active or indeterminate
-        // take the neighbour from the parent for the own branch
-        deepChild(m_position)->setNeighbour(parent()->neighbour(m_position));
-
-        // this nodes gets again the neighbor of his parent
-        parent()->setNeighbour(shared_from_this());
-    }
-    */
 }
 
 /*!
@@ -84,21 +88,6 @@ void node_base::setupChild(const position_t position, const level_t level)
     node_p child = factory(shared_from_this(), position, level_t(m_level+1));
 
     assert(dimensions == 1);
-    real center = m_center[0]+c_width[0]*((int(position)%2)-0.5)/pow(2, m_level+1);
-    child->setCenter(center, dimX);
-
-    position_t reversed_position = reverse(position);
-    const node_p &boundary = this->neighbour(position);
-    // transfer ownership of boundary
-    child->setNeighbour(boundary, position);
-    // point boundary to closest node (our child)
-    boundary->setNeighbour(child, reversed_position);
-    // if there is a child, it is always our closest neighbour
-    this ->setNeighbour(child, position);
-    // e.g. the left child has its parent to the right
-    child->setNeighbour(shared_from_this(), reversed_position);
-
-    child->m_property = child->interpolation();
     child->unpack(level);
 
     m_childs[position] = child;
@@ -124,36 +113,27 @@ void node_base::unpack(const level_t level)
  */
 real node_base::interpolation() const
 {
-    assert(dimensions == 1);
-    // test for boundary: the parent is never a boundary:
-    // check only other direction
-    if(m_neighbours[m_position]->level() == lvlBoundary) {
-        return (m_neighbours[m_position]->property() + parent()->property())/2;
-    } else if(level() == level_t(1)) { // on lvl 1 parent->parent is empty
-        return(parent()->property()+deepNeighbour(m_position)->property())/2;
-    } else {
-        return (parent()->property()+parent()->parent()->property())/2;
+    real property = 0;
+    // # TODO explicitly unroll this loop?
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        property += m_neighbours[i]->property();
     }
+    return property/childsByDimension;
 }
 
-/*!
- * \brief node_base::deepNeighbour gives the closest neighbour which is not part of this branch
- * \param position direction to look for the neighbour
- * \return node_p of the neighbour
- */
-inline node_p node_base::deepNeighbour(const node_base::position_t position)
+node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
+    : m_parent(parent)
+    , m_position(position)
+    , m_level(level)
+    , m_active(boost::logic::indeterminate)
 {
-    return deepChild(position)->neighbour(position);
-}
+    if(level > lvlRoot) {
+        m_neighbours[reverse(position)] = parent;
+        m_neighbours[position] = parent->neighbour(position);
 
-node_p node_base::deepChild(const node_base::position_t position)
-{
-    if(m_childs[position].get()) { // TODO why does get() && active() not work? (cerr?)
-        if(m_childs[position]->active()) { // if there is an active child ...
-            return m_childs[position]->deepChild(position);
-        }
+        m_center[dimX] = (parent->center()+parent->neighbour(position)->center())/2;
+        m_property = interpolation();
     }
-    return shared_from_this();
 }
 
 /*!
@@ -169,7 +149,6 @@ void node_base::detachChild(const node_base::position_t position)
 {
     assert(m_childs[position].get()); // there must be a child
 
-    this->setNeighbour(deepNeighbour(position));
     m_childs[position]->detach();
     m_childs[position].reset();
 }
@@ -181,33 +160,13 @@ void node_base::detachChild(const node_base::position_t position)
 void node_base::detach()
 {
     for(size_t i = 0; i < childsByDimension; ++i) {
-        m_childs[i]->detach();
-        m_childs[i].reset();
+        m_childs[i]->detachChild(position_t(i));
         m_neighbours[i].reset();
     }
     m_parent.reset();
 }
 
-/*!
- * \brief node_base::pack reduces the branch recursively below this node if possible
- */
-void node_base::pack()
-{
-    assert(dimensions == 1); // neighbour handling is more complicated in dim>1
-
-    const node_p neighbour = deepNeighbour(m_position)->shared_from_this();
-
-    // reset recursively childs and neighbours to NULL pointer
-    detach();
-
-    // this nodes gets again the neighbor of his parent
-    parent()->setNeighbour(shared_from_this());
-    setNeighbour(neighbour);
-}
-
 real node_base::epsilon = EPSILON;
-real node_base::c_span0[] = {0};
-real node_base::c_span1[] = {0};
-real node_base::c_width[] = {0};
+node_p node_base::c_root = node_p();
 
 #include "node_base.hpp"

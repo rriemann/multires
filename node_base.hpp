@@ -67,6 +67,7 @@ struct node_base
           lvlBoundary = -1
         , lvlNoChilds =  0
         , lvlRoot     =  0
+        , lvlFirst    = 1
     };
 
     enum dimension_t {
@@ -79,8 +80,10 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
-    inline node_p next() const
-    { return neighbour(direction); }
+    node_p next() const;
+
+    inline node_p child(const position_t position) const
+    { return m_childs[position]; }
 
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
@@ -128,7 +131,7 @@ struct node_base
     { return m_parent; }
 
     inline real detail() const
-    { real detail = (m_property - interpolation()); std::cerr << detail << std::endl; return detail; }
+    { real detail = (m_property - interpolation()); return detail; }
 
     inline real center(dimension_t dimension = dimX) const
     { return m_center[dimension]; }
@@ -136,35 +139,30 @@ struct node_base
     inline void setCenter(real center, dimension_t dimension = dimX)
     { m_center[dimension] = center; m_active = boost::logic::indeterminate; }
 
-    static void setRange(real &span0, real &span1, dimension_t dimension = dimX) {
-        c_span0[dimension] = span0;
-        c_span1[dimension] = span1;
-        c_width[dimension] = span1-span0;
-    }
-
 
     void setupChild(const position_t position, const level_t level = lvlNoChilds);
     void unpack(const level_t level);
 
-    inline node_p deepNeighbour(const position_t position);
-    node_p deepChild(const position_t position);
     void detachChild(const position_t position);
     void detach();
 
-    void pack();
+    void pack() {
+        assert(0); // not implemented yet
+    }
+
     real interpolation() const;
 
     real m_property;
 
+    static void setRoot(const node_p &root)
+    { c_root = root; }
+
+    static node_p root()
+    { return c_root; }
+
 
 protected:
-    node_base(const node_p &parent, position_t position, level_t level)
-        : m_parent(parent)
-        , m_position(position)
-        , m_level(level)
-        , m_active(boost::logic::indeterminate)
-    {
-    }
+    node_base(const node_p &parent, position_t position, level_t level);
 
 private:
     static const position_t direction = posRight;
@@ -178,9 +176,8 @@ private:
     node_p m_childs[childsByDimension];
 
     real        m_center[dimensions];
-    static real c_span0[dimensions];
-    static real c_span1[dimensions];
-    static real c_width[dimensions];
+
+    static node_p c_root;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

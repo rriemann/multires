@@ -55,7 +55,6 @@ int main()
     real x1    = +1.0;
 
     real width = x1 - x0;
-    node_t::setRange(x0, x1);
 
     real dx    = width / (N-1);
 
@@ -67,6 +66,8 @@ int main()
     right->setCenter(x1, node_t::dimX);
 
     node_tp root  = node_t::factory(no_parent, node_t::posRoot, node_t::lvlRoot);
+    node_t::setRoot(root);
+
     root->setNeighbour(left);
     root->setNeighbour(right);
     root->setCenter((x0+x1)/2, node_t::dimX);
@@ -81,7 +82,7 @@ int main()
     });
 
 
-    // root->isActive();
+    root->isActive();
 
     std::copy(node_iterator(left), node_iterator(),
               std::ostream_iterator<node_base>(std::cout, "\n"));
