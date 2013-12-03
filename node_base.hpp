@@ -88,6 +88,20 @@ struct node_base
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
 
+    static node_p createRoot(const std::vector<real> &boundary)
+    {
+        c_root = node_p(new node_base(node_p(NULL), posRoot, lvlRoot));
+        assert(dimensions == 1);
+        for(size_t i = 0; i < boundary.size(); ++i) {
+            node_p edge = node_p(new node_base(node_p(NULL), position_t(i), lvlBoundary));
+            edge->setCenter(boundary[i]);
+            c_root->setNeighbour(edge);
+        }
+        c_root->setCenter((boundary[0]+boundary[1])/2);
+        c_root->m_property = c_root->interpolation();
+        return c_root;
+    }
+
     inline position_t position() const
     { return m_position; }
 
@@ -182,7 +196,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f act: %s> property: % 3.3f >") % node.level() % node.position() % node.center() % node.active() % node.property();
+    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f act: %s> property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.active() % node.property() % node.interpolation();
     return stream;
 }
 

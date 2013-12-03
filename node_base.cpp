@@ -72,7 +72,7 @@ bool node_base::isActive()
             }
         }
     }
-    if(ok || (fabs(detail()) > epsilon)) {
+    if((fabs(detail()) > epsilon)) {
         setActive(true);
         return true;
     } else {
@@ -113,6 +113,11 @@ void node_base::unpack(const level_t level)
  */
 real node_base::interpolation() const
 {
+#ifndef NO_DEBUG
+    if(m_level == lvlBoundary) {
+        return m_property;
+    }
+#endif
     real property = 0;
     // # TODO explicitly unroll this loop?
     for(size_t i = 0; i < childsByDimension; ++i) {
