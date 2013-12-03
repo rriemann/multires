@@ -48,7 +48,7 @@ real f_eval2(real x) {
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 8;
+    int level = 15;
     // total number of nodes, including (childsbyDimension) boundary elements
     real x0    = -1.0;
     real x1    = +1.0;
@@ -63,7 +63,7 @@ int main()
         node.m_property = f_eval(node.center());
     });
 
-    root->isActive();
+    root->pack();
 
     // output command line
     std::for_each(node_iterator(root->neighbour(node_t::posLeft)), node_iterator(), [](node_base &node) {
@@ -73,7 +73,7 @@ int main()
     // output file
     std::ofstream file("/tmp/output.txt");
     std::for_each(node_iterator(root->neighbour(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
-        file << boost::format("%e %e %d %e\n") % node.center() % node.m_property % node.active() % node.interpolation();
+        file << boost::format("%e %e %e\n") % node.center() % node.m_property % node.interpolation();
     });
     file.close();
     return 0;

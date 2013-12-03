@@ -128,12 +128,15 @@ struct node_base
         }
     }
 
+    /*
     tribool active() const
     { return m_active; }
 
-    inline void setActive(tribool active = true);
+    inline void setActive(tribool active = true)
+    { m_active = active; }
+    */
 
-    bool isActive();
+    bool pack();
 
     inline level_t level() const
     { return m_level; }
@@ -151,18 +154,14 @@ struct node_base
     { return m_center[dimension]; }
 
     inline void setCenter(real center, dimension_t dimension = dimX)
-    { m_center[dimension] = center; m_active = boost::logic::indeterminate; }
+    { m_center[dimension] = center; }
 
 
-    void setupChild(const position_t position, const level_t level = lvlNoChilds);
+    void setupChild(const position_t position);
     void unpack(const level_t level);
 
     void detachChild(const position_t position);
     void detach();
-
-    void pack() {
-        assert(0); // not implemented yet
-    }
 
     real interpolation() const;
 
@@ -184,7 +183,7 @@ private:
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
-    tribool m_active;
+    // tribool m_active;
 
     node_p m_neighbours[childsByDimension];
     node_p m_childs[childsByDimension];
@@ -196,7 +195,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f act: %s> property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.active() % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.property() % node.interpolation();
     return stream;
 }
 
