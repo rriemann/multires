@@ -31,6 +31,7 @@
 
 struct node_base;
 typedef node_base* node_p;
+// http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
 typedef std::unique_ptr<node_base> node_u;
 typedef node_p node_tp;
 typedef node_base node_t;
@@ -79,41 +80,50 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
-    node_base *next() const;
+    node_p increment() const;
+    node_p decrement() const;
+
 
     inline node_p child(const position_t position) const
     { return m_childs[position].get(); }
 
-    static node_u factory(const node_p parent, position_t position, level_t level = lvlBoundary)
-    { return node_u(new node_base(parent, position, level)); }
-
-    static node_p createRoot(const std::vector<real> &boundary)
+    static node_p createRoot(const std::vector<real> &boundary_value)
     {
-        c_root = node_p(new node_base(node_p(NULL), posRoot, lvlRoot));
-        assert(dimensions == 1);
-        for(size_t i = 0; i < boundary.size(); ++i) {
-            node_p edge = node_p(new node_base(node_p(NULL), position_t(i), lvlBoundary));
-            edge->setCenter(boundary[i]);
-            c_root->setNeighbour(edge);
+        assert(boundary_value.size() == childsByDimension);
+
+        c_root = node_u(new node_base(node_p(nullptr), posRoot, lvlRoot));
+        real sum = 0;
+        for(size_t i = 0; i < boundary_value.size(); ++i) {
+            // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
+            node_p edge = node_p(new node_base(node_p(nullptr), position_t(i), lvlBoundary));
+            sum += boundary_value[i];
+            edge->setCenter(boundary_value[i]);
+            c_root->setBoundary(edge);
         }
-        c_root->setCenter((boundary[0]+boundary[1])/2);
+        c_root->setCenter(sum/2);
         c_root->m_property = c_root->interpolation();
-        return c_root;
+        return c_root.get();
     }
 
     inline position_t position() const
     { return m_position; }
 
-    inline const node_p neighbour(const position_t position) const
+    inline node_p neighbour(const position_t position) const
     { return m_neighbours[position]; }
 
     inline void setNeighbour(const node_p node, const position_t position)
     { m_neighbours[position] = node; }
 
-    inline void setNeighbour(node_p node)
+    inline node_p boundary(const position_t position) const
+    { return m_boundaries[position]; }
+
+    inline void setBoundary(const node_p node, const position_t position)
+    { m_boundaries[position] = node; }
+
+    inline void setBoundary(node_p node)
     {
-        this->setNeighbour(node,                       node->position() );
-        node->setNeighbour(this, reverse(node->position()));
+        this->setBoundary(node, node->position() );
+        node->setBoundary(this, reverse(node->position()));
     }
 
     static position_t reverse(position_t position)
@@ -156,7 +166,7 @@ struct node_base
     { m_center[dimension] = center; }
 
 
-    void setupChild(const position_t position);
+    void createNode(const position_t position);
     void unpack(const level_t level);
 
     void detachChild(const position_t position);
@@ -165,30 +175,30 @@ struct node_base
 
     real m_property;
 
-    static void setRoot(const node_p &root)
-    { c_root = root; }
-
     static node_p root()
-    { return c_root; }
+    { return c_root.get(); }
+
+    ~node_base();
 
 
 protected:
-    node_base(const node_p &parent, position_t position, level_t level);
 
 private:
+    node_base(const node_p &parent, position_t position, level_t level);
     static const position_t direction = posRight;
 
-    node_p m_parent;
+    node_p m_parent = nullptr;
     const position_t m_position;
     level_t m_level;
     // tribool m_active;
 
-    node_p m_neighbours[childsByDimension];
+    node_p m_boundaries[childsByDimension] = {nullptr};
+    node_p m_neighbours[childsByDimension] = {nullptr};
     node_u m_childs[childsByDimension];
 
-    real        m_center[dimensions];
+    real   m_center[dimensions];
 
-    static node_p c_root;
+    static node_u c_root;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

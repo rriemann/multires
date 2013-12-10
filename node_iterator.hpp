@@ -26,7 +26,8 @@ class node_iterator
         : public boost::iterator_facade<
         node_iterator
         , node_base
-        , boost::forward_traversal_tag
+        //, boost::forward_traversal_tag
+        , boost::bidirectional_traversal_tag
         >
 {
 public:
@@ -42,7 +43,10 @@ private:
     friend class boost::iterator_core_access;
 
     void increment()
-    { m_node = m_node->next(); }
+    { m_node = m_node->increment(); }
+
+    void decrement()
+    { m_node = m_node->decrement(); }
 
     bool equal(node_iterator const &other) const
     { return this->m_node == other.m_node; }

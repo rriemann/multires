@@ -25,28 +25,23 @@
  * The implementation of the tree doesn't allow to have a very efficent algorith to get the next node.
  * So this method should only be used in the rare cases of output generation
  */
-node_base* node_base::next() const
+node_p node_base::increment() const
 {
-    position_t reversed = reverse(direction);
-    if((m_level == lvlBoundary) && (m_position == reversed)) {
-        // we start at the boundary and need to find the closest child
-        node_t *close = root();
-        node_t *closer;
-        while((closer = close->child(m_position))) {
-            close = closer;
-        }
-        return close;
-    } else if(m_childs[direction] == NULL) {
-        // go go up in the tree, we can use the neighbour pointers
+    if(m_neighbours[direction]) {
         return m_neighbours[direction];
     } else {
-        // to go down the tree, we have to find the closest child
-        node_t *close     = child(direction);
-        node_t *closer;
-        while((closer = close->child(reversed))) {
-            close = closer;
-        }
-        return close;
+        return m_boundaries[direction];
+    }
+}
+
+node_p node_base::decrement() const
+{
+    static const position_t reversed = reverse(direction);
+
+    if(m_neighbours[reversed]) {
+        return m_neighbours[reversed];
+    } else {
+        return m_boundaries[reversed];
     }
 }
 
@@ -82,11 +77,11 @@ bool node_base::pack()
  * \brief node_base::setupChild initializes a new child node at the given position
  * \param position
  */
-void node_base::setupChild(const position_t position)
+void node_base::createNode(const position_t position)
 {
-    assert(m_childs[position].get() == NULL); // full stop if there is already a child
-
-    m_childs[position] = factory(this, position, level_t(m_level+1));
+    assert(!m_childs[position]); // full stop if there is already a child
+    node_p node = new node_base(this, position, level_t(m_level+1));
+    m_childs[position] = node_u(node);
 }
 
 /*!
@@ -97,7 +92,7 @@ void node_base::unpack(const level_t level)
 {
     if(level > lvlNoChilds) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
-            setupChild(position_t(i));
+            createNode(position_t(i));
             m_childs[i]->unpack(level_t(level - 1));
         }
     }
@@ -119,9 +114,19 @@ real node_base::interpolation() const
     real property = 0;
     // # TODO explicitly unroll this loop?
     for(size_t i = 0; i < childsByDimension; ++i) {
-        property += m_neighbours[i]->property();
+        property += m_boundaries[i]->property();
     }
     return property/childsByDimension;
+}
+
+node_base::~node_base()
+{
+    if(m_level > lvlRoot) {
+        position_t reversed = reverse(m_position);
+        node_p boundary = m_boundaries[m_position];
+        m_parent->setNeighbour(boundary, m_position);
+        boundary->setNeighbour(m_parent, reversed);
+    }
 }
 
 node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
@@ -131,15 +136,19 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     // , m_active(boost::logic::indeterminate)
 {
     if(level > lvlRoot) { // this also filters lvlBoundary
-        m_neighbours[reverse(position)] = parent;
-        m_neighbours[position] = parent->neighbour(position);
+        position_t reversed = reverse(position);
+        m_boundaries[reversed] = parent;
+        m_boundaries[position] = parent->boundary(position);
 
-        m_center[dimX] = (parent->center()+parent->neighbour(position)->center())/2;
+        parent->setNeighbour(this, position);
+        m_boundaries[position]->setNeighbour(this, reversed);
+
+        m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
         m_property = interpolation();
     }
 }
 
 real node_base::epsilon = EPSILON;
-node_p node_base::c_root = node_p();
+node_u node_base::c_root = node_u(nullptr);
 
 #include "node_base.hpp"
