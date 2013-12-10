@@ -31,7 +31,6 @@
 
 struct node_base;
 typedef std::shared_ptr<node_base> node_p;
-typedef std::weak_ptr<node_base> node_w;
 typedef node_p node_tp;
 typedef node_base node_t;
 using boost::logic::tribool;
@@ -80,7 +79,7 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
-    node_p next() const;
+    node_base *next() const;
 
     inline node_p child(const position_t position) const
     { return m_childs[position]; }

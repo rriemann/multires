@@ -25,7 +25,7 @@
  * The implementation of the tree doesn't allow to have a very efficent algorith to get the next node.
  * So this method should only be used in the rare cases of output generation
  */
-node_p node_base::next() const
+node_base* node_base::next() const
 {
     position_t reversed = reverse(direction);
     if((m_level == lvlBoundary) && (m_position == reversed)) {
@@ -35,10 +35,10 @@ node_p node_base::next() const
         while((closer = close->child(m_position).get())) {
             close = closer;
         }
-        return close->shared_from_this();
+        return close;
     } else if(m_childs[direction].get() == NULL) {
         // go go up in the tree, we can use the neighbour pointers
-        return m_neighbours[direction];
+        return m_neighbours[direction].get();
     } else {
         // to go down the tree, we have to find the closest child
         node_t *close     = child(direction).get();
@@ -46,7 +46,7 @@ node_p node_base::next() const
         while((closer = close->child(reversed).get())) {
             close = closer;
         }
-        return close->shared_from_this();
+        return close;
     }
 }
 

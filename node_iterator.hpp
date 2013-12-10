@@ -34,7 +34,7 @@ public:
         : m_node(0)
     {}
 
-    explicit node_iterator(node_p p)
+    explicit node_iterator(node_base* p)
         : m_node(p)
     {}
 
@@ -48,9 +48,9 @@ private:
     { return this->m_node == other.m_node; }
 
     node_base& dereference() const
-    { return *(m_node.get()); }
+    { return *m_node; }
 
-    node_p m_node;
+    node_base* m_node;
 };
 
 #endif // NODE_ITERATOR_HPP
