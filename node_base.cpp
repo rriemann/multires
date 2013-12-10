@@ -20,19 +20,27 @@
 
 node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
     : m_parent(parent)
+    , m_index(0)
     , m_position(position)
     , m_level(level)
-    , m_index(0)
     // , m_active(boost::logic::indeterminate)
     , m_virtual(boost::logic::indeterminate)
 {
-    if(level > lvlRoot) { // this also filters lvlBoundary
-        m_neighbours[reverse(position)] = parent;
-        m_neighbours[position] = parent->neighbour(position);
+    assert(m_level<=lvlRoot);
+}
 
-        m_center[dimX] = (parent->center()+parent->neighbour(position)->center())/2;
-        m_property = interpolation();
-    }
+node_base::node_base(const node_p &parent, node_base::index_t index)
+    : m_parent(parent)
+    , m_index(index)
+    , m_position(m_index.position())
+    , m_level(m_index.level())
+{
+    assert(m_level > lvlRoot);
+    m_neighbours[reverse(m_position)] = parent;
+    m_neighbours[m_position] = parent->neighbour(m_position);
+
+    m_center[dimX] = (parent->center()+parent->neighbour(m_position)->center())/2;
+    m_property = interpolation();
 }
 
 /**
@@ -133,7 +141,7 @@ void node_base::setupChild(const position_t position)
 {
     assert(m_childs[position].get() == NULL); // full stop if there is already a child
 
-    node_p child = factory(shared_from_this(), position, level_t(m_level+1));
+    node_p child = factory(shared_from_this(), m_index.child(position));
 
     m_childs[position] = child;
 }

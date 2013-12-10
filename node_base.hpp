@@ -97,10 +97,22 @@ struct node_base
         { assert(dimensions==1); return m_index*2 + kekule_index(position) + 1; }
 
         inline level_t level() const
-        { return level_t(floor(log2(m_index+1))); }
+        {
+            assert(m_index>0);
+            return level_t(floor(log2(m_index+1)));
+        }
 
         inline position_t position() const
-        { assert(dimensions==1); return (m_index > (pow(2,level())*0.75-2)) ? posRight : posLeft; }
+        {
+            assert(dimensions==1);
+            if(m_index == 0) {
+                return posRoot;
+            } else {
+                assert(m_index>0); /* cannot handle (yet) the position of boundary */
+                size_t left_index_max = pow(2,level())*1.5-2;
+                return (m_index > left_index_max) ? posRight : posLeft;
+            }
+        }
 
     private:
         size_t m_index;
@@ -114,8 +126,13 @@ struct node_base
     inline node_p child(const position_t position) const
     { return m_childs[position]; }
 
+    /*
     static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
     { return node_p(new node_base(parent, position, level)); }
+    */
+
+    static node_p factory(const node_p parent, index_t index)
+    { return node_p(new node_base(parent, index)); }
 
     static node_p createRoot(const std::vector<real> &boundary)
     {
@@ -211,14 +228,15 @@ struct node_base
 
 protected:
     node_base(const node_p &parent, position_t position, level_t level);
+    node_base(const node_p &parent, index_t index);
 
 private:
     static const position_t direction = posRight;
 
     node_p m_parent;
+    index_t m_index;
     const position_t m_position;
     level_t m_level;
-    index_t m_index;
     // tribool m_active;
     tribool m_virtual;
 
