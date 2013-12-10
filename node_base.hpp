@@ -78,6 +78,35 @@ struct node_base
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real epsilon;
 
+    // with this idea in mind: http://de.wikipedia.org/wiki/Kekule-Nummer
+    // BUT: root element is zero!
+
+    struct kekule_index
+    {
+        kekule_index(size_t i)
+            : m_index(i)
+        {}
+
+        operator size_t() const
+        { return m_index; }
+
+        inline kekule_index parent() const
+        { return floor((m_index-1)/2); }
+
+        inline kekule_index child(const position_t position) const
+        { assert(dimensions==1); return m_index*2 + kekule_index(position) + 1; }
+
+        inline level_t level() const
+        { return level_t(floor(log2(m_index+1))); }
+
+        inline position_t position() const
+        { assert(dimensions==1); return (m_index > (pow(2,level())*0.75-2)) ? posRight : posLeft; }
+
+    private:
+        size_t m_index;
+    };
+    typedef kekule_index index_t;
+
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
     node_p next() const;
@@ -136,6 +165,12 @@ struct node_base
     { m_active = active; }
     */
 
+    tribool isVirtual() const
+    { return m_virtual; }
+
+    inline void setVirtual(tribool status = true)
+    { m_virtual = status; }
+
     bool pack();
 
     inline level_t level() const
@@ -183,7 +218,9 @@ private:
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
+    index_t m_index;
     // tribool m_active;
+    tribool m_virtual;
 
     node_p m_neighbours[childsByDimension];
     node_p m_childs[childsByDimension];
@@ -195,7 +232,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 3d, pos: % 2d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.property() % node.interpolation();
     return stream;
 }
 

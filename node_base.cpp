@@ -18,6 +18,23 @@
 
 #include <cmath>
 
+node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
+    : m_parent(parent)
+    , m_position(position)
+    , m_level(level)
+    , m_index(0)
+    // , m_active(boost::logic::indeterminate)
+    , m_virtual(boost::logic::indeterminate)
+{
+    if(level > lvlRoot) { // this also filters lvlBoundary
+        m_neighbours[reverse(position)] = parent;
+        m_neighbours[position] = parent->neighbour(position);
+
+        m_center[dimX] = (parent->center()+parent->neighbour(position)->center())/2;
+        m_property = interpolation();
+    }
+}
+
 /**
  * @brief node_base::next is used by the node_base iterator class to get the next node
  * @return node_p shared_ptr to the next node
@@ -154,21 +171,6 @@ real node_base::interpolation() const
         property += m_neighbours[i]->property();
     }
     return property/childsByDimension;
-}
-
-node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
-    : m_parent(parent)
-    , m_position(position)
-    , m_level(level)
-    // , m_active(boost::logic::indeterminate)
-{
-    if(level > lvlRoot) { // this also filters lvlBoundary
-        m_neighbours[reverse(position)] = parent;
-        m_neighbours[position] = parent->neighbour(position);
-
-        m_center[dimX] = (parent->center()+parent->neighbour(position)->center())/2;
-        m_property = interpolation();
-    }
 }
 
 real node_base::epsilon = EPSILON;
