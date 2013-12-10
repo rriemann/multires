@@ -30,14 +30,14 @@
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
 
 struct node_base;
-typedef std::shared_ptr<node_base> node_p;
+typedef node_base* node_p;
+typedef std::unique_ptr<node_base> node_u;
 typedef node_p node_tp;
 typedef node_base node_t;
 using boost::logic::tribool;
 using boost::logic::indeterminate;
 
 struct node_base
-        : public std::enable_shared_from_this<node_base>
 {
 
     enum position_t {
@@ -82,10 +82,10 @@ struct node_base
     node_base *next() const;
 
     inline node_p child(const position_t position) const
-    { return m_childs[position]; }
+    { return m_childs[position].get(); }
 
-    static node_p factory(const node_p parent, position_t position, level_t level = lvlBoundary)
-    { return node_p(new node_base(parent, position, level)); }
+    static node_u factory(const node_p parent, position_t position, level_t level = lvlBoundary)
+    { return node_u(new node_base(parent, position, level)); }
 
     static node_p createRoot(const std::vector<real> &boundary)
     {
@@ -113,7 +113,7 @@ struct node_base
     inline void setNeighbour(node_p node)
     {
         this->setNeighbour(node,                       node->position() );
-        node->setNeighbour(shared_from_this(), reverse(node->position()));
+        node->setNeighbour(this, reverse(node->position()));
     }
 
     static position_t reverse(position_t position)
@@ -160,7 +160,6 @@ struct node_base
     void unpack(const level_t level);
 
     void detachChild(const position_t position);
-    void detach();
 
     real interpolation() const;
 
@@ -185,7 +184,7 @@ private:
     // tribool m_active;
 
     node_p m_neighbours[childsByDimension];
-    node_p m_childs[childsByDimension];
+    node_u m_childs[childsByDimension];
 
     real        m_center[dimensions];
 

@@ -59,20 +59,20 @@ int main()
     // create children in memory
     root->unpack(node_t::level_t(level));
 
-    std::for_each(node_iterator(root->neighbour(node_t::posLeft).get()), node_iterator(), [](node_base &node) {
+    std::for_each(node_iterator(root->neighbour(node_t::posLeft)), node_iterator(), [](node_base &node) {
         node.m_property = f_eval(node.center());
     });
 
     root->pack();
 
     // output command line
-    std::for_each(node_iterator(root->neighbour(node_t::posLeft).get()), node_iterator(), [](node_base &node) {
+    std::for_each(node_iterator(root->neighbour(node_t::posLeft)), node_iterator(), [](node_base &node) {
         std::cout << node << std::endl;
     });
 
     // output file
     std::ofstream file("/tmp/output.txt");
-    std::for_each(node_iterator(root->neighbour(node_t::posLeft).get()), node_iterator(), [&file](node_base &node) {
+    std::for_each(node_iterator(root->neighbour(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
         file << boost::format("%e %e %e\n") % node.center() % node.m_property % node.interpolation();
     });
     file.close();

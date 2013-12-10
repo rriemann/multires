@@ -30,20 +30,20 @@ node_base* node_base::next() const
     position_t reversed = reverse(direction);
     if((m_level == lvlBoundary) && (m_position == reversed)) {
         // we start at the boundary and need to find the closest child
-        node_t *close = root().get();
+        node_t *close = root();
         node_t *closer;
-        while((closer = close->child(m_position).get())) {
+        while((closer = close->child(m_position))) {
             close = closer;
         }
         return close;
-    } else if(m_childs[direction].get() == NULL) {
+    } else if(m_childs[direction] == NULL) {
         // go go up in the tree, we can use the neighbour pointers
-        return m_neighbours[direction].get();
+        return m_neighbours[direction];
     } else {
         // to go down the tree, we have to find the closest child
-        node_t *close     = child(direction).get();
+        node_t *close     = child(direction);
         node_t *closer;
-        while((closer = close->child(reversed).get())) {
+        while((closer = close->child(reversed))) {
             close = closer;
         }
         return close;
@@ -68,7 +68,7 @@ bool node_base::pack()
     for(size_t i = 0; i < childsByDimension; ++i) {
         if(m_childs[i].get()) {
             if(m_childs[i]->pack()) {
-                detachChild(position_t(i));
+                m_childs[i].reset();
             } else {
                 keep = true;
             }
@@ -77,36 +77,6 @@ bool node_base::pack()
     return ((!keep) && (fabs(detail()) < epsilon));
 }
 
-/*!
- * \brief removes the child at position from this node
- * \param position of the child to be removed
- *
- * \note   this does not necessarily delete the child. It will be deleted
- *         on removal of the last pointer
- *
- * \sa std::shared_ptr
- * \sa node_base::setupChild
- */
-void node_base::detachChild(const node_base::position_t position)
-{
-    m_childs[position]->detach();
-    m_childs[position].reset();
-}
-
-/*!
- * \brief node_base::detach will prepare this element for removal
- * \return the node_base to replace this node as a neighbour
- */
-void node_base::detach()
-{
-    for(size_t i = 0; i < childsByDimension; ++i) {
-        if(m_childs[i].get()) {
-            m_childs[i]->detachChild(position_t(i));
-        }
-        m_neighbours[i].reset();
-    }
-    m_parent.reset();
-}
 
 /*!
  * \brief node_base::setupChild initializes a new child node at the given position
@@ -116,9 +86,7 @@ void node_base::setupChild(const position_t position)
 {
     assert(m_childs[position].get() == NULL); // full stop if there is already a child
 
-    node_p child = factory(shared_from_this(), position, level_t(m_level+1));
-
-    m_childs[position] = child;
+    m_childs[position] = factory(this, position, level_t(m_level+1));
 }
 
 /*!
