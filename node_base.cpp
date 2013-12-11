@@ -79,6 +79,11 @@ bool node_base::pack()
  */
 bool node_base::pack2()
 {
+    /*
+     * important notice:
+     * never ever call pack2 recursive on a node with same or lower level than
+     * the level of the current node. This would create an infinite loop
+     */
     bool keep = false; // keep means: do not pack
 
     // do I have children?
@@ -134,6 +139,11 @@ bool node_base::pack2()
         } while(candidate->level() > m_level);
 
         assert(m_level == candidate->level());
+
+        // doesn't make much sense to get first the parent and then the child, heh?
+        // consider: we need to use the unique_ptr to delete the child, and
+        //           the unique_ptr can only be accessed by the owner of the pointer,
+        //           which is the parent node.
         node_u &child = candidate->child(reversed);
         if(child) {
             if(child->pack2()) {
