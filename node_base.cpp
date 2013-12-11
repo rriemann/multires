@@ -126,20 +126,27 @@ bool node_base::pack2()
     }
 
     // check grand-nephew
-    node_p grandparent = boundary(position());
-    node_u &uncle = grandparent->child(position());
-    if(uncle) {
-        assert(m_level == uncle->level()+1);
-        node_u &cousin = uncle->child(reversed);
-        if(cousin) {
-            assert(m_level == cousin->level());
-            node_u &child = cousin->child(reversed);
-            if(child) {
-                if(child->pack2()) {
-                    child.reset();
-                } else {
-                    return false;
-                }
+    node_p bound = boundary(position());
+    node_p bound_neighbour = bound->neighbour(position());
+    // we only do something when there is a grand-nephew:
+    // - maybe there is only a grand-cousin
+    // - maybe the grand-nephew has even children
+    if(bound_neighbour && bound_neighbour->level() < m_level) {
+        // ok, there must be a grand-nephew: we found him already,
+        // or at least his children
+        node_p candidate = bound_neighbour;
+        // we iterate until we found the parent of the grand-nephew,
+        // which should be our cousin (same level)
+        while(candidate->level() < m_level) {
+            candidate = candidate->parent();
+        }
+        assert(m_level == candidate->level());
+        node_u &child = candidate->child(reversed);
+        if(child) {
+            if(child->pack2()) {
+                child.reset();
+            } else {
+                return false;
             }
         }
     }
