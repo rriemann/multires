@@ -118,28 +118,21 @@ bool node_base::pack2()
         }
     }
 
-    // these asserts are also in the constructor
-    if(m_level > lvlFirst) {
-        assert(boundary(reverse(m_position))->level() + 1== m_level);
-        assert((boundary(m_position)->level() + 2 == m_level) ||
-               (boundary(m_position)->level() < lvlFirst));
-    }
-
     // check grand-nephew
     node_p bound = boundary(position());
-    node_p bound_neighbour = bound->neighbour(position());
+    node_p candidate = bound->neighbour(position());
     // we only do something when there is a grand-nephew:
     // - maybe there is only a grand-cousin
     // - maybe the grand-nephew has even children
-    if(bound_neighbour && bound_neighbour->level() < m_level) {
+    if(candidate && candidate->level() > m_level) {
         // ok, there must be a grand-nephew: we found him already,
         // or at least his children
-        node_p candidate = bound_neighbour;
         // we iterate until we found the parent of the grand-nephew,
         // which should be our cousin (same level)
-        while(candidate->level() < m_level) {
+        do {
             candidate = candidate->parent();
-        }
+        } while(candidate->level() > m_level);
+
         assert(m_level == candidate->level());
         node_u &child = candidate->child(reversed);
         if(child) {
@@ -240,9 +233,8 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     m_boundaries[reversed] = parent;
     m_boundaries[position] = parent->boundary(position);
 
-    assert((boundary(reversed  )->level() + 1 == m_level));
-    assert((boundary(m_position)->level() + 2 == m_level) ||
-           (boundary(m_position)->level() < lvlFirst));
+    assert(boundary(reversed  )->level() + 1 == m_level);
+    assert(boundary(m_position)->level() + 2 <= m_level);
 
     parent->setNeighbour(this, position);
     m_boundaries[position]->setNeighbour(this, reversed);

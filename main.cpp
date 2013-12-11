@@ -48,7 +48,7 @@ real f_eval2(real x) {
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 3;
+    int level = 20;
     // total number of nodes, including (childsbyDimension) boundary elements
     real x0    = -1.0;
     real x1    = +1.0;
@@ -66,6 +66,7 @@ int main()
     root->pack2();
 
     // output command line
+    std::cout << std::endl;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
         std::cout << node << std::endl;
     });
