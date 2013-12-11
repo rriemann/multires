@@ -87,23 +87,10 @@ struct node_base
     inline node_p child(const position_t position) const
     { return m_childs[position].get(); }
 
-    static node_p createRoot(const std::vector<real> &boundary_value)
-    {
-        assert(boundary_value.size() == childsByDimension);
+    inline node_u &child(const position_t position)
+    { return m_childs[position]; }
 
-        c_root = node_u(new node_base(node_p(nullptr), posRoot, lvlRoot));
-        real sum = 0;
-        for(size_t i = 0; i < boundary_value.size(); ++i) {
-            // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
-            node_p edge = node_p(new node_base(node_p(nullptr), position_t(i), lvlBoundary));
-            sum += boundary_value[i];
-            edge->setCenter(boundary_value[i]);
-            c_root->setBoundary(edge);
-        }
-        c_root->setCenter(sum/2);
-        c_root->m_property = c_root->interpolation();
-        return c_root.get();
-    }
+    static node_p createRoot(const std::vector<real> &boundary_value);
 
     inline position_t position() const
     { return m_position; }
@@ -115,7 +102,9 @@ struct node_base
     { m_neighbours[position] = node; }
 
     inline node_p boundary(const position_t position) const
-    { return m_boundaries[position]; }
+    {
+        return m_boundaries[position];
+    }
 
     inline void setBoundary(const node_p node, const position_t position)
     { m_boundaries[position] = node; }
@@ -146,6 +135,7 @@ struct node_base
     */
 
     bool pack();
+    bool pack2();
 
     inline level_t level() const
     { return m_level; }
@@ -185,14 +175,15 @@ protected:
 
 private:
     node_base(const node_p &parent, position_t position, level_t level);
+    node_base(position_t position, level_t level);
     static const position_t direction = posRight;
 
-    node_p m_parent = nullptr;
+    node_p m_parent;
     const position_t m_position;
     level_t m_level;
     // tribool m_active;
 
-    node_p m_boundaries[childsByDimension] = {nullptr};
+    node_p m_boundaries[childsByDimension]; // TODO make it const?
     node_p m_neighbours[childsByDimension] = {nullptr};
     node_u m_childs[childsByDimension];
 

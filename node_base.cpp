@@ -30,7 +30,7 @@ node_p node_base::increment() const
     if(m_neighbours[direction]) {
         return m_neighbours[direction];
     } else {
-        return m_boundaries[direction];
+        return boundary(direction);
     }
 }
 
@@ -41,7 +41,7 @@ node_p node_base::decrement() const
     if(m_neighbours[reversed]) {
         return m_neighbours[reversed];
     } else {
-        return m_boundaries[reversed];
+        return boundary(reversed);
     }
 }
 
@@ -59,17 +59,92 @@ bool node_base::pack()
     }
     */
     // test if children can be interpolated
-    bool keep = false; // keep = do not pack
+    bool keep = false; // keep means: do not pack
     for(size_t i = 0; i < childsByDimension; ++i) {
-        if(m_childs[i].get()) {
-            if(m_childs[i]->pack()) {
-                m_childs[i].reset();
+        node_u &child     = m_childs[i];
+        if(child) {
+            if(child->pack()) {
+                child.reset();
             } else {
                 keep = true;
             }
         }
     }
     return ((!keep) && (fabs(detail()) < epsilon));
+}
+
+/*!
+ * \brief node_base::pack2
+ * \return bool if this node can be deleted.
+ */
+bool node_base::pack2()
+{
+    bool keep = false; // keep means: do not pack
+
+    // do I have children?
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        node_u &child = m_childs[i];
+//        std::cerr << m_childs[i].get() << std::endl;
+        if(child) {
+            if(child->pack2()) {
+                child.reset();
+            } else {
+                keep = true;
+            }
+        }
+    }
+
+    // two reasons to not pack:
+    // - I have children who cannot be deleted.
+    // - My value is too important.
+    if(keep || (fabs(detail()) > epsilon)) {
+        return false;
+    }
+
+    // let's see if we have to chance to return true?
+
+    position_t reversed = reverse(position());
+
+    // check nephew
+    node_u &silbling = parent()->child(reversed);
+    if(silbling) {
+        node_u &child = silbling->child(position());
+        if(child) {
+            if(child->pack2()) {
+                child.reset();
+            } else {
+                return false;
+            }
+        }
+    }
+
+    // these asserts are also in the constructor
+    if(m_level > lvlFirst) {
+        assert(boundary(reverse(m_position))->level() + 1== m_level);
+        assert((boundary(m_position)->level() + 2 == m_level) ||
+               (boundary(m_position)->level() < lvlFirst));
+    }
+
+    // check grand-nephew
+    node_p grandparent = boundary(position());
+    node_u &uncle = grandparent->child(position());
+    if(uncle) {
+        assert(m_level == uncle->level()+1);
+        node_u &cousin = uncle->child(reversed);
+        if(cousin) {
+            assert(m_level == cousin->level());
+            node_u &child = cousin->child(reversed);
+            if(child) {
+                if(child->pack2()) {
+                    child.reset();
+                } else {
+                    return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }
 
 
@@ -82,6 +157,24 @@ void node_base::createNode(const position_t position)
     assert(!m_childs[position]); // full stop if there is already a child
     node_p node = new node_base(this, position, level_t(m_level+1));
     m_childs[position] = node_u(node);
+}
+
+node_p node_base::createRoot(const std::vector<real> &boundary_value)
+{
+    assert(boundary_value.size() == childsByDimension);
+
+    c_root = node_u(new node_base(posRoot, lvlRoot));
+    real sum = 0;
+    for(size_t i = 0; i < boundary_value.size(); ++i) {
+        // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
+        node_p edge = node_p(new node_base(position_t(i), lvlBoundary));
+        sum += boundary_value[i];
+        edge->setCenter(boundary_value[i]);
+        c_root->setBoundary(edge);
+    }
+    c_root->setCenter(sum/2);
+    c_root->m_property = c_root->interpolation();
+    return c_root.get();
 }
 
 /*!
@@ -114,7 +207,7 @@ real node_base::interpolation() const
     real property = 0;
     // # TODO explicitly unroll this loop?
     for(size_t i = 0; i < childsByDimension; ++i) {
-        property += m_boundaries[i]->property();
+        property += boundary(position_t(i))->property();
     }
     return property/childsByDimension;
 }
@@ -123,9 +216,9 @@ node_base::~node_base()
 {
     if(m_level > lvlRoot) {
         position_t reversed = reverse(m_position);
-        node_p boundary = m_boundaries[m_position];
-        m_parent->setNeighbour(boundary, m_position);
-        boundary->setNeighbour(m_parent, reversed);
+        node_p bound = boundary(m_position);
+        m_parent->setNeighbour(bound, m_position);
+        bound->setNeighbour(m_parent, reversed);
     }
 }
 
@@ -135,17 +228,28 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     , m_level(level)
     // , m_active(boost::logic::indeterminate)
 {
-    if(level > lvlRoot) { // this also filters lvlBoundary
-        position_t reversed = reverse(position);
-        m_boundaries[reversed] = parent;
-        m_boundaries[position] = parent->boundary(position);
+    assert(level > lvlRoot);
+    position_t reversed = reverse(position);
+    m_boundaries[reversed] = parent;
+    m_boundaries[position] = parent->boundary(position);
 
-        parent->setNeighbour(this, position);
-        m_boundaries[position]->setNeighbour(this, reversed);
+    assert((boundary(reversed  )->level() + 1 == m_level));
+    assert((boundary(m_position)->level() + 2 == m_level) ||
+           (boundary(m_position)->level() < lvlFirst));
 
-        m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
-        m_property = interpolation();
-    }
+    parent->setNeighbour(this, position);
+    m_boundaries[position]->setNeighbour(this, reversed);
+
+    m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
+    m_property = interpolation();
+}
+
+node_base::node_base(node_base::position_t position, node_base::level_t level)
+    : m_parent(nullptr)
+    , m_position(position)
+    , m_level(level)
+{
+    assert(level < lvlFirst);
 }
 
 real node_base::epsilon = EPSILON;
