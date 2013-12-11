@@ -25,7 +25,8 @@
  * The implementation of the tree doesn't allow to have a very efficent algorith to get the next node.
  * So this method should only be used in the rare cases of output generation
  */
-node_p node_base::increment() const
+template <class node_derived>
+typename node_base<node_derived>::node_p node_base<node_derived>::increment() const
 {
     if(m_neighbours[direction]) {
         return m_neighbours[direction];
@@ -34,7 +35,8 @@ node_p node_base::increment() const
     }
 }
 
-node_p node_base::decrement() const
+template <class node_derived>
+typename node_base<node_derived>::node_p node_base<node_derived>::decrement() const
 {
     static const position_t reversed = reverse(direction);
 
@@ -51,7 +53,8 @@ node_p node_base::decrement() const
  *
  * \return bool if the branch could be replaced by interpolated values assuming a maximal error of epsilon
  */
-bool node_base::pack()
+template <class node_derived>
+bool node_base<node_derived>::pack()
 {
     /*
     if(!boost::logic::indeterminate(m_active)) {
@@ -69,7 +72,7 @@ bool node_base::pack()
             }
         }
     }
-    return ((!keep) && (fabs(detail()) < epsilon));
+    return ((!keep) && (fabs(static_cast<node_derived*>(this)->detail()) < epsilon));
 }
 
 
@@ -77,10 +80,11 @@ bool node_base::pack()
  * \brief node_base::setupChild initializes a new child node at the given position
  * \param position
  */
-void node_base::createNode(const position_t position)
+template <class node_derived>
+void node_base<node_derived>::createNode(const position_t position)
 {
     assert(!m_childs[position]); // full stop if there is already a child
-    node_p node = new node_base(this, position, level_t(m_level+1));
+    node_p node = new node_derived(this, position, level_t(m_level+1));
     m_childs[position] = node_u(node);
 }
 
@@ -88,7 +92,8 @@ void node_base::createNode(const position_t position)
  * \brief node_base::unpack populates this node with new child nodes
  * \param level precises the number of child generations to create relative to the this node
  */
-void node_base::unpack(const level_t level)
+template <class node_derived>
+void node_base<node_derived>::unpack(const level_t level)
 {
     if(level > lvlNoChilds) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
@@ -98,28 +103,8 @@ void node_base::unpack(const level_t level)
     }
 }
 
-/*!
- * \brief node_base::interpolation return the interpolation value
- *        based on surrounding elements (only elements with lower level are used)
- * \return the actual value for the interpolation
- */
-real node_base::interpolation() const
-{
-#ifndef NO_DEBUG
-    // only in debugging mode interpolation should be could on the boundary
-    if(m_level == lvlBoundary) {
-        return m_property;
-    }
-#endif
-    real property = 0;
-    // # TODO explicitly unroll this loop?
-    for(size_t i = 0; i < childsByDimension; ++i) {
-        property += m_boundaries[i]->property();
-    }
-    return property/childsByDimension;
-}
-
-node_base::~node_base()
+template <class node_derived>
+node_base<node_derived>::~node_base()
 {
     if(m_level > lvlRoot) {
         position_t reversed = reverse(m_position);
@@ -129,7 +114,8 @@ node_base::~node_base()
     }
 }
 
-node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
+template <class node_derived>
+node_base<node_derived>::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
     : m_parent(parent)
     , m_position(position)
     , m_level(level)
@@ -144,11 +130,13 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
         m_boundaries[position]->setNeighbour(this, reversed);
 
         m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
-        m_property = interpolation();
     }
 }
 
-real node_base::epsilon = EPSILON;
-node_u node_base::c_root = node_u(nullptr);
+template <class node_derived>
+real node_base<node_derived>::epsilon = EPSILON;
+
+template <class node_derived>
+typename node_base<node_derived>::node_u node_base<node_derived>::c_root = node_u(nullptr);
 
 #include "node_base.hpp"

@@ -23,7 +23,7 @@
 
 // using namespace std;
 
-#include "node_iterator.hpp"
+#include "node_real.hpp"
 
 real f_eval(real x) {
     if(x < -0.5) {
@@ -54,26 +54,27 @@ int main()
     real x1    = +1.0;
 
     std::vector<real> boundaries = {x0, x1};
-    node_tp root = node_t::createRoot(boundaries);
+    node_tp root = static_cast<node_tp>(node_t::createRoot(boundaries));
+    root->interpolation();
 
     // create children in memory
     root->unpack(node_t::level_t(level));
 
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
-        node.m_property = f_eval(node.center());
+    std::for_each(node_t::iterator(root->boundary(node_t::posLeft)), node_t::iterator(), [](node_t &node) {
+        node.setProperty(f_eval(node.center()));
     });
 
     root->pack();
 
     // output command line
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
+    std::for_each(node_t::iterator(root->boundary(node_t::posLeft)), node_t::iterator(), [](node_t &node) {
         std::cout << node << std::endl;
     });
 
     // output file
     std::ofstream file("/tmp/output.txt");
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
-        file << boost::format("%e %e %e\n") % node.center() % node.m_property % node.interpolation();
+    std::for_each(node_t::iterator(root->boundary(node_t::posLeft)), node_t::iterator(), [&file](node_t &node) {
+        file << boost::format("%e %e %e\n") % node.center() % node.property() % node.interpolation();
     });
     file.close();
     return 0;

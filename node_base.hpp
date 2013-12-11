@@ -26,20 +26,22 @@
 #include <boost/logic/tribool.hpp>
 #include <boost/logic/tribool_io.hpp> // also important for correct debug info in gdb
 
+
+#include <boost/iterator/iterator_facade.hpp>
+
 // Polymorphic list node base class
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
 
-struct node_base;
-typedef node_base* node_p;
-// http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
-typedef std::unique_ptr<node_base> node_u;
-typedef node_p node_tp;
-typedef node_base node_t;
 using boost::logic::tribool;
 using boost::logic::indeterminate;
 
+template <class node_derived>
 struct node_base
 {
+
+    typedef node_base* node_p;
+    // http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
+    typedef std::unique_ptr<node_base> node_u;
 
     enum position_t {
         // according to numbering of quadrants, starting with 0
@@ -91,17 +93,16 @@ struct node_base
     {
         assert(boundary_value.size() == childsByDimension);
 
-        c_root = node_u(new node_base(node_p(nullptr), posRoot, lvlRoot));
+        c_root = node_u(new node_derived(node_p(nullptr), posRoot, lvlRoot));
         real sum = 0;
         for(size_t i = 0; i < boundary_value.size(); ++i) {
             // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
-            node_p edge = node_p(new node_base(node_p(nullptr), position_t(i), lvlBoundary));
+            node_p edge = node_p(new node_derived(node_p(nullptr), position_t(i), lvlBoundary));
             sum += boundary_value[i];
             edge->setCenter(boundary_value[i]);
             c_root->setBoundary(edge);
         }
         c_root->setCenter(sum/2);
-        c_root->m_property = c_root->interpolation();
         return c_root.get();
     }
 
@@ -123,7 +124,7 @@ struct node_base
     inline void setBoundary(node_p node)
     {
         this->setBoundary(node, node->position() );
-        node->setBoundary(this, reverse(node->position()));
+        node->setBoundary(static_cast<node_p>(this), reverse(node->position()));
     }
 
     static position_t reverse(position_t position)
@@ -150,14 +151,8 @@ struct node_base
     inline level_t level() const
     { return m_level; }
 
-    real property() const
-    { return m_property; }
-
     inline const node_p& parent() const
     { return m_parent; }
-
-    inline real detail() const
-    { real detail = (m_property - interpolation()); return detail; }
 
     inline real center(dimension_t dimension = dimX) const
     { return m_center[dimension]; }
@@ -171,20 +166,57 @@ struct node_base
 
     void detachChild(const position_t position);
 
-    real interpolation() const;
-
-    real m_property;
-
     static node_p root()
     { return c_root.get(); }
 
-    ~node_base();
 
+
+    // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
+
+    class iterator
+            : public boost::iterator_facade<
+            iterator
+            , node_derived
+            //, boost::forward_traversal_tag
+            , boost::bidirectional_traversal_tag
+            >
+    {
+    public:
+        iterator()
+            : m_node(nullptr)
+        {}
+
+        explicit iterator(node_p p)
+            : m_node(p)
+        {}
+
+    private:
+        friend class boost::iterator_core_access;
+
+        void increment()
+        { m_node = m_node->increment(); }
+
+        void decrement()
+        { m_node = m_node->decrement(); }
+
+        bool equal(iterator const &other) const
+        { return this->m_node == other.m_node; }
+
+        node_derived& dereference() const
+        {
+            node_derived *blub = static_cast<node_derived*>(m_node);
+            return *blub;
+        }
+
+        node_p m_node;
+    };
+
+
+
+    ~node_base();
+    node_base(const node_p &parent, position_t position, level_t level);
 
 protected:
-
-private:
-    node_base(const node_p &parent, position_t position, level_t level);
     static const position_t direction = posRight;
 
     node_p m_parent = nullptr;
@@ -200,11 +232,5 @@ private:
 
     static node_u c_root;
 };
-
-inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
-{
-    stream << boost::format("< < level: % 2d, pos: % 2d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.property() % node.interpolation();
-    return stream;
-}
 
 #endif // NODE_BASE_HPP

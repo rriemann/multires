@@ -14,47 +14,21 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef NODE_ITERATOR_HPP
-#define NODE_ITERATOR_HPP
+#include "node_real.hpp"
 
-#include "node_base.hpp"
-#include <boost/iterator/iterator_facade.hpp>
 
-// inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
-
-class node_iterator
-        : public boost::iterator_facade<
-        node_iterator
-        , node_base
-        //, boost::forward_traversal_tag
-        , boost::bidirectional_traversal_tag
-        >
+real node_real::interpolation() const
 {
-public:
-    node_iterator()
-        : m_node(0)
-    {}
-
-    explicit node_iterator(node_base* p)
-        : m_node(p)
-    {}
-
-private:
-    friend class boost::iterator_core_access;
-
-    void increment()
-    { m_node = m_node->increment(); }
-
-    void decrement()
-    { m_node = m_node->decrement(); }
-
-    bool equal(node_iterator const &other) const
-    { return this->m_node == other.m_node; }
-
-    node_base& dereference() const
-    { return *m_node; }
-
-    node_base* m_node;
-};
-
-#endif // NODE_ITERATOR_HPP
+#ifndef NO_DEBUG
+    // only in debugging mode interpolation should be called on the boundary
+    if(m_level == lvlBoundary) {
+        return m_property;
+    }
+#endif
+    real property = 0;
+    // # TODO explicitly unroll this loop?
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        property += static_cast<node_real*>(m_boundaries[i])->property();
+    }
+    return property/childsByDimension;
+}
