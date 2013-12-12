@@ -48,7 +48,7 @@ real f_eval2(real x) {
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 20;
+    int level = 6;
     // total number of nodes, including (childsbyDimension) boundary elements
     real x0    = -1.0;
     real x1    = +1.0;
@@ -60,13 +60,13 @@ int main()
     root->unpack(node_t::level_t(level));
 
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
-        node.m_property = f_eval(node.center());
+        node.m_property = f_eval2(node.center());
     });
 
     root->pack2();
 
     // output command line
-    std::cout << std::endl;
+    // std::cout << std::endl;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
         std::cout << node << std::endl;
     });
@@ -74,8 +74,9 @@ int main()
     // output file
     std::ofstream file("/tmp/output.txt");
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
-        file << boost::format("%e %e %e\n") % node.center() % node.m_property % node.interpolation();
+        file << boost::format("%e %e %e %e\n") % node.center() % node.m_property % node.interpolation() % ((node.level() > node_t::lvlRoot) ? node.level() : 0) ;
     });
     file.close();
+    std::cerr << "try: gnuplot -p -e \"set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:4 with boxes\"" << std::endl;
     return 0;
 }
