@@ -89,7 +89,6 @@ bool node_base::pack2()
     // do I have children?
     for(size_t i = 0; i < childsByDimension; ++i) {
         node_u &child = m_childs[i];
-//        std::cerr << m_childs[i].get() << std::endl;
         if(child) {
             if(child->pack2()) {
                 child.reset();
@@ -155,6 +154,108 @@ bool node_base::pack2()
     }
 
     return true;
+}
+
+/*!
+ * \brief node_base::pack3 prepares the compression of the tree
+ * \return bool false if there is at least one non-virtual node in this branch (maybe this)
+ */
+bool node_base::pack3()
+{
+    bool deletable = true;
+
+    // do I have children? Try to make them inactive
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        node_u &child = m_childs[i];
+        if(child) {
+            if(!child->pack3()) {
+                deletable = false;
+            }
+        }
+    }
+
+    // function will pass if m_deletable is false or indeterminate
+    if(m_deletable) {
+        return true;
+    }
+    /*
+     * important notice:
+     * never ever call pack3 recursive on a node with same or lower level than
+     * the level of the current node. This would create an infinite loop
+     */
+
+    // hypothesis: the node can be deleted.
+    m_deletable = deletable;
+
+
+    // another reason to not pack:
+    // My value is too important.
+    if(fabs(detail()) > epsilon) {
+        m_deletable = false;
+    }
+
+    // short summary: all children are inactive
+    /*
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        node_u &child = m_childs[i];
+        if(child) {
+            child.reset();
+        }
+    }
+    */
+
+    // let's see if we have a chance to return true?
+
+    position_t reversed = reverse(position());
+
+    // check nephew
+    node_u &silbling = parent()->child(reversed);
+    if(silbling) {
+        // by the way: as this node is for sure not virtual, we can already mark
+        // one of our nearest cousins (our silbling here) to be at most virtual
+        // meaning non-deletable
+        silbling->setDeletable(false);
+        node_u &child = silbling->child(position());
+        if(child) {
+            if(!child->pack3()) {
+                m_deletable = false;
+                return false;
+            }
+        }
+    }
+
+    // check grand-nephew
+    node_p bound = boundary(position());
+    node_p candidate = bound->neighbour(position());
+    // we only do something when there is a grand-nephew:
+    // - maybe there is only a grand-cousin
+    // - maybe the grand-nephew has even children
+    if(candidate && candidate->level() > m_level) {
+        // ok, there must be a grand-nephew: we found him already,
+        // or at least his children
+        // we iterate until we found the parent of the grand-nephew,
+        // which should be our cousin (same level)
+        do {
+            candidate = candidate->parent();
+        } while(candidate->level() > m_level);
+
+        assert(m_level == candidate->level());
+
+        // doesn't make much sense to get first the parent and then the child, heh?
+        // consider: we need to use the unique_ptr to delete the child, and
+        //           the unique_ptr can only be accessed by the owner of the pointer,
+        //           which is the parent node.
+        node_u &child = candidate->child(reversed);
+        if(child) {
+            if(child->pack3()) {
+                child.reset();
+            } else {
+                return false;
+            }
+        }
+    }
+
+    return m_deletable;
 }
 
 

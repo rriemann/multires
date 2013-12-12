@@ -63,7 +63,7 @@ int main()
         node.m_property = f_eval2(node.center());
     });
 
-    root->pack2();
+    root->pack3();
 
     // output command line
     // std::cout << std::endl;
@@ -74,9 +74,15 @@ int main()
     // output file
     std::ofstream file("/tmp/output.txt");
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
-        file << boost::format("%e %e %e %e\n") % node.center() % node.m_property % node.interpolation() % ((node.level() > node_t::lvlRoot) ? node.level() : 0) ;
+        file << boost::format("%e %e %e %e %e %e\n")
+                % node.center()
+                % node.m_property
+                % node.interpolation()
+                % ((node.level() > node_t::lvlRoot) ? node.level() : 0)
+                % (node.active() ? ((node.level() > node_t::lvlRoot) ? node.level() : 0) : 0)
+                % (!node.active() ? ((node.level() > node_t::lvlRoot) ? node.level() : 0) : 0);
     });
     file.close();
-    std::cerr << "try: gnuplot -p -e \"set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:4 with boxes\"" << std::endl;
+    std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:4 with boxes\"" << std::endl;
     return 0;
 }

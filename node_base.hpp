@@ -26,6 +26,9 @@
 #include <boost/logic/tribool.hpp>
 #include <boost/logic/tribool_io.hpp> // also important for correct debug info in gdb
 
+using boost::logic::tribool;
+using boost::logic::indeterminate;
+
 // Polymorphic list node base class
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
 
@@ -35,8 +38,6 @@ typedef node_base* node_p;
 typedef std::unique_ptr<node_base> node_u;
 typedef node_p node_tp;
 typedef node_base node_t;
-using boost::logic::tribool;
-using boost::logic::indeterminate;
 
 struct node_base
 {
@@ -136,12 +137,25 @@ struct node_base
 
     bool pack();
     bool pack2();
+    bool pack3();
 
     inline level_t level() const
     { return m_level; }
 
     real property() const
     { return m_property; }
+
+    inline void setActive(const bool ok = true)
+    { m_active = ok; }
+
+    inline bool active() const
+    { return m_active; }
+
+    inline void setDeletable(const bool ok = true)
+    { m_deletable = ok; }
+
+    inline bool deletable() const
+    { return m_deletable; }
 
     inline const node_p& parent() const
     { return m_parent; }
@@ -181,7 +195,8 @@ private:
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
-    // tribool m_active;
+    bool m_active = true;
+    tribool m_deletable = boost::logic::indeterminate;
 
     node_p m_boundaries[childsByDimension]; // TODO make it const?
     node_p m_neighbours[childsByDimension] = {nullptr};
@@ -194,7 +209,7 @@ private:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 3d, pos: % 2d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.center() % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % node.active() % node.center() % node.property() % node.interpolation();
     return stream;
 }
 
