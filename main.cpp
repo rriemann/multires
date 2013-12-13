@@ -45,6 +45,25 @@ real f_eval2(real x) {
     }
 }
 
+// quadric
+real f_eval3(real x) {
+    return 2*pow(x,4)-2*pow(x,2)-0.2*pow(x,3)+0.3*x+1;
+}
+
+real f_eval4(real x) {
+    return (x-1)*(x-1);
+}
+
+// sin
+const real pi2 = 2*std::atan(1.0);
+
+real f_eval5(real x) {
+    if(x > pi2/3) {
+        return 1;
+    }
+    return std::sin(3*x);
+}
+
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
@@ -62,10 +81,13 @@ int main()
     size_t count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes;
-        node.m_property = f_eval(node.center());
+        node.m_property = f_eval5(node.center());
     });
 
-    root->pack3();
+    for(size_t timestep = 0; timestep < 1; ++timestep) {
+        root->pack3();
+        root->flow();
+    }
 
     size_t count_nodes_packed = 0;
 

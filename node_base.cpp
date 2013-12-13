@@ -162,13 +162,14 @@ bool node_base::pack2()
  */
 bool node_base::pack3()
 {
-    if(m_activeChilds != boost::logic::indeterminate) {
-        assert(m_deletable != boost::logic::indeterminate);
+    if((m_activeChilds != boost::logic::indeterminate) && (m_deletable != boost::logic::indeterminate)) {
         return m_deletable;
     }
 
-    // hypothesis: the node can be deleted.
-    m_deletable = true;
+    if(m_deletable == boost::logic::indeterminate) {
+        // hypothesis: maybe this node can be deleted
+        m_deletable = true;
+    }
 
     // hypothesis: this node is not active (thus, virtual)
     m_active = false;
@@ -210,6 +211,8 @@ bool node_base::pack3()
     if(fabs(detail()) > epsilon) {
         m_deletable = false;
         m_active = true;
+
+        updateDerivative();
     }
 
     if(level() > lvlRoot) {
@@ -280,6 +283,21 @@ bool node_base::pack3()
     return m_deletable;
 }
 
+void node_base::flow()
+{
+    if(m_active) {
+        m_property = m_property - velocity*timestep*derivative();
+        m_deletable = boost::logic::indeterminate;
+        for(size_t i = 0; i < childsByDimension; ++i) {
+            node_u &child = m_childs[i];
+            if(child) {
+                child->flow();
+            }
+        }
+    } else {
+        m_property = interpolation();
+    }
+}
 
 /*!
  * \brief node_base::setupChild initializes a new child node at the given position
@@ -287,11 +305,11 @@ bool node_base::pack3()
  */
 void node_base::createNode(const position_t position)
 {
-    assert(!m_childs[position]); // full stop if there is already a child
-    node_p node = new node_base(this, position, level_t(m_level+1));
-    m_childs[position] = node_u(node);
-
-    m_activeChilds = boost::logic::indeterminate;
+    if(!m_childs[position]) {
+        node_p node = new node_base(this, position, level_t(m_level+1));
+        m_childs[position] = node_u(node);
+        m_activeChilds = boost::logic::indeterminate;
+    }
 }
 
 node_p node_base::createRoot(const std::vector<real> &boundary_value)
@@ -323,6 +341,7 @@ void node_base::unpack(const level_t level)
             createNode(position_t(i));
             m_childs[i]->unpack(level_t(level - 1));
         }
+        // m_activeChilds = boost::logic::indeterminate;
     }
 }
 

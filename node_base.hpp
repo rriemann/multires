@@ -140,6 +140,14 @@ struct node_base
     bool pack2();
     bool pack3();
 
+    void updateDerivative()
+    { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center()   - neighbour(reverse(direction))->center()); }
+
+    real derivative() const
+    { return m_derivative; }
+
+    void flow();
+
     inline level_t level() const
     { return m_level; }
 
@@ -179,6 +187,7 @@ struct node_base
     real interpolation() const;
 
     real m_property;
+    real m_derivative;
 
     static node_p root()
     { return c_root.get(); }
