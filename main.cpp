@@ -48,7 +48,7 @@ real f_eval2(real x) {
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 6;
+    int level = 12;
     // total number of nodes, including (childsbyDimension) boundary elements
     real x0    = -1.0;
     real x1    = +1.0;
@@ -59,21 +59,23 @@ int main()
     // create children in memory
     root->unpack(node_t::level_t(level));
 
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
-        node.m_property = f_eval2(node.center());
+    size_t count_nodes = 0;
+    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
+        ++count_nodes;
+        node.m_property = f_eval(node.center());
     });
 
     root->pack3();
 
-    // output command line
-    // std::cout << std::endl;
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [](node_base &node) {
-        std::cout << node << std::endl;
-    });
+    size_t count_nodes_packed = 0;
 
     // output file
     std::ofstream file("/tmp/output.txt");
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&file](node_base &node) {
+    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
+        ++count_nodes_packed;
+
+        std::cout << node << std::endl;
+
         file << boost::format("%e %e %e %e %e %e\n")
                 % node.center()
                 % node.m_property
@@ -83,6 +85,7 @@ int main()
                 % (!node.active() ? ((node.level() > node_t::lvlRoot) ? node.level() : 0) : 0);
     });
     file.close();
-    std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:4 with boxes\"" << std::endl;
+    std::cerr << boost::format("pack rate: %d/%d = %f\n") % count_nodes_packed % count_nodes % (real(count_nodes_packed)/count_nodes);
+    std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:5 with boxes, '' using 1:6 with boxes\"" << std::endl;
     return 0;
 }

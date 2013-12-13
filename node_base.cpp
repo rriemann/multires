@@ -162,95 +162,117 @@ bool node_base::pack2()
  */
 bool node_base::pack3()
 {
-    bool deletable = true;
+    if(m_activeChilds != boost::logic::indeterminate) {
+        assert(m_deletable != boost::logic::indeterminate);
+        return m_deletable;
+    }
 
-    // do I have children? Try to make them inactive
+    // hypothesis: the node can be deleted.
+    m_deletable = true;
+
+    // hypothesis: this node is not active (thus, virtual)
+    m_active = false;
+
+    // hypothesis: let's say we don't have active children
+    m_activeChilds = false;
+    // Do we? Try to make all existing children inactive
     for(size_t i = 0; i < childsByDimension; ++i) {
         node_u &child = m_childs[i];
         if(child) {
-            if(!child->pack3()) {
-                deletable = false;
+            if(child->pack3()) {
+                child.reset();
+            } else {
+                // this child is resisting, so we have at least one active child
+                m_activeChilds = true;
+                // give this children an active parent
+                m_active = true;
             }
         }
     }
 
-    // function will pass if m_deletable is false or indeterminate
-    if(m_deletable) {
-        return true;
-    }
     /*
      * important notice:
      * never ever call pack3 recursive on a node with same or lower level than
      * the level of the current node. This would create an infinite loop
      */
 
-    // hypothesis: the node can be deleted.
-    m_deletable = deletable;
-
-
-    // another reason to not pack:
-    // My value is too important.
-    if(fabs(detail()) > epsilon) {
-        m_deletable = false;
-    }
-
-    // short summary: all children are inactive
-    /*
-    for(size_t i = 0; i < childsByDimension; ++i) {
-        node_u &child = m_childs[i];
-        if(child) {
-            child.reset();
-        }
-    }
-    */
-
-    // let's see if we have a chance to return true?
-
-    position_t reversed = reverse(position());
-
-    // check nephew
-    node_u &silbling = parent()->child(reversed);
-    if(silbling) {
-        // by the way: as this node is for sure not virtual, we can already mark
-        // one of our nearest cousins (our silbling here) to be at most virtual
-        // meaning non-deletable
-        silbling->setDeletable(false);
-        node_u &child = silbling->child(position());
-        if(child) {
-            if(!child->pack3()) {
-                m_deletable = false;
-                return false;
+    // remove children, if there are all together deletable
+    if(!m_activeChilds) {
+        for(size_t i = 0; i < childsByDimension; ++i) {
+            node_u &child = m_childs[i];
+            if(child) {
+                child.reset();
             }
         }
     }
 
-    // check grand-nephew
-    node_p bound = boundary(position());
-    node_p candidate = bound->neighbour(position());
-    // we only do something when there is a grand-nephew:
-    // - maybe there is only a grand-cousin
-    // - maybe the grand-nephew has even children
-    if(candidate && candidate->level() > m_level) {
-        // ok, there must be a grand-nephew: we found him already,
-        // or at least his children
-        // we iterate until we found the parent of the grand-nephew,
-        // which should be our cousin (same level)
-        do {
-            candidate = candidate->parent();
-        } while(candidate->level() > m_level);
+    // My value is too important.
+    if(fabs(detail()) > epsilon) {
+        m_deletable = false;
+        m_active = true;
+    }
 
-        assert(m_level == candidate->level());
+    if(level() > lvlRoot) {
+        position_t reversed = reverse(position());
 
-        // doesn't make much sense to get first the parent and then the child, heh?
-        // consider: we need to use the unique_ptr to delete the child, and
-        //           the unique_ptr can only be accessed by the owner of the pointer,
-        //           which is the parent node.
-        node_u &child = candidate->child(reversed);
-        if(child) {
-            if(child->pack3()) {
-                child.reset();
-            } else {
-                return false;
+        // check nephew
+        node_u &sibling = parent()->child(reversed);
+        if(sibling) {
+            node_u &child = sibling->child(position());
+            if(child) {
+                if(child->pack3()) {
+                    // cannot delete it in place, maybe it has an active cousin
+                    // and has to stay present as a non-active node
+
+                    // child.reset();
+                } else {
+                    // cannot delete this node: we are uncle of an active node
+                    m_deletable = false;
+                }
+            }
+        }
+
+        // check grand-nephew
+        node_p cousin_candidate = boundary(position())->neighbour(position());
+        // we only do something when there is a grand-nephew:
+        // - maybe there is only a grand-cousin
+        // - maybe the grand-nephew has even children
+        if(cousin_candidate && cousin_candidate->level() > m_level) {
+            // ok, there must be a grand-nephew: we found him already,
+            // or at least his children
+            // we iterate until we found the parent of the grand-nephew,
+            // which should be our cousin (same level)
+            do {
+                cousin_candidate = cousin_candidate->parent();
+            } while(cousin_candidate->level() > m_level);
+
+            assert(m_level == cousin_candidate->level());
+
+            // doesn't make much sense to get first the parent and then the child, heh?
+            // consider: we need to use the unique_ptr to delete the child, and
+            //           the unique_ptr can only be accessed by the owner of the pointer,
+            //           which is the parent node.
+            node_u &child = cousin_candidate->child(reversed);
+            if(child) {
+                if(child->pack3()) {
+                    // cannot delete it in place, maybe it has an active cousin
+                    // and has to stay present as a non-active node
+
+                    // child.reset();
+                } else {
+                    // cannot delete this node: we are uncle of an active node
+                    m_deletable = false;
+                }
+            }
+        }
+
+        if(m_deletable == false) {
+            // mark the nearest cousins not deletable as well:
+            if(sibling) {
+                sibling->setDeletable(false);
+            }
+            if(cousin_candidate) {
+                cousin_candidate->setDeletable(false);
             }
         }
     }
@@ -268,6 +290,8 @@ void node_base::createNode(const position_t position)
     assert(!m_childs[position]); // full stop if there is already a child
     node_p node = new node_base(this, position, level_t(m_level+1));
     m_childs[position] = node_u(node);
+
+    m_activeChilds = boost::logic::indeterminate;
 }
 
 node_p node_base::createRoot(const std::vector<real> &boundary_value)

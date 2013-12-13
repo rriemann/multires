@@ -120,6 +120,7 @@ struct node_base
     {
         // attention: this doesn't make sense for posRoot = -1
         assert(position != posRoot);
+        // TODO position_t(position + 1 - (position % 2));
         if(position % 2 == 0) { // if position is even
             return position_t(position + 1);
         } else {
@@ -196,7 +197,8 @@ private:
     const position_t m_position;
     level_t m_level;
     bool m_active = true;
-    tribool m_deletable = boost::logic::indeterminate;
+    tribool m_activeChilds = boost::logic::indeterminate;
+    tribool m_deletable    = boost::logic::indeterminate;
 
     node_p m_boundaries[childsByDimension]; // TODO make it const?
     node_p m_neighbours[childsByDimension] = {nullptr};
