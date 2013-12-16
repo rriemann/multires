@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <memory>
+#include <array>
 #include <cassert>
 #include <boost/format.hpp>
 #include <boost/logic/tribool.hpp>
@@ -79,6 +80,9 @@ struct node_base
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real epsilon;
 
+    typedef std::array<node_p,childsByDimension> node_p_array;
+    typedef std::array<node_u,childsByDimension> node_u_array;
+
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
     node_p increment() const;
@@ -107,15 +111,6 @@ struct node_base
         return m_boundaries[position];
     }
 
-    inline void setBoundary(const node_p node, const position_t position)
-    { m_boundaries[position] = node; }
-
-    inline void setBoundary(node_p node)
-    {
-        this->setBoundary(node, node->position() );
-        node->setBoundary(this, reverse(node->position()));
-    }
-
     static position_t reverse(position_t position)
     {
         // attention: this doesn't make sense for posRoot = -1
@@ -138,7 +133,9 @@ struct node_base
 
     bool pack();
     bool pack2();
-    bool pack3();
+    bool isActive();
+
+    void cleanUp();
 
     void updateDerivative()
     { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center()   - neighbour(reverse(direction))->center()); }
@@ -155,16 +152,16 @@ struct node_base
     { return m_property; }
 
     inline void setActive(const bool ok = true)
-    { m_active = ok; }
+    { m_activeRequirement = ok; }
 
     inline bool active() const
-    { return m_active; }
+    { return m_activeRequirement; }
 
-    inline void setDeletable(const bool ok = true)
-    { m_deletable = ok; }
+    inline void setVirtual(const bool ok = true)
+    { m_virtualRequirement = ok; }
 
-    inline bool deletable() const
-    { return m_deletable; }
+    inline bool isVirtual() const
+    { return m_virtualRequirement; }
 
     inline const node_p& parent() const
     { return m_parent; }
@@ -198,20 +195,26 @@ struct node_base
 protected:
 
 private:
-    node_base(const node_p &parent, position_t position, level_t level);
-    node_base(position_t position, level_t level);
+    node_base(const node_p &parent, position_t position, level_t level, const node_p_array &boundaries);
+    node_base(position_t position, level_t level, const node_p_array &boundaries);
     static const position_t direction = posRight;
 
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
+    /*
     bool m_active = true;
     tribool m_activeChilds = boost::logic::indeterminate;
     tribool m_deletable    = boost::logic::indeterminate;
+    */
 
-    node_p m_boundaries[childsByDimension]; // TODO make it const?
-    node_p m_neighbours[childsByDimension] = {nullptr};
-    node_u m_childs[childsByDimension];
+    bool m_cached = false;
+    bool m_virtualRequirement = false;
+    bool m_activeRequirement  = false;
+
+    const node_p_array m_boundaries; // TODO make it const?
+    node_p_array m_neighbours = {}; // initalize nullptr
+    node_u_array m_childs;
 
     real   m_center[dimensions];
 

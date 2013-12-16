@@ -160,59 +160,31 @@ bool node_base::pack2()
  * \brief node_base::pack3 prepares the compression of the tree
  * \return bool false if there is at least one non-virtual node in this branch (maybe this)
  */
-bool node_base::pack3()
+bool node_base::isActive()
 {
-    if((m_activeChilds != boost::logic::indeterminate) && (m_deletable != boost::logic::indeterminate)) {
-        return m_deletable;
+    if(m_cached) {
+        return m_activeRequirement;
     }
 
-    if(m_deletable == boost::logic::indeterminate) {
-        // hypothesis: maybe this node can be deleted
-        m_deletable = true;
-    }
-
-    // hypothesis: this node is not active (thus, virtual)
-    m_active = false;
-
-    // hypothesis: let's say we don't have active children
-    m_activeChilds = false;
     // Do we? Try to make all existing children inactive
     for(size_t i = 0; i < childsByDimension; ++i) {
         node_u &child = m_childs[i];
         if(child) {
-            if(child->pack3()) {
-                child.reset();
-            } else {
-                // this child is resisting, so we have at least one active child
-                m_activeChilds = true;
-                // give this children an active parent
-                m_active = true;
+            if(child->isActive()) {
+                m_activeRequirement = true;
             }
         }
     }
 
     /*
      * important notice:
-     * never ever call pack3 recursive on a node with same or lower level than
+     * never ever call isActive recursive on a node with same or lower level than
      * the level of the current node. This would create an infinite loop
      */
 
-    // remove children, if there are all together deletable
-    if(!m_activeChilds) {
-        for(size_t i = 0; i < childsByDimension; ++i) {
-            node_u &child = m_childs[i];
-            if(child) {
-                child.reset();
-            }
-        }
-    }
-
     // My value is too important.
     if(fabs(detail()) > epsilon) {
-        m_deletable = false;
-        m_active = true;
-
-        updateDerivative();
+        m_activeRequirement = true;
     }
 
     if(level() > lvlRoot) {
@@ -223,14 +195,8 @@ bool node_base::pack3()
         if(sibling) {
             node_u &child = sibling->child(position());
             if(child) {
-                if(child->pack3()) {
-                    // cannot delete it in place, maybe it has an active cousin
-                    // and has to stay present as a non-active node
-
-                    // child.reset();
-                } else {
-                    // cannot delete this node: we are uncle of an active node
-                    m_deletable = false;
+                if(child->isActive()) {
+                    m_activeRequirement = true;
                 }
             }
         }
@@ -257,43 +223,56 @@ bool node_base::pack3()
             //           which is the parent node.
             node_u &child = cousin_candidate->child(reversed);
             if(child) {
-                if(child->pack3()) {
-                    // cannot delete it in place, maybe it has an active cousin
-                    // and has to stay present as a non-active node
-
-                    // child.reset();
-                } else {
-                    // cannot delete this node: we are uncle of an active node
-                    m_deletable = false;
+                if(child->isActive()) {
+                    m_activeRequirement = true;
                 }
             }
         }
 
-        if(m_deletable == false) {
+        if(m_activeRequirement) {
             // mark the nearest cousins not deletable as well:
             if(sibling) {
-                sibling->setDeletable(false);
+                sibling->setVirtual();
             }
             if(cousin_candidate) {
-                cousin_candidate->setDeletable(false);
+                cousin_candidate->setVirtual();
             }
         }
     }
 
-    return m_deletable;
+    if(m_activeRequirement) {
+        m_virtualRequirement = true;
+        updateDerivative();
+    }
+
+    return m_activeRequirement;
+}
+
+void node_base::cleanUp()
+{
+    for(size_t i = 0; i < childsByDimension; ++i) {
+        node_u &child = m_childs[i];
+        if(child) {
+            if(!child->isVirtual()) {
+                child.reset();
+            }
+        }
+    }
 }
 
 void node_base::flow()
 {
-    if(m_active) {
+    if(m_activeRequirement) {
         m_property = m_property - velocity*timestep*derivative();
-        m_deletable = boost::logic::indeterminate;
         for(size_t i = 0; i < childsByDimension; ++i) {
             node_u &child = m_childs[i];
             if(child) {
                 child->flow();
             }
         }
+        m_cached = false;
+        m_virtualRequirement = false;
+        m_activeRequirement = false;
     } else {
         m_property = interpolation();
     }
@@ -306,9 +285,13 @@ void node_base::flow()
 void node_base::createNode(const position_t position)
 {
     if(!m_childs[position]) {
-        node_p node = new node_base(this, position, level_t(m_level+1));
+        assert(dimensions == 1);
+        node_p_array boundaries;
+        boundaries[reverse(position)] = this;
+        boundaries[position] = this->boundary(position);
+        node_p node = new node_base(this, position, level_t(m_level+1), boundaries);
         m_childs[position] = node_u(node);
-        m_activeChilds = boost::logic::indeterminate;
+        m_cached = false;
     }
 }
 
@@ -316,15 +299,17 @@ node_p node_base::createRoot(const std::vector<real> &boundary_value)
 {
     assert(boundary_value.size() == childsByDimension);
 
-    c_root = node_u(new node_base(posRoot, lvlRoot));
+    node_p_array boundaries;
+    const node_p_array empty = {};
     real sum = 0;
     for(size_t i = 0; i < boundary_value.size(); ++i) {
         // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
-        node_p edge = node_p(new node_base(position_t(i), lvlBoundary));
+        node_p edge = node_p(new node_base(position_t(i), lvlBoundary, empty));
         sum += boundary_value[i];
         edge->setCenter(boundary_value[i]);
-        c_root->setBoundary(edge);
+        boundaries[i] = edge;
     }
+    c_root = node_u(new node_base(posRoot, lvlRoot, boundaries));
     c_root->setCenter(sum/2);
     c_root->m_property = c_root->interpolation();
     return c_root.get();
@@ -376,31 +361,32 @@ node_base::~node_base()
     }
 }
 
-node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level)
+node_base::node_base(const node_p &parent, node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)
     : m_parent(parent)
     , m_position(position)
     , m_level(level)
+    , m_boundaries(boundaries)
+    , m_neighbours(boundaries)
     // , m_active(boost::logic::indeterminate)
 {
     assert(level > lvlRoot);
     position_t reversed = reverse(position);
-    m_boundaries[reversed] = parent;
-    m_boundaries[position] = parent->boundary(position);
-
-    assert(boundary(reversed  )->level() + 1 == m_level);
-    assert(boundary(m_position)->level() + 2 <= m_level);
 
     parent->setNeighbour(this, position);
     m_boundaries[position]->setNeighbour(this, reversed);
+
+    assert(boundary(reversed  )->level() + 1 == m_level);
+    assert(boundary(m_position)->level() + 2 <= m_level);
 
     m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
     m_property = interpolation();
 }
 
-node_base::node_base(node_base::position_t position, node_base::level_t level)
+node_base::node_base(node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)
     : m_parent(nullptr)
     , m_position(position)
     , m_level(level)
+    , m_boundaries(boundaries)
 {
     assert(level < lvlFirst);
 }

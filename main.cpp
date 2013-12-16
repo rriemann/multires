@@ -81,11 +81,12 @@ int main()
     size_t count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes;
-        node.m_property = f_eval5(node.center());
+        node.m_property = f_eval(node.center());
     });
 
     for(size_t timestep = 0; timestep < 1; ++timestep) {
-        root->pack3();
+        root->isActive();
+        root->cleanUp();
         root->flow();
     }
 
