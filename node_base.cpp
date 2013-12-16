@@ -245,6 +245,8 @@ bool node_base::isActive()
         updateDerivative();
     }
 
+    m_cached = true;
+
     return m_activeRequirement;
 }
 
@@ -253,6 +255,7 @@ void node_base::cleanUp()
     for(size_t i = 0; i < childsByDimension; ++i) {
         node_u &child = m_childs[i];
         if(child) {
+            child->cleanUp();
             if(!child->isVirtual()) {
                 child.reset();
             }
