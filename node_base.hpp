@@ -123,16 +123,6 @@ struct node_base
         }
     }
 
-    /*
-    tribool active() const
-    { return m_active; }
-
-    inline void setActive(tribool active = true)
-    { m_active = active; }
-    */
-
-    bool pack();
-    bool pack2();
     bool isActive();
 
     void cleanUp();
