@@ -1,3 +1,6 @@
+guiRunner
+rawRunner
+
 # Object files
 *.o
 *.ko
