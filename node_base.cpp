@@ -225,7 +225,7 @@ void node_base::unpack(const level_t level)
  */
 real node_base::interpolation() const
 {
-#ifndef NO_DEBUG
+#ifndef NDEBUG
     // only in debugging mode interpolation should be could on the boundary
     if(m_level == lvlBoundary) {
         return m_property;

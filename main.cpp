@@ -61,13 +61,13 @@ real f_eval5(real x) {
     if(x > pi2/3) {
         return 1;
     }
-    return std::sin(3*x);
+    return std::sin(3*x)*0.5+0.5;
 }
 
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 8;
+    int level = 16;
     // total number of nodes, including (childsbyDimension) boundary elements
     real x0    = -1.0;
     real x1    = +1.0;
@@ -81,13 +81,13 @@ int main()
     size_t count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes;
-        node.m_property = f_eval(node.center());
+        node.m_property = f_eval5(node.center());
     });
 
     for(size_t timestep = 0; timestep < 1; ++timestep) {
         root->isActive();
         root->cleanUp();
-        // root->flow();
+        root->flow();
     }
 
     size_t count_nodes_packed = 0;
