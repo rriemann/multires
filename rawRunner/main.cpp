@@ -23,54 +23,14 @@
 
 // using namespace std;
 
-#include "node_iterator.hpp"
+#include "node/node_iterator.hpp"
 
-real f_eval(real x) {
-    if(x < -0.5) {
-        return 0;
-    } else if (x < 0) {
-        return 1;
-    } else if (x < 0.5) {
-        return 4*(x-0.5)*(x-0.5);
-    } else {
-        return 2*(x-0.5);
-    }
-}
-
-real f_eval2(real x) {
-    if(x > 0.25 && x < 0.75) {
-        return 1.0;
-    } else {
-        return 0.0;
-    }
-}
-
-// quadric
-real f_eval3(real x) {
-    return 2*pow(x,4)-2*pow(x,2)-0.2*pow(x,3)+0.3*x+1;
-}
-
-real f_eval4(real x) {
-    return (x-1)*(x-1);
-}
-
-// sin
-const real pi2 = 2*std::atan(1.0);
-
-real f_eval5(real x) {
-    if(x > pi2/3) {
-        return 1;
-    }
-    return std::sin(3*x)*0.5+0.5;
-}
+#include "functions.h"
 
 int main()
 {
     // generation of childrens, e.g.: only root = 0, grand-children = 2
-    int level = 16;
     // total number of nodes, including (childsbyDimension) boundary elements
-    real x0    = -1.0;
-    real x1    = +1.0;
 
     std::vector<real> boundaries = {x0, x1};
     node_tp root = node_t::createRoot(boundaries);
