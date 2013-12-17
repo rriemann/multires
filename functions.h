@@ -60,4 +60,8 @@ real f_eval5(real x) {
     return std::sin(3*x)*0.5+0.5;
 }
 
+real f_eval_gauss(real x) {
+    return exp(-10*x*x);
+}
+
 #endif // FUNCTIONS_H

@@ -26,4 +26,7 @@ INCLUDEPATH += qcustomplot
 
 FORMS    += mainwindow.ui
 
-LIBS    += ../node/libnode.a
+NODE_LIB = ../node/libnode.a
+
+PRE_TARGETDEPS = $${NODE_LIB}
+LIBS          += $${NODE_LIB}

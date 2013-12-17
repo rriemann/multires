@@ -134,6 +134,7 @@ struct node_base
     { return m_derivative; }
 
     void flow();
+    void timeStep();
 
     inline level_t level() const
     { return m_level; }

@@ -46,7 +46,7 @@ node_p node_base::decrement() const
 }
 
 /*!
- * \brief node_base::pack3 prepares the compression of the tree
+ * \brief node_base::isActive prepares the compression of the tree
  * \return bool false if there is at least one non-virtual node in this branch (maybe this)
  */
 bool node_base::isActive()
@@ -159,12 +159,26 @@ void node_base::flow()
                 child->flow();
             }
         }
-        m_cached = false;
-        m_virtualRequirement = false;
-        m_activeRequirement = false;
+        /*
+        */
+        if(level() < level_t(g_level)) {
+            unpack(lvlFirst); // makes m_cache = false
+        }
     } else {
         m_property = interpolation();
     }
+    // if m_cached is not set to false, the derivative is not computed again
+    m_cached = false;
+    m_virtualRequirement = false;
+    m_activeRequirement = false;
+}
+
+void node_base::timeStep()
+{
+    assert(this == c_root.get());
+    flow();
+    isActive();
+    cleanUp();
 }
 
 /*!

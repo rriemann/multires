@@ -34,12 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
     root = node_t::createRoot(boundaries);
 
     // create children in memory
-    root->unpack(node_t::level_t(level));
+    root->unpack(node_t::level_t(g_level));
 
     count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes;
-        node.m_property = f_eval5(node.center());
+        node.m_property = f_eval_gauss(node.center());
     });
 
     for(size_t timestep = 0; timestep < 1; ++timestep) {
@@ -70,7 +70,9 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[1]->setName("Virtual Elements");
     bars[1]->setBrush(QBrush(Qt::red));
 
-    replot();
+    // replot();
+
+    actionRun();
 }
 
 MainWindow::~MainWindow()
@@ -82,7 +84,7 @@ void MainWindow::actionRun()
 {
     qDebug() << "triggered";
     if(root) {
-        root->flow();
+        root->timeStep();
         replot();
     }
 
@@ -100,7 +102,6 @@ void MainWindow::replot()
         lvlvalues.push_back(node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
         lvlvirtualvalues.push_back(!node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
         ++count_nodes_packed;
-        std::cout << node << std::endl;
     });
 
     qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);

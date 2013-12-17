@@ -36,7 +36,7 @@ int main()
     node_tp root = node_t::createRoot(boundaries);
 
     // create children in memory
-    root->unpack(node_t::level_t(level));
+    root->unpack(node_t::level_t(g_level));
 
     size_t count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
