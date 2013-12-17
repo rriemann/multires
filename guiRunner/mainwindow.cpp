@@ -25,17 +25,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    customPlot = ui->customPlot;
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
 
 
     std::vector<real> boundaries = {x0, x1};
-    node_tp root = node_t::createRoot(boundaries);
+    root = node_t::createRoot(boundaries);
 
     // create children in memory
     root->unpack(node_t::level_t(level));
 
-    size_t count_nodes = 0;
+    count_nodes = 0;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes;
         node.m_property = f_eval5(node.center());
@@ -47,9 +48,50 @@ MainWindow::MainWindow(QWidget *parent) :
 //        root->flow();
     }
 
-    size_t count_nodes_packed = 0;
-
     // output file
+
+    customPlot->addGraph();
+    // give the axes some labels:
+    customPlot->xAxis->setLabel("x");
+    customPlot->yAxis->setLabel("y");
+    // set axes ranges, so we see all data:
+    customPlot->xAxis->setRange(x0, x1);
+    customPlot->yAxis->setRange(-0.2, 1.2);
+
+    for(size_t i = 0; i < 2; ++i) {
+        bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
+        customPlot->addPlottable(bars[i]);
+        bars[i]->setPen(QPen(Qt::transparent));
+        bars[i]->setWidth(0.005);
+    }
+    bars[0]->setName("Nonvirtual Elements");
+    bars[0]->setBrush(QBrush(Qt::blue));
+
+    bars[1]->setName("Virtual Elements");
+    bars[1]->setBrush(QBrush(Qt::red));
+
+    replot();
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::actionRun()
+{
+    qDebug() << "triggered";
+    if(root) {
+        root->flow();
+        replot();
+    }
+
+}
+
+void MainWindow::replot()
+{
+    count_nodes_packed = 0;
+
     QVector<real> xvalues, yvalues;
     QVector<real> lvlvalues, lvlvirtualvalues;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
@@ -61,45 +103,12 @@ MainWindow::MainWindow(QWidget *parent) :
         std::cout << node << std::endl;
     });
 
-    QCustomPlot *customPlot = ui->customPlot;
+    qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
 
-    customPlot->addGraph();
     customPlot->graph(0)->setData(xvalues, yvalues);
-    // give the axes some labels:
-    customPlot->xAxis->setLabel("x");
-    customPlot->yAxis->setLabel("y");
-    // set axes ranges, so we see all data:
-    customPlot->xAxis->setRange(x0, x1);
-    customPlot->yAxis->setRange(0, 1);
-    customPlot->replot();
-
-    QCPBars *bars = new QCPBars(customPlot->xAxis, customPlot->yAxis);
-    customPlot->addPlottable(bars);
-    bars->setName("Nonvirtual Elements");
-    bars->setBrush(QBrush(Qt::blue));
-    bars->setPen(QPen(Qt::transparent));
-    bars->setWidth(0.005);
-    bars->setData(xvalues, lvlvalues);
-    QCPBars *vbars = new QCPBars(customPlot->xAxis, customPlot->yAxis);
-    customPlot->addPlottable(vbars);
-    vbars->setName("Virtual Elements");
-    vbars->setBrush(QBrush(Qt::red));
-    vbars->setPen(QPen(Qt::transparent));
-    vbars->setWidth(0.005);
-    vbars->setData(xvalues, lvlvirtualvalues);
+    bars[0]->setData(xvalues, lvlvalues);
+    bars[1]->setData(xvalues, lvlvirtualvalues);
 
     customPlot->rescaleAxes();
     customPlot->replot();
-
-
-}
-
-MainWindow::~MainWindow()
-{
-    delete ui;
-}
-
-void MainWindow::actionRun()
-{
-    qDebug() << "triggered";
 }

@@ -21,6 +21,10 @@
 
 #include "node/node_iterator.hpp"
 
+class QCustomPlot;
+class QCPBars;
+struct node_base;
+
 namespace Ui {
 class MainWindow;
 }
@@ -38,9 +42,18 @@ private:
 
     node_p m_root = nullptr;
 
+
+
+    QCustomPlot *customPlot;
+    std::array<QCPBars*,2> bars;
+    node_base* root = nullptr;
+    size_t count_nodes;
+    size_t count_nodes_packed;
+
 private slots:
 
     void actionRun();
+    void replot();
 };
 
 #endif // MAINWINDOW_HPP
