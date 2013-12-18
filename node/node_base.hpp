@@ -135,6 +135,7 @@ struct node_base
 
     void flow();
     void timeStep();
+    void multiresolution();
 
     inline level_t level() const
     { return m_level; }

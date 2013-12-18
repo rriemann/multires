@@ -177,6 +177,11 @@ void node_base::timeStep()
 {
     assert(this == c_root.get());
     flow();
+    multiresolution();
+}
+
+void node_base::multiresolution()
+{
     isActive();
     cleanUp();
 }

@@ -25,9 +25,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     customPlot = ui->customPlot;
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
+
+
+    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
 
     std::vector<real> boundaries = {x0, x1};
@@ -42,13 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
         node.m_property = f_eval_gauss(node.center());
     });
 
-    for(size_t timestep = 0; timestep < 1; ++timestep) {
-        root->isActive();
-        root->cleanUp();
-//        root->flow();
-    }
-
-    // output file
+    root->multiresolution();
 
     customPlot->addGraph();
     // give the axes some labels:
@@ -57,6 +55,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // set axes ranges, so we see all data:
     customPlot->xAxis->setRange(x0, x1);
     customPlot->yAxis->setRange(-0.2, 1.2);
+
+    customPlot->graph(0)->setPen(QPen(Qt::green));
 
     for(size_t i = 0; i < 2; ++i) {
         bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
@@ -70,9 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[1]->setName("Virtual Elements");
     bars[1]->setBrush(QBrush(Qt::red));
 
-    // replot();
-
-    actionRun();
+    replot();
 }
 
 MainWindow::~MainWindow()

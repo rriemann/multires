@@ -8,8 +8,8 @@ typedef double real;
 #define DIMENSION 1
 #define EPSILON 0.001
 
-const real velocity = 1.0;
-const real timestep = 0.1;
+const real velocity = 0.5;
+const real timestep = 0.05;
 
 const size_t g_level = 16;
 const real x0    = -1.0;
