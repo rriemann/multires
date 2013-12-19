@@ -40,7 +40,7 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    node_p m_root = nullptr;
+    node_t::node_p m_root = nullptr;
 
 
 

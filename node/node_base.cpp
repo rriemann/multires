@@ -25,20 +25,26 @@
  * The implementation of the tree doesn't allow to have a very efficent algorith to get the next node.
  * So this method should only be used in the rare cases of output generation
  */
-node_p node_base::increment() const
+node_base::node_p node_base::increment() const
 {
-    if(m_neighbours[direction]) {
+    // do not cross the boundary
+    if(this == c_root->boundary(direction)) {
+        return nullptr;
+    } else if(m_neighbours[direction]) {
         return m_neighbours[direction];
     } else {
         return boundary(direction);
     }
 }
 
-node_p node_base::decrement() const
+node_base::node_p node_base::decrement() const
 {
     static const position_t reversed = reverse(direction);
 
-    if(m_neighbours[reversed]) {
+    // do not cross the boundary
+    if(this == c_root->boundary(reversed)) {
+        return nullptr;
+    } else if(m_neighbours[reversed]) {
         return m_neighbours[reversed];
     } else {
         return boundary(reversed);
@@ -126,7 +132,7 @@ bool node_base::setNodeStateRecursive()
 
     if(m_activeRequirement) {
         m_virtualRequirement = true;
-        updateDerivative();
+        m_derivative = derivative();
     }
 
     m_cached = true;
@@ -146,10 +152,18 @@ void node_base::cleanUpRecursive()
     }
 }
 
+real node_base::derivative() const
+{
+    // return (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX) - neighbour(reverse(direction))->center(dimX));
+    assert(velocity > 0);
+    // for positive velocity we use the look-behind derivative
+    return (this->property() - neighbour(reverse(direction))->property())/(this->center(dimX) - neighbour(reverse(direction))->center(dimX));
+}
+
 void node_base::timeStepRecursive()
 {
     if(m_activeRequirement) {
-        m_property = m_property - velocity*timestep*derivative();
+        m_property = m_property - velocity*timestep*m_derivative;
         for(node_u const &child : m_childs) {
             if(child) {
                 child->timeStepRecursive();
@@ -160,6 +174,7 @@ void node_base::timeStepRecursive()
         }
     } else {
         m_property = interpolation();
+        // ^- cut off the datail
     }
     // if m_cached is not set to false, the derivative is not computed again
     m_cached = false;
@@ -169,6 +184,36 @@ void node_base::timeStepRecursive()
 
 void node_base::timeStep()
 {
+    /*
+    real derivativeEgo = 0;
+    node_p nodeEgo;
+
+    if(c_boundarycondition == bcPeriodic) {
+        assert(dimensions == 1);
+
+        // we calculate the PDE for the right boundary manually
+        nodeEgo = c_root->boundary(posRight);
+        node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
+        node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
+        nodeEgo->setNeighbour(boundaryRight, posRight);
+
+        // assert(boundaryRight->level() == boundaryLeft->level());
+
+
+
+        derivativeEgo = nodeEgo->derivative();
+    }
+    */
+
+    /*
+    if(c_boundarycondition == bcPeriodic) {
+
+        nodeEgo->m_property  = nodeEgo->m_property - velocity*timestep*derivativeEgo;
+
+        // copy the result to the left boundary
+        c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
+    }
+    */
     assert(this == c_root.get());
     timeStepRecursive();
     optimizeTree();
@@ -196,11 +241,13 @@ void node_base::createNode(const position_t position)
     }
 }
 
-node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels)
+node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels, boundaryCondition_t boundaryCondition)
 {
     assert(boundary_value.size() == childsByDimension);
 
     c_propertyGenerator = propertyGenerator;
+
+    c_boundaryCondition = boundaryCondition;
 
     node_p_array boundaries = {};
     const node_p_array empty = {};
@@ -217,6 +264,7 @@ node_p node_base::createRoot(const std::vector<real> &boundary_value, const prop
 
     c_root->unpackRecursive(levels);
     c_root->initPropertyRecursive();
+
     return c_root.get();
 }
 
@@ -310,7 +358,8 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
 }
 
 real node_base::epsilon = EPSILON;
-node_u node_base::c_root = node_u(nullptr);
+node_base::node_u node_base::c_root = node_u(nullptr);
+node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
 
 node_base::propertyGenerator_t node_base::c_propertyGenerator = node_base::propertyGenerator_t();
 

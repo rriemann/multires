@@ -34,11 +34,6 @@ using boost::logic::indeterminate;
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
 
 struct node_base;
-typedef node_base* node_p;
-// http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
-typedef std::unique_ptr<node_base> node_u;
-typedef node_p node_tp;
-typedef node_base node_t;
 
 struct node_base
 {
@@ -76,10 +71,18 @@ struct node_base
           dimX = 0
     };
 
+    enum boundaryCondition_t {
+          bcIndependent = 0
+        , bcPeriodic    = 1
+    };
+
     static const unsigned int dimensions = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real epsilon;
 
+    // http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
+    typedef node_base* node_p;
+    typedef std::unique_ptr<node_base> node_u;
     typedef std::array<node_p,childsByDimension> node_p_array;
     typedef std::array<node_u,childsByDimension> node_u_array;
     typedef std::array<real,dimensions> realvector;
@@ -98,7 +101,7 @@ struct node_base
     inline node_u &child(const position_t position)
     { return m_childs[position]; }
 
-    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level));
+    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), boundaryCondition_t boundaryCondition = bcIndependent);
 
     inline position_t position() const
     { return m_position; }
@@ -131,8 +134,8 @@ struct node_base
     void updateDerivative()
     { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX)   - neighbour(reverse(direction))->center(dimX)); }
 
-    real derivative() const
-    { return m_derivative; }
+    inline real derivative() const;
+
     void timeStep();
     void optimizeTree();
 
@@ -219,7 +222,10 @@ private:
 
     static propertyGenerator_t c_propertyGenerator;
 
+    static boundaryCondition_t c_boundaryCondition;
+
 public:
+
     real m_property;
 };
 
@@ -228,5 +234,8 @@ inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
     stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.active()) + int(node.isVirtual())) % node.center(node_base::dimX) % node.property() % node.interpolation();
     return stream;
 }
+
+typedef node_base::node_p node_tp;
+typedef node_base node_t;
 
 #endif // NODE_BASE_HPP
