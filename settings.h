@@ -3,10 +3,14 @@
 
 #include <cstddef>
 // #include <cstdint>
-
-typedef double real;
+#include <array>
 #define DIMENSION 1
 #define EPSILON 0.001
+
+const size_t g_dimension = DIMENSION;
+
+typedef double real;
+typedef std::array<real,g_dimension> realarray;
 
 const real velocity = 0.5;
 const real timestep = 0.05;

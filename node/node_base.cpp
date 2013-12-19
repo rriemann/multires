@@ -45,11 +45,7 @@ node_p node_base::decrement() const
     }
 }
 
-/*!
- * \brief node_base::isActive prepares the compression of the tree
- * \return bool false if there is at least one non-virtual node in this branch (maybe this)
- */
-bool node_base::isActive()
+bool node_base::setNodeStateRecursive()
 {
     if(m_cached) {
         return m_activeRequirement;
@@ -58,7 +54,7 @@ bool node_base::isActive()
     // Do we? Try to make all existing children inactive
     for(node_u const &child : m_childs) {
         if(child) {
-            if(child->isActive()) {
+            if(child->setNodeStateRecursive()) {
                 m_activeRequirement = true;
             }
         }
@@ -83,7 +79,7 @@ bool node_base::isActive()
         if(sibling) {
             node_u &child = sibling->child(position());
             if(child) {
-                if(child->isActive()) {
+                if(child->setNodeStateRecursive()) {
                     m_activeRequirement = true;
                 }
             }
@@ -111,7 +107,7 @@ bool node_base::isActive()
             //           which is the parent node.
             node_u &child = cousin_candidate->child(reversed);
             if(child) {
-                if(child->isActive()) {
+                if(child->setNodeStateRecursive()) {
                     m_activeRequirement = true;
                 }
             }
@@ -138,11 +134,11 @@ bool node_base::isActive()
     return m_activeRequirement;
 }
 
-void node_base::cleanUp()
+void node_base::cleanUpRecursive()
 {
     for(node_u &child : m_childs) {
         if(child) {
-            child->cleanUp();
+            child->cleanUpRecursive();
             if(!child->isVirtual()) {
                 child.reset();
             }
@@ -150,19 +146,17 @@ void node_base::cleanUp()
     }
 }
 
-void node_base::flow()
+void node_base::timeStepRecursive()
 {
     if(m_activeRequirement) {
         m_property = m_property - velocity*timestep*derivative();
         for(node_u const &child : m_childs) {
             if(child) {
-                child->flow();
+                child->timeStepRecursive();
             }
         }
-        /*
-        */
         if(level() < level_t(g_level)) {
-            unpack(lvlFirst); // makes m_cache = false
+            unpackRecursive(lvlFirst); // makes m_cache = false
         }
     } else {
         m_property = interpolation();
@@ -176,14 +170,14 @@ void node_base::flow()
 void node_base::timeStep()
 {
     assert(this == c_root.get());
-    flow();
-    multiresolution();
+    timeStepRecursive();
+    optimizeTree();
 }
 
-void node_base::multiresolution()
+void node_base::optimizeTree()
 {
-    isActive();
-    cleanUp();
+    setNodeStateRecursive();
+    cleanUpRecursive();
 }
 
 /*!
@@ -202,23 +196,27 @@ void node_base::createNode(const position_t position)
     }
 }
 
-node_p node_base::createRoot(const std::vector<real> &boundary_value)
+node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels)
 {
     assert(boundary_value.size() == childsByDimension);
 
-    node_p_array boundaries;
+    c_propertyGenerator = propertyGenerator;
+
+    node_p_array boundaries = {};
     const node_p_array empty = {};
     real sum = 0;
     for(size_t i = 0; i < boundary_value.size(); ++i) {
         // TODO these destruction of these edge objects is not properly handled as there are no childs of anything
-        node_p edge = node_p(new node_base(position_t(i), lvlBoundary, empty));
+        realarray edgecenter = {{boundary_value[i]}};
+        boundaries[i] = node_p(new node_base(edgecenter, position_t(i), lvlBoundary, empty));
         sum += boundary_value[i];
-        edge->setCenter(boundary_value[i]);
-        boundaries[i] = edge;
     }
-    c_root = node_u(new node_base(posRoot, lvlRoot, boundaries));
-    c_root->setCenter(sum/2);
-    c_root->m_property = c_root->interpolation();
+    realarray rootcenter = {{sum/2}};
+    c_root = node_u(new node_base(rootcenter, posRoot, lvlRoot, boundaries));
+
+
+    c_root->unpackRecursive(levels);
+    c_root->initPropertyRecursive();
     return c_root.get();
 }
 
@@ -226,14 +224,24 @@ node_p node_base::createRoot(const std::vector<real> &boundary_value)
  * \brief node_base::unpack populates this node with new child nodes
  * \param level precises the number of child generations to create relative to the this node
  */
-void node_base::unpack(const level_t level)
+void node_base::unpackRecursive(const level_t level)
 {
     if(level > lvlNoChilds) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
             createNode(position_t(i));
-            m_childs[i]->unpack(level_t(level - 1));
+            m_childs[i]->unpackRecursive(level_t(level - 1));
         }
         m_cached = false;
+    }
+}
+
+void node_base::initPropertyRecursive()
+{
+    for(node_u &child : m_childs) {
+        if(child) {
+            child->initPropertyRecursive();
+        }
+        m_property = c_propertyGenerator(m_center);
     }
 }
 
@@ -250,6 +258,7 @@ real node_base::interpolation() const
         return m_property;
     }
 #endif
+    assert(m_level > lvlBoundary);
     real property = 0;
     // # TODO explicitly unroll this loop?
     for(size_t i = 0; i < childsByDimension; ++i) {
@@ -274,7 +283,8 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     , m_level(level)
     , m_boundaries(boundaries)
     , m_neighbours(boundaries)
-    // , m_active(boost::logic::indeterminate)
+    // , m_center initialization (make m_center const) TODO
+    , m_property(interpolation())
 {
     assert(level > lvlRoot);
     position_t reversed = reverse(position);
@@ -285,20 +295,23 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     assert(boundary(reversed  )->level() + 1 == m_level);
     assert(boundary(m_position)->level() + 2 <= m_level);
 
-    m_center[dimX] = (parent->center()+parent->boundary(position)->center())/2;
-    m_property = interpolation();
+    m_center[dimX] = (parent->center(dimX)+parent->boundary(position)->center(dimX))/2;
 }
 
-node_base::node_base(node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)
+node_base::node_base(realarray center, node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)
     : m_parent(nullptr)
     , m_position(position)
     , m_level(level)
     , m_boundaries(boundaries)
+    , m_center(center)
+    , m_property(c_propertyGenerator(center))
 {
     assert(level < lvlFirst);
 }
 
 real node_base::epsilon = EPSILON;
 node_u node_base::c_root = node_u(nullptr);
+
+node_base::propertyGenerator_t node_base::c_propertyGenerator = node_base::propertyGenerator_t();
 
 #include "node_base.hpp"

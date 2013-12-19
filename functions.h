@@ -21,7 +21,9 @@
 
 #include <cmath>
 
-real f_eval(real x) {
+real f_eval(realarray xa) {
+    real x = xa[0];
+
     if(x < -0.5) {
         return 0;
     } else if (x < 0) {
@@ -33,7 +35,9 @@ real f_eval(real x) {
     }
 }
 
-real f_eval2(real x) {
+real f_eval2(realarray xa) {
+    real x = xa[0];
+
     if(x > 0.25 && x < 0.75) {
         return 1.0;
     } else {
@@ -42,25 +46,33 @@ real f_eval2(real x) {
 }
 
 // quadric
-real f_eval3(real x) {
+real f_eval3(realarray xa) {
+    real x = xa[0];
+
     return 2*pow(x,4)-2*pow(x,2)-0.2*pow(x,3)+0.3*x+1;
 }
 
-real f_eval4(real x) {
+real f_eval4(realarray xa) {
+    real x = xa[0];
+
     return (x-1)*(x-1);
 }
 
 // sin
 const real pi2 = 2*std::atan(1.0);
 
-real f_eval5(real x) {
+real f_eval5(realarray xa) {
+    real x = xa[0];
+
     if(x > pi2/3) {
         return 1;
     }
     return std::sin(3*x)*0.5+0.5;
 }
 
-real f_eval_gauss(real x) {
+real f_eval_gauss(realarray xa) {
+    real x = xa[0];
+
     return exp(-10*x*x);
 }
 

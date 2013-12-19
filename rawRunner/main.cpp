@@ -33,22 +33,21 @@ int main()
     // total number of nodes, including (childsbyDimension) boundary elements
 
     std::vector<real> boundaries = {x0, x1};
-    node_tp root = node_t::createRoot(boundaries);
 
-    // create children in memory
-    root->unpack(node_t::level_t(g_level));
+    node_t::propertyGenerator_t propertyGenerator(&f_eval5);
+
+    node_tp root = node_t::createRoot(boundaries, propertyGenerator);
+
 
     size_t count_nodes = 0;
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
-        ++count_nodes;
-        node.m_property = f_eval5(node.center());
-    });
 
+    /*
     for(size_t timestep = 0; timestep < 1; ++timestep) {
-        root->isActive();
-        root->cleanUp();
+        root->setNodeStateRecursive();
+        root->cleanUpRecursive();
         root->flow();
     }
+    */
 
     size_t count_nodes_packed = 0;
 
@@ -60,7 +59,7 @@ int main()
         std::cout << node << std::endl;
 
         file << boost::format("%e %e %e %e %e %e\n")
-                % node.center()
+                % node.center(node_t::dimX)
                 % node.m_property
                 % node.interpolation()
                 % ((node.level() > node_t::lvlRoot) ? node.level() : 0)

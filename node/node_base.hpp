@@ -21,8 +21,8 @@
 
 #include <iostream>
 #include <memory>
-#include <array>
 #include <cassert>
+#include <functional>
 #include <boost/format.hpp>
 #include <boost/logic/tribool.hpp>
 #include <boost/logic/tribool_io.hpp> // also important for correct debug info in gdb
@@ -82,6 +82,9 @@ struct node_base
 
     typedef std::array<node_p,childsByDimension> node_p_array;
     typedef std::array<node_u,childsByDimension> node_u_array;
+    typedef std::array<real,dimensions> realvector;
+
+    typedef std::function<real(realarray)> propertyGenerator_t;
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
@@ -95,7 +98,7 @@ struct node_base
     inline node_u &child(const position_t position)
     { return m_childs[position]; }
 
-    static node_p createRoot(const std::vector<real> &boundary_value);
+    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level));
 
     inline position_t position() const
     { return m_position; }
@@ -123,19 +126,15 @@ struct node_base
         }
     }
 
-    bool isActive();
-
-    void cleanUp();
+    bool setNodeStateRecursive();
 
     void updateDerivative()
-    { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center()   - neighbour(reverse(direction))->center()); }
+    { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX)   - neighbour(reverse(direction))->center(dimX)); }
 
     real derivative() const
     { return m_derivative; }
-
-    void flow();
     void timeStep();
-    void multiresolution();
+    void optimizeTree();
 
     inline level_t level() const
     { return m_level; }
@@ -161,21 +160,18 @@ struct node_base
     inline real detail() const
     { real detail = (m_property - interpolation()); return detail; }
 
-    inline real center(dimension_t dimension = dimX) const
+    inline realarray center() const
+    { return m_center; }
+
+    inline real center(dimension_t dimension) const
     { return m_center[dimension]; }
 
+    /*
     inline void setCenter(real center, dimension_t dimension = dimX)
     { m_center[dimension] = center; }
-
-
-    void createNode(const position_t position);
-    void unpack(const level_t level);
-
-    void detachChild(const position_t position);
+    */
 
     real interpolation() const;
-
-    real m_property;
     real m_derivative;
 
     static node_p root()
@@ -187,8 +183,17 @@ struct node_base
 protected:
 
 private:
+    node_base(const node_base&) = delete; // remove copy constructor
     node_base(const node_p &parent, position_t position, level_t level, const node_p_array &boundaries);
-    node_base(position_t position, level_t level, const node_p_array &boundaries);
+    node_base(realarray center, position_t position, level_t level, const node_p_array &boundaries);
+
+    void createNode(const position_t position);
+
+    void unpackRecursive(const level_t level);
+    void cleanUpRecursive();
+    void initPropertyRecursive();
+    void timeStepRecursive();
+
     static const position_t direction = posRight;
 
     node_p m_parent;
@@ -208,14 +213,19 @@ private:
     node_p_array m_neighbours = {}; // initalize nullptr
     node_u_array m_childs;
 
-    real   m_center[dimensions];
+    realarray   m_center;
 
     static node_u c_root;
+
+    static propertyGenerator_t c_propertyGenerator;
+
+public:
+    real m_property;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.active()) + int(node.isVirtual())) % node.center() % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.active()) + int(node.isVirtual())) % node.center(node_base::dimX) % node.property() % node.interpolation();
     return stream;
 }
 
