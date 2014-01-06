@@ -17,6 +17,7 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include "functions.h"
+#include "settings.h"
 
 #include <QDebug>
 
@@ -30,12 +31,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
 
-
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
 
+    qDebug();
+    qDebug() << g_level;
+
     std::vector<real> boundaries = {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
+    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcIndependent);
 
     // it is not clear if this gives the right result
     count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
@@ -88,7 +91,7 @@ void MainWindow::replot()
 
     QVector<real> xvalues, yvalues;
     QVector<real> lvlvalues, lvlvirtualvalues;
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)), [&](node_base &node) {
+    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(node_t::dimX));
         yvalues.push_back(node.property());
         lvlvalues.push_back(node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);

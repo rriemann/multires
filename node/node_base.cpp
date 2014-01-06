@@ -184,44 +184,78 @@ void node_base::timeStepRecursive()
 
 void node_base::timeStep()
 {
-    /*
+    assert(this == c_root.get());
+
     real derivativeEgo = 0;
     node_p nodeEgo;
 
-    if(c_boundarycondition == bcPeriodic) {
+    if(c_boundaryCondition == bcPeriodic) {
         assert(dimensions == 1);
 
         // we calculate the PDE for the right boundary manually
         nodeEgo = c_root->boundary(posRight);
         node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
-        node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
+        // node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
+
         nodeEgo->setNeighbour(boundaryRight, posRight);
-
-        // assert(boundaryRight->level() == boundaryLeft->level());
-
-
+        // c_root->boundary(posLeft)->setNeighbour(boundaryLeft, posLeft);
 
         derivativeEgo = nodeEgo->derivative();
     }
+    /*
     */
 
-    /*
-    if(c_boundarycondition == bcPeriodic) {
+    timeStepRecursive();
+
+    if(c_boundaryCondition == bcPeriodic) {
 
         nodeEgo->m_property  = nodeEgo->m_property - velocity*timestep*derivativeEgo;
 
         // copy the result to the left boundary
         c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
     }
+    /*
     */
-    assert(this == c_root.get());
-    timeStepRecursive();
+
     optimizeTree();
 }
 
 void node_base::optimizeTree()
 {
     setNodeStateRecursive();
+
+    if(c_boundaryCondition == bcPeriodic) {
+        node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
+        node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
+
+        int levelDiff = int(boundaryRight->level()) - int(boundaryLeft->level());
+        assert(abs(levelDiff) <= 1);
+
+        if(levelDiff > 0) {
+            boundaryLeft->unpackRecursive(level_t(levelDiff));
+            boundaryLeft = c_root->boundary(posRight)->neighbour(posLeft);
+        } else if(levelDiff < 0) {
+            boundaryRight->unpackRecursive(level_t(-levelDiff));
+            boundaryRight = c_root->boundary(posLeft)->neighbour(posRight);
+
+        }
+
+        assert(boundaryRight->level() == boundaryLeft->level());
+
+        // make sure, that both outermost (inactive) nodes have the same level
+        bool done = false;
+        do {
+            if(boundaryRight->isVirtual() || boundaryLeft->isVirtual()) {
+                boundaryRight->setVirtual();
+                boundaryLeft ->setVirtual();
+                done = true;
+            } else {
+                boundaryRight = boundaryRight->parent();
+                boundaryLeft  = boundaryLeft ->parent();
+            }
+        } while(!done);
+    }
+
     cleanUpRecursive();
 }
 

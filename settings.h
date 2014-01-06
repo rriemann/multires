@@ -15,7 +15,7 @@ typedef std::array<real,g_dimension> realarray;
 const real velocity = 0.5;
 const real timestep = 0.05;
 
-const size_t g_level = 16;
+const size_t g_level = 5;
 const real x0    = -1.0;
 const real x1    = +1.0;
 

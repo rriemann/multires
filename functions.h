@@ -52,7 +52,7 @@ real f_eval3(realarray xa) {
     return 2*pow(x,4)-2*pow(x,2)-0.2*pow(x,3)+0.3*x+1;
 }
 
-real f_eval4(realarray xa) {
+real f_eval_square(realarray xa) {
     real x = xa[0];
 
     return (x-1)*(x-1);
@@ -71,9 +71,21 @@ real f_eval5(realarray xa) {
 }
 
 real f_eval_gauss(realarray xa) {
-    real x = xa[0];
+    real x = xa[0]-0.05;
 
     return exp(-10*x*x);
+}
+
+real f_eval_step(realarray xa) {
+    real x = xa[0];
+
+    return (x < 0) ? 0 : 1;
+}
+
+real f_eval_linear(realarray xa) {
+    real x = xa[0];
+
+    return x;
 }
 
 #endif // FUNCTIONS_H

@@ -49,13 +49,18 @@
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionRun">
    <property name="icon">
-    <iconset theme="system-run"/>
+    <iconset theme="system-run">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>Run</string>
    </property>
    <property name="toolTip">
     <string>Run</string>
+   </property>
+   <property name="shortcut">
+    <string>Space</string>
    </property>
   </action>
  </widget>

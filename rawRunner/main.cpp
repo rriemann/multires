@@ -41,13 +41,14 @@ int main()
 
     size_t count_nodes = 0;
 
-    /*
-    for(size_t timestep = 0; timestep < 1; ++timestep) {
+    for(size_t timestep = 0; timestep < 10; ++timestep) {
+        /*
         root->setNodeStateRecursive();
         root->cleanUpRecursive();
         root->flow();
+        */
+        root->timeStep();
     }
-    */
 
     size_t count_nodes_packed = 0;
 
