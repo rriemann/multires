@@ -131,10 +131,10 @@ struct node_base
 
     bool setNodeStateRecursive();
 
-    void updateDerivative()
-    { m_derivative = (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX)   - neighbour(reverse(direction))->center(dimX)); }
+    inline void updateDerivative()
+    { m_derivative = derivative(); }
 
-    inline real derivative() const;
+    real derivative() const;
 
     void timeStep();
     void optimizeTree();
@@ -150,6 +150,12 @@ struct node_base
 
     inline bool active() const
     { return m_activeRequirement; }
+
+    inline void setSavetyZone(const bool ok = true)
+    { m_savetyRequirement = ok; }
+
+    inline bool isSavetyZone() const
+    { return m_savetyRequirement; }
 
     inline void setVirtual(const bool ok = true)
     { m_virtualRequirement = ok; }
@@ -193,6 +199,7 @@ private:
     void createNode(const position_t position);
 
     void unpackRecursive(const level_t level);
+    void updateDerivativeRecursive();
     void cleanUpRecursive();
     void initPropertyRecursive();
     void timeStepRecursive();
@@ -210,6 +217,7 @@ private:
 
     bool m_cached = false;
     bool m_virtualRequirement = false;
+    bool m_savetyRequirement  = false;
     bool m_activeRequirement  = false;
 
     const node_p_array m_boundaries; // TODO make it const?

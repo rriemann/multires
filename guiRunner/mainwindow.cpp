@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     qDebug();
-    qDebug() << g_level;
+    qDebug() << QString("max level: %1").arg(g_level);
 
     std::vector<real> boundaries = {x0, x1};
     root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcIndependent);
@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     customPlot->graph(0)->setPen(QPen(Qt::green));
 
-    for(size_t i = 0; i < 2; ++i) {
+    for(size_t i = 0; i < bars.size() ; ++i) {
         bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
         customPlot->addPlottable(bars[i]);
         bars[i]->setPen(QPen(Qt::transparent));
@@ -66,6 +66,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bars[1]->setName("Virtual Elements");
     bars[1]->setBrush(QBrush(Qt::red));
+
+    bars[2]->setName("Savety Zone");
+    bars[2]->setBrush(QBrush(Qt::yellow));
 
     replot();
 }
@@ -80,6 +83,7 @@ void MainWindow::actionRun()
     qDebug() << "triggered";
     if(root) {
         root->timeStep();
+        root->timeStep();
         replot();
     }
 
@@ -90,12 +94,13 @@ void MainWindow::replot()
     count_nodes_packed = 0;
 
     QVector<real> xvalues, yvalues;
-    QVector<real> lvlvalues, lvlvirtualvalues;
+    QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(node_t::dimX));
         yvalues.push_back(node.property());
-        lvlvalues.push_back(node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
-        lvlvirtualvalues.push_back(!node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+        lvlvalues       .push_back(node.active()       ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+        lvlvirtualvalues.push_back(node.isVirtual()    ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+        lvlsavetyvalues .push_back((node.isSavetyZone() && !node.isVirtual()) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
         ++count_nodes_packed;
     });
 

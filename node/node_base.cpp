@@ -123,14 +123,23 @@ bool node_base::setNodeStateRecursive()
             // mark the nearest cousins not deletable as well:
             if(sibling) {
                 sibling->setVirtual();
+                sibling->setSavetyZone();
             }
             if(cousin_candidate) {
                 cousin_candidate->setVirtual();
+                cousin_candidate->setSavetyZone();
             }
         }
     }
 
     if(m_activeRequirement) {
+
+        if(level() < level_t(g_level)) {
+            for(size_t i = 0; i < childsByDimension; ++i) {
+                createNode(position_t(i)); // create node, if not existing
+                m_childs[i]->setSavetyZone();
+            }
+        }
         m_virtualRequirement = true;
         m_derivative = derivative();
     }
@@ -145,7 +154,7 @@ void node_base::cleanUpRecursive()
     for(node_u &child : m_childs) {
         if(child) {
             child->cleanUpRecursive();
-            if(!child->isVirtual()) {
+            if(!child->isVirtual() && !child->isSavetyZone()) {
                 child.reset();
             }
         }
@@ -155,22 +164,20 @@ void node_base::cleanUpRecursive()
 real node_base::derivative() const
 {
     // return (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX) - neighbour(reverse(direction))->center(dimX));
-    assert(velocity > 0);
+    // assert(neighbour(reverse(direction))->level() == neighbour(direction)->level());
+    assert(g_velocity > 0);
     // for positive velocity we use the look-behind derivative
     return (this->property() - neighbour(reverse(direction))->property())/(this->center(dimX) - neighbour(reverse(direction))->center(dimX));
 }
 
 void node_base::timeStepRecursive()
 {
-    if(m_activeRequirement) {
-        m_property = m_property - velocity*timestep*m_derivative;
+    if(m_activeRequirement || m_savetyRequirement) {
+        m_property = m_property - g_velocity*g_timestep*m_derivative;
         for(node_u const &child : m_childs) {
             if(child) {
                 child->timeStepRecursive();
             }
-        }
-        if(level() < level_t(g_level)) {
-            unpackRecursive(lvlFirst); // makes m_cache = false
         }
     } else {
         m_property = interpolation();
@@ -179,6 +186,7 @@ void node_base::timeStepRecursive()
     // if m_cached is not set to false, the derivative is not computed again
     m_cached = false;
     m_virtualRequirement = false;
+    m_savetyRequirement  = false;
     m_activeRequirement = false;
 }
 
@@ -202,20 +210,17 @@ void node_base::timeStep()
 
         derivativeEgo = nodeEgo->derivative();
     }
-    /*
-    */
 
+    updateDerivativeRecursive();
     timeStepRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
 
-        nodeEgo->m_property  = nodeEgo->m_property - velocity*timestep*derivativeEgo;
+        nodeEgo->m_property  = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
 
         // copy the result to the left boundary
         c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
     }
-    /*
-    */
 
     optimizeTree();
 }
@@ -313,7 +318,17 @@ void node_base::unpackRecursive(const level_t level)
             createNode(position_t(i));
             m_childs[i]->unpackRecursive(level_t(level - 1));
         }
-        m_cached = false;
+        // m_cached = false;
+    }
+}
+
+void node_base::updateDerivativeRecursive()
+{
+    updateDerivative();
+    for(node_u &child : m_childs) {
+        if(child) {
+            child->updateDerivativeRecursive();
+        }
     }
 }
 

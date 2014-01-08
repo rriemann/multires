@@ -45,7 +45,7 @@ private:
 
 
     QCustomPlot *customPlot;
-    std::array<QCPBars*,2> bars;
+    std::array<QCPBars*,3> bars;
     node_base* root = nullptr;
     size_t count_nodes;
     size_t count_nodes_packed;
