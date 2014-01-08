@@ -53,11 +53,15 @@ node_base::node_p node_base::decrement() const
 
 bool node_base::isActiveTypeRecursive()
 {
+    // here we determine the type of the node:
+    // active or virtual or savetyzone or none
+
     if(!is(typeCached)) {
-        // Do we? Try to make all existing children inactive
+        // We try to find active children
         for(node_u const &child : m_childs) {
             if(child) {
                 if(child->isActiveTypeRecursive()) {
+                    // with active children, we have to be active as well
                     set(typeActive);
                 }
             }
@@ -69,11 +73,15 @@ bool node_base::isActiveTypeRecursive()
          * the level of the current node. This would create an infinite loop
         */
 
-        // My value is too important.
         if(fabs(detail()) > c_epsilon) {
+            // My value is too important. I have to be active to keep it.
             set(typeActive);
         }
 
+
+        // Now we gonna check our big family. If we are uncle, which means,
+        // that we have nephews (child of sibling or of cousin), we have to
+        // stay active.
         if(level() > lvlRoot) {
             position_t reversed = reverse(position());
 
@@ -180,8 +188,8 @@ void node_base::timeStepRecursive()
         m_property = interpolation();
         // ^- cut off the datail
     }
-    // if m_cached is not set to false, the derivative is not computed again
 
+    // if type is not unset, the derivative is not computed again
     m_type = typeUnset;
 }
 
@@ -312,7 +320,6 @@ void node_base::unpackRecursive(const level_t level)
             createNode(position_t(i));
             m_childs[i]->unpackRecursive(level_t(level - 1));
         }
-        // m_cached = false;
     }
 }
 

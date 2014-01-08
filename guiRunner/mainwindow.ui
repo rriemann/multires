@@ -44,6 +44,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionInitializeRoot"/>
    <addaction name="actionRun"/>
    <addaction name="actionAutoPlay"/>
   </widget>
@@ -73,6 +74,17 @@
    </property>
    <property name="text">
     <string>autoPlay</string>
+   </property>
+  </action>
+  <action name="actionInitializeRoot">
+   <property name="icon">
+    <iconset theme="view-refresh"/>
+   </property>
+   <property name="text">
+    <string>initializeRoot</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
    </property>
   </action>
  </widget>

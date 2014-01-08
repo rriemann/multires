@@ -35,27 +35,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->mainToolBar->addWidget(spinBox);
 
     timer = new QTimer(this);
-    timer->setInterval(250);
+    timer->setInterval(100);
 
     customPlot = ui->customPlot;
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
     connect(timer, SIGNAL(timeout()), this, SLOT(actionRun()));
+    connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeRoot()));
 
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
 
     qDebug();
     qDebug() << QString("max level: %1").arg(g_level);
-
-    std::vector<real> boundaries = {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
-
-    // it is not clear if this gives the right result
-    count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
-
-    root->optimizeTree();
 
     customPlot->addGraph();
     // give the axes some labels:
@@ -85,12 +78,27 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[3]->setName("Static Elements");
     bars[3]->setBrush(QBrush(Qt::black));
 
-    replot();
+    initializeRoot();
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::initializeRoot()
+{
+
+
+    std::vector<real> boundaries = {x0, x1};
+    root = node_t::createRoot(boundaries, f_eval_step, node_t::level_t(g_level), node_t::bcIndependent);
+
+    // it is not clear if this gives the right result
+    count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
+
+    root->optimizeTree();
+
+    replot();
 }
 
 void MainWindow::actionRun()

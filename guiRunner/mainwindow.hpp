@@ -59,6 +59,8 @@ private slots:
     void actionRun();
     void replot();
     void autoPlayToggled(bool checked);
+
+    void initializeRoot();
 };
 
 #endif // MAINWINDOW_HPP
