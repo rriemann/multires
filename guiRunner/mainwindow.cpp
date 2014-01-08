@@ -20,6 +20,8 @@
 #include "settings.h"
 
 #include <QDebug>
+#include <QSpinBox>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -27,9 +29,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    spinBox = new QSpinBox(this);
+    spinBox->setMinimum(1);
+    spinBox->setValue(1);
+    ui->mainToolBar->addWidget(spinBox);
+
+    timer = new QTimer(this);
+    timer->setInterval(250);
+
     customPlot = ui->customPlot;
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
+    connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
+    connect(timer, SIGNAL(timeout()), this, SLOT(actionRun()));
 
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
@@ -38,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << QString("max level: %1").arg(g_level);
 
     std::vector<real> boundaries = {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcIndependent);
+    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
@@ -61,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
         bars[i]->setPen(QPen(Qt::transparent));
         bars[i]->setWidth(0.005);
     }
-    bars[0]->setName("Nonvirtual Elements");
+    bars[0]->setName("Active Elements");
     bars[0]->setBrush(QBrush(Qt::blue));
 
     bars[1]->setName("Virtual Elements");
@@ -69,6 +81,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bars[2]->setName("Savety Zone");
     bars[2]->setBrush(QBrush(Qt::yellow));
+
+    bars[3]->setName("Static Elements");
+    bars[3]->setBrush(QBrush(Qt::black));
 
     replot();
 }
@@ -82,8 +97,10 @@ void MainWindow::actionRun()
 {
     qDebug() << "triggered";
     if(root) {
-        root->timeStep();
-        root->timeStep();
+        int stepAtOnce = spinBox->value();
+        for(int i = 0; i < stepAtOnce; ++i) {
+            root->timeStep();
+        }
         replot();
     }
 
@@ -94,22 +111,55 @@ void MainWindow::replot()
     count_nodes_packed = 0;
 
     QVector<real> xvalues, yvalues;
-    QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues;
+    QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues, lvlstaticvalues;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(node_t::dimX));
         yvalues.push_back(node.property());
-        lvlvalues       .push_back(node.active()       ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
-        lvlvirtualvalues.push_back(node.isVirtual()    ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
-        lvlsavetyvalues .push_back((node.isSavetyZone() && !node.isVirtual()) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+
+        if(node.level() > node_t::lvlRoot) {
+            real bar = pow(2,-node.level());
+            if(node.is(node_t::typeActive)) {
+                lvlvalues       .push_back(bar);
+                lvlsavetyvalues .push_back(0);
+                lvlvirtualvalues.push_back(0);
+            } else if(node.is(node_t::typeSavetyZone)) {
+                lvlvalues       .push_back(0);
+                lvlsavetyvalues .push_back(bar);
+                lvlvirtualvalues.push_back(0);
+            } else if(node.is(node_t::typeVirtual)) {
+                lvlvalues       .push_back(0);
+                lvlsavetyvalues .push_back(0);
+                lvlvirtualvalues.push_back(bar);
+            }
+
+            lvlstaticvalues.push_back(0);
+        } else {
+            lvlvalues       .push_back(0);
+            lvlsavetyvalues .push_back(0);
+            lvlvirtualvalues.push_back(0);
+
+            lvlstaticvalues .push_back(1);
+        }
         ++count_nodes_packed;
     });
 
     qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
 
     customPlot->graph(0)->setData(xvalues, yvalues);
-    bars[0]->setData(xvalues, lvlvalues);
-    bars[1]->setData(xvalues, lvlvirtualvalues);
+    bars[0]->setData(xvalues, lvlvalues); // blue
+    bars[1]->setData(xvalues, lvlvirtualvalues); // red
+    bars[2]->setData(xvalues, lvlsavetyvalues); // yellow
+    bars[3]->setData(xvalues, lvlstaticvalues); // black
 
     customPlot->rescaleAxes();
     customPlot->replot();
+}
+
+void MainWindow::autoPlayToggled(bool checked)
+{
+    if(checked) {
+        timer->start();
+    } else {
+        timer->stop();
+    }
 }

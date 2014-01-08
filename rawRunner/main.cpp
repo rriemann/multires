@@ -64,8 +64,8 @@ int main()
                 % node.m_property
                 % node.interpolation()
                 % ((node.level() > node_t::lvlRoot) ? node.level() : 0)
-                % ( node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0)
-                % (!node.active() ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+                % (node.is(node_t::typeActive) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0)
+                % (node.is(node_t::typeVirtual) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
     });
     file.close();
     std::cerr << boost::format("pack rate: %d/%d = %f\n") % count_nodes_packed % count_nodes % (real(count_nodes_packed)/count_nodes);

@@ -51,102 +51,99 @@ node_base::node_p node_base::decrement() const
     }
 }
 
-bool node_base::setNodeStateRecursive()
+bool node_base::isActiveTypeRecursive()
 {
-    if(m_cached) {
-        return m_activeRequirement;
-    }
-
-    // Do we? Try to make all existing children inactive
-    for(node_u const &child : m_childs) {
-        if(child) {
-            if(child->setNodeStateRecursive()) {
-                m_activeRequirement = true;
-            }
-        }
-    }
-
-    /*
-     * important notice:
-     * never ever call isActive recursive on a node with same or lower level than
-     * the level of the current node. This would create an infinite loop
-     */
-
-    // My value is too important.
-    if(fabs(detail()) > epsilon) {
-        m_activeRequirement = true;
-    }
-
-    if(level() > lvlRoot) {
-        position_t reversed = reverse(position());
-
-        // check nephew
-        node_u &sibling = parent()->child(reversed);
-        if(sibling) {
-            node_u &child = sibling->child(position());
+    if(!is(typeCached)) {
+        // Do we? Try to make all existing children inactive
+        for(node_u const &child : m_childs) {
             if(child) {
-                if(child->setNodeStateRecursive()) {
-                    m_activeRequirement = true;
+                if(child->isActiveTypeRecursive()) {
+                    set(typeActive);
                 }
             }
         }
 
-        // check grand-nephew
-        node_p cousin_candidate = boundary(position())->neighbour(position());
-        // we only do something when there is a grand-nephew:
-        // - maybe there is only a grand-cousin
-        // - maybe the grand-nephew has even children
-        if(cousin_candidate && cousin_candidate->level() > m_level) {
-            // ok, there must be a grand-nephew: we found him already,
-            // or at least his children
-            // we iterate until we found the parent of the grand-nephew,
-            // which should be our cousin (same level)
-            do {
-                cousin_candidate = cousin_candidate->parent();
-            } while(cousin_candidate->level() > m_level);
+        /*
+         * important notice:
+         * never ever call isActive recursive on a node with same or lower level than
+         * the level of the current node. This would create an infinite loop
+        */
 
-            assert(m_level == cousin_candidate->level());
-
-            // doesn't make much sense to get first the parent and then the child, heh?
-            // consider: we need to use the unique_ptr to delete the child, and
-            //           the unique_ptr can only be accessed by the owner of the pointer,
-            //           which is the parent node.
-            node_u &child = cousin_candidate->child(reversed);
-            if(child) {
-                if(child->setNodeStateRecursive()) {
-                    m_activeRequirement = true;
-                }
-            }
+        // My value is too important.
+        if(fabs(detail()) > c_epsilon) {
+            set(typeActive);
         }
 
-        if(m_activeRequirement) {
-            // mark the nearest cousins not deletable as well:
+        if(level() > lvlRoot) {
+            position_t reversed = reverse(position());
+
+            // check nephew
+            node_u &sibling = parent()->child(reversed);
             if(sibling) {
-                sibling->setVirtual();
-                sibling->setSavetyZone();
+                node_u &child = sibling->child(position());
+                if(child) {
+                    if(child->isActiveTypeRecursive()) {
+                        set(typeActive);
+                    }
+                }
             }
-            if(cousin_candidate) {
-                cousin_candidate->setVirtual();
-                cousin_candidate->setSavetyZone();
+
+            // check grand-nephew
+            node_p cousin_candidate = boundary(position())->neighbour(position());
+            // we only do something when there is a grand-nephew:
+            // - maybe there is only a grand-cousin
+            // - maybe the grand-nephew has even children
+            if(cousin_candidate && cousin_candidate->level() > m_level) {
+                // ok, there must be a grand-nephew: we found him already,
+                // or at least his children
+                // we iterate until we found the parent of the grand-nephew,
+                // which should be our cousin (same level)
+                do {
+                    cousin_candidate = cousin_candidate->parent();
+                } while(cousin_candidate->level() > m_level);
+
+                assert(m_level == cousin_candidate->level());
+
+                // doesn't make much sense to get first the parent and then the child, heh?
+                // consider: we need to use the unique_ptr to delete the child, and
+                //           the unique_ptr can only be accessed by the owner of the pointer,
+                //           which is the parent node.
+                node_u &child = cousin_candidate->child(reversed);
+                if(child) {
+                    if(child->isActiveTypeRecursive()) {
+                        set(typeActive);
+                    }
+                }
+            }
+
+            if(is(typeActive)) {
+                // mark the nearest cousins not deletable as well:
+                if(sibling) {
+                    // sibling->set(typeVirtual);
+                    sibling->set(typeSavetyZone);
+                }
+                if(cousin_candidate) {
+                    // cousin_candidate->set(typeVirtual);
+                    cousin_candidate->set(typeSavetyZone);
+                }
             }
         }
-    }
 
-    if(m_activeRequirement) {
-
-        if(level() < level_t(g_level)) {
-            for(size_t i = 0; i < childsByDimension; ++i) {
-                createNode(position_t(i)); // create node, if not existing
-                m_childs[i]->setSavetyZone();
+        if(is(typeActive)) {
+            /*
+            */
+            if(level() < level_t(g_level)) {
+                for(size_t i = 0; i < childsByDimension; ++i) {
+                    createNode(position_t(i)); // create node, if not existing
+                    m_childs[i]->set(typeSavetyZone);
+                }
             }
+            m_derivative = derivative();
         }
-        m_virtualRequirement = true;
-        m_derivative = derivative();
+        set(typeCached);
     }
 
-    m_cached = true;
-
-    return m_activeRequirement;
+    return is(typeActive);
 }
 
 void node_base::cleanUpRecursive()
@@ -154,7 +151,7 @@ void node_base::cleanUpRecursive()
     for(node_u &child : m_childs) {
         if(child) {
             child->cleanUpRecursive();
-            if(!child->isVirtual() && !child->isSavetyZone()) {
+            if(!child->isVirtual()) {
                 child.reset();
             }
         }
@@ -172,7 +169,7 @@ real node_base::derivative() const
 
 void node_base::timeStepRecursive()
 {
-    if(m_activeRequirement || m_savetyRequirement) {
+    if(isSavetyZone()) {
         m_property = m_property - g_velocity*g_timestep*m_derivative;
         for(node_u const &child : m_childs) {
             if(child) {
@@ -184,40 +181,37 @@ void node_base::timeStepRecursive()
         // ^- cut off the datail
     }
     // if m_cached is not set to false, the derivative is not computed again
-    m_cached = false;
-    m_virtualRequirement = false;
-    m_savetyRequirement  = false;
-    m_activeRequirement = false;
+
+    m_type = typeUnset;
 }
 
 void node_base::timeStep()
 {
     assert(this == c_root.get());
 
-    real derivativeEgo = 0;
-    node_p nodeEgo;
+    // we calculate the PDE for the right boundary manually
+    node_p nodeEgo = c_root->boundary(posRight);
 
-    if(c_boundaryCondition == bcPeriodic) {
+    if(c_boundaryCondition == bcIndependent) {
+        //
+    } else if(c_boundaryCondition == bcPeriodic) {
         assert(dimensions == 1);
-
-        // we calculate the PDE for the right boundary manually
-        nodeEgo = c_root->boundary(posRight);
-        node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
+        // node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
         // node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
 
-        nodeEgo->setNeighbour(boundaryRight, posRight);
+        // nodeEgo->setNeighbour(boundaryRight, posRight);
         // c_root->boundary(posLeft)->setNeighbour(boundaryLeft, posLeft);
 
-        derivativeEgo = nodeEgo->derivative();
     }
+    real derivativeEgo = nodeEgo->derivative();
 
     updateDerivativeRecursive();
     timeStepRecursive();
 
-    if(c_boundaryCondition == bcPeriodic) {
-
-        nodeEgo->m_property  = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
-
+    nodeEgo->m_property  = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
+    if(c_boundaryCondition == bcIndependent) {
+        //
+    } else if(c_boundaryCondition == bcPeriodic) {
         // copy the result to the left boundary
         c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
     }
@@ -227,7 +221,7 @@ void node_base::timeStep()
 
 void node_base::optimizeTree()
 {
-    setNodeStateRecursive();
+    isActiveTypeRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
         node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
@@ -406,7 +400,7 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
     assert(level < lvlFirst);
 }
 
-real node_base::epsilon = EPSILON;
+real node_base::c_epsilon = EPSILON;
 node_base::node_u node_base::c_root = node_u(nullptr);
 node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
 

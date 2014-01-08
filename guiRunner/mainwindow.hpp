@@ -24,6 +24,8 @@
 class QCustomPlot;
 class QCPBars;
 struct node_base;
+class QSpinBox;
+class QTimer;
 
 namespace Ui {
 class MainWindow;
@@ -45,15 +47,18 @@ private:
 
 
     QCustomPlot *customPlot;
-    std::array<QCPBars*,3> bars;
+    std::array<QCPBars*,4> bars;
     node_base* root = nullptr;
     size_t count_nodes;
     size_t count_nodes_packed;
+    QSpinBox *spinBox;
+    QTimer *timer;
 
 private slots:
 
     void actionRun();
     void replot();
+    void autoPlayToggled(bool checked);
 };
 
 #endif // MAINWINDOW_HPP

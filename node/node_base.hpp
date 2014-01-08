@@ -67,6 +67,16 @@ struct node_base
         , lvlFirst    = 1
     };
 
+    // this is designed to allow: if(type>typeVirtual) { eval(); }
+    enum type_t {
+          typeUnset      = 0
+        , typeCached     = 1 << 0
+        , typeDeletable  = 1 << 1
+        , typeVirtual    = 1 << 2
+        , typeSavetyZone = 1 << 3
+        , typeActive     = 1 << 4
+    };
+
     enum dimension_t {
           dimX = 0
     };
@@ -78,7 +88,7 @@ struct node_base
 
     static const unsigned int dimensions = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
-    static real epsilon;
+    static real c_epsilon;
 
     // http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
     typedef node_base* node_p;
@@ -129,7 +139,7 @@ struct node_base
         }
     }
 
-    bool setNodeStateRecursive();
+    bool isActiveTypeRecursive();
 
     inline void updateDerivative()
     { m_derivative = derivative(); }
@@ -145,23 +155,32 @@ struct node_base
     real property() const
     { return m_property; }
 
-    inline void setActive(const bool ok = true)
-    { m_activeRequirement = ok; }
+    inline void set(type_t type)
+    { m_type = type_t(m_type | type); }
 
-    inline bool active() const
-    { return m_activeRequirement; }
+    inline bool is(type_t type) const
+    { return m_type & type; }
 
-    inline void setSavetyZone(const bool ok = true)
-    { m_savetyRequirement = ok; }
+    inline void setActive()
+    { set(typeActive); }
+
+    inline bool isActive() const
+    { return m_type >= typeActive; }
+
+    inline void setSavetyZone()
+    { set(typeSavetyZone); }
 
     inline bool isSavetyZone() const
-    { return m_savetyRequirement; }
+    { return m_type >= typeSavetyZone; }
 
-    inline void setVirtual(const bool ok = true)
-    { m_virtualRequirement = ok; }
+    inline void setVirtual()
+    { set(typeVirtual); }
 
     inline bool isVirtual() const
-    { return m_virtualRequirement; }
+    { return m_type >= typeVirtual; }
+
+    inline type_t type() const
+    { return m_type; }
 
     inline const node_p& parent() const
     { return m_parent; }
@@ -215,10 +234,7 @@ private:
     tribool m_deletable    = boost::logic::indeterminate;
     */
 
-    bool m_cached = false;
-    bool m_virtualRequirement = false;
-    bool m_savetyRequirement  = false;
-    bool m_activeRequirement  = false;
+    type_t m_type = typeUnset;
 
     const node_p_array m_boundaries; // TODO make it const?
     node_p_array m_neighbours = {}; // initalize nullptr
@@ -239,7 +255,7 @@ public:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.active()) + int(node.isVirtual())) % node.center(node_base::dimX) % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.isActive()) + int(node.isVirtual())) % node.center(node_base::dimX) % node.property() % node.interpolation();
     return stream;
 }
 
