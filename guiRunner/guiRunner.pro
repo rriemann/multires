@@ -20,7 +20,8 @@ SOURCES += main.cpp\
         qcustomplot/qcustomplot.cpp
 
 HEADERS  += mainwindow.hpp \
-            qcustomplot/qcustomplot.hpp
+            qcustomplot/qcustomplot.hpp \
+            ../settings.h
 
 INCLUDEPATH += qcustomplot
 

@@ -25,30 +25,26 @@
  * The implementation of the tree doesn't allow to have a very efficent algorith to get the next node.
  * So this method should only be used in the rare cases of output generation
  */
-node_base::node_p node_base::increment() const
+node_base::node_p node_base::forward(const node_base::position_t position) const
 {
     // do not cross the boundary
-    if(this == c_root->boundary(direction)) {
+    if(this == c_root->boundary(position)) {
         return nullptr;
-    } else if(m_neighbours[direction]) {
-        return m_neighbours[direction];
+    } else if(m_neighbours[position]) {
+        return m_neighbours[position];
     } else {
-        return boundary(direction);
+        return boundary(position);
     }
+}
+
+node_base::node_p node_base::increment() const
+{
+    return forward(direction);
 }
 
 node_base::node_p node_base::decrement() const
 {
-    static const position_t reversed = reverse(direction);
-
-    // do not cross the boundary
-    if(this == c_root->boundary(reversed)) {
-        return nullptr;
-    } else if(m_neighbours[reversed]) {
-        return m_neighbours[reversed];
-    } else {
-        return boundary(reversed);
-    }
+    return forward(reversed);
 }
 
 bool node_base::isActiveTypeRecursive()
@@ -124,6 +120,18 @@ bool node_base::isActiveTypeRecursive()
                 }
             }
 
+            if(is(typeSavetyZone)) {
+                // mark the nearest cousins not deletable as well:
+                if(sibling) {
+                    sibling->set(typeVirtual);
+                    //sibling->set(typeSavetyZone);
+                }
+                if(cousin_candidate) {
+                    cousin_candidate->set(typeVirtual);
+                    //cousin_candidate->set(typeSavetyZone);
+                }
+            }
+
             if(is(typeActive)) {
                 // mark the nearest cousins not deletable as well:
                 if(sibling) {
@@ -138,15 +146,12 @@ bool node_base::isActiveTypeRecursive()
         }
 
         if(is(typeActive)) {
-            /*
-            */
             if(level() < level_t(g_level)) {
                 for(size_t i = 0; i < childsByDimension; ++i) {
                     createNode(position_t(i)); // create node, if not existing
                     m_childs[i]->set(typeSavetyZone);
                 }
             }
-            m_derivative = derivative();
         }
         set(typeCached);
     }
@@ -200,23 +205,13 @@ void node_base::timeStep()
     // we calculate the PDE for the right boundary manually
     node_p nodeEgo = c_root->boundary(posRight);
 
-    if(c_boundaryCondition == bcIndependent) {
-        //
-    } else if(c_boundaryCondition == bcPeriodic) {
-        assert(dimensions == 1);
-        // node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
-        // node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
-
-        // nodeEgo->setNeighbour(boundaryRight, posRight);
-        // c_root->boundary(posLeft)->setNeighbour(boundaryLeft, posLeft);
-
-    }
     real derivativeEgo = nodeEgo->derivative();
 
     updateDerivativeRecursive();
     timeStepRecursive();
 
     nodeEgo->m_property  = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
+
     if(c_boundaryCondition == bcIndependent) {
         //
     } else if(c_boundaryCondition == bcPeriodic) {
@@ -229,6 +224,13 @@ void node_base::timeStep()
 
 void node_base::optimizeTree()
 {
+    if(c_boundaryCondition == bcIndependent) {
+        //
+    } else if(c_boundaryCondition == bcPeriodic) {
+        c_root->boundary(direction)->setNeighbour(c_root->boundary(reversed )->neighbour(direction), direction);
+        c_root->boundary(reversed )->setNeighbour(c_root->boundary(direction)->neighbour(reversed ), reversed );
+    }
+
     isActiveTypeRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
@@ -315,6 +317,9 @@ node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value,
  */
 void node_base::unpackRecursive(const level_t level)
 {
+    for(const node_p &bounding : m_boundaries) {
+        assert(bounding != 0);
+    }
     if(level > lvlNoChilds) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
             createNode(position_t(i));
@@ -325,7 +330,9 @@ void node_base::unpackRecursive(const level_t level)
 
 void node_base::updateDerivativeRecursive()
 {
-    updateDerivative();
+    if(isSavetyZone()) {
+        updateDerivative();
+    }
     for(node_u &child : m_childs) {
         if(child) {
             child->updateDerivativeRecursive();

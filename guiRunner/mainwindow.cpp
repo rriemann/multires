@@ -17,7 +17,6 @@
 #include "mainwindow.hpp"
 #include "ui_mainwindow.h"
 #include "functions.h"
-#include "settings.h"
 
 #include <QDebug>
 #include <QSpinBox>
@@ -45,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeRoot()));
 
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-
 
     qDebug();
     qDebug() << QString("max level: %1").arg(g_level);
@@ -88,10 +86,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeRoot()
 {
-
-
     std::vector<real> boundaries = {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_step, node_t::level_t(g_level), node_t::bcIndependent);
+    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
@@ -103,7 +99,6 @@ void MainWindow::initializeRoot()
 
 void MainWindow::actionRun()
 {
-    qDebug() << "triggered";
     if(root) {
         int stepAtOnce = spinBox->value();
         for(int i = 0; i < stepAtOnce; ++i) {

@@ -101,6 +101,7 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
+    node_p forward(const position_t position) const;
     node_p increment() const;
     node_p decrement() const;
 
@@ -223,7 +224,8 @@ private:
     void initPropertyRecursive();
     void timeStepRecursive();
 
-    static const position_t direction = posRight;
+    constexpr static position_t direction = posRight;
+    constexpr static position_t reversed  = posLeft;
 
     node_p m_parent;
     const position_t m_position;

@@ -2,8 +2,8 @@
 #define SETTINGS_H
 
 #include <cstddef>
-// #include <cstdint>
 #include <array>
+
 #define DIMENSION 1
 #define EPSILON 0.005
 
