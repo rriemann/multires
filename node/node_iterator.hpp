@@ -43,10 +43,10 @@ private:
     friend class boost::iterator_core_access;
 
     void increment()
-    { m_node = m_node->increment(); }
+    { m_node = m_node->forward(node_base::c_direction); }
 
     void decrement()
-    { m_node = m_node->decrement(); }
+    { m_node = m_node->forward(node_base::c_reversed ); }
 
     bool equal(node_iterator const &other) const
     { return this->m_node == other.m_node; }

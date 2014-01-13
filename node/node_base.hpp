@@ -24,11 +24,6 @@
 #include <cassert>
 #include <functional>
 #include <boost/format.hpp>
-#include <boost/logic/tribool.hpp>
-#include <boost/logic/tribool_io.hpp> // also important for correct debug info in gdb
-
-using boost::logic::tribool;
-using boost::logic::indeterminate;
 
 // Polymorphic list node base class
 // inspired by http://www.boost.org/doc/libs/1_55_0/libs/iterator/example/node.hpp
@@ -90,6 +85,9 @@ struct node_base
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real c_epsilon;
 
+    static const position_t c_direction = posRight;
+    static const position_t c_reversed  = posLeft;
+
     // http://www.drdobbs.com/cpp/c11-uniqueptr/240002708
     typedef node_base* node_p;
     typedef std::unique_ptr<node_base> node_u;
@@ -101,10 +99,8 @@ struct node_base
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
+    /*! cycle through the tree without crossing boundary */
     node_p forward(const position_t position) const;
-    node_p increment() const;
-    node_p decrement() const;
-
 
     inline node_p child(const position_t position) const
     { return m_childs[position].get(); }
@@ -195,11 +191,6 @@ struct node_base
     inline real center(dimension_t dimension) const
     { return m_center[dimension]; }
 
-    /*
-    inline void setCenter(real center, dimension_t dimension = dimX)
-    { m_center[dimension] = center; }
-    */
-
     real interpolation() const;
     real m_derivative;
 
@@ -224,17 +215,9 @@ private:
     void initPropertyRecursive();
     void timeStepRecursive();
 
-    constexpr static position_t direction = posRight;
-    constexpr static position_t reversed  = posLeft;
-
     node_p m_parent;
     const position_t m_position;
     level_t m_level;
-    /*
-    bool m_active = true;
-    tribool m_activeChilds = boost::logic::indeterminate;
-    tribool m_deletable    = boost::logic::indeterminate;
-    */
 
     type_t m_type = typeUnset;
 

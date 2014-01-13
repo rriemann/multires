@@ -30,21 +30,9 @@ node_base::node_p node_base::forward(const node_base::position_t position) const
     // do not cross the boundary
     if(this == c_root->boundary(position)) {
         return nullptr;
-    } else if(m_neighbours[position]) {
-        return m_neighbours[position];
     } else {
-        return boundary(position);
+        return neighbour(position);
     }
-}
-
-node_base::node_p node_base::increment() const
-{
-    return forward(direction);
-}
-
-node_base::node_p node_base::decrement() const
-{
-    return forward(reversed);
 }
 
 bool node_base::isActiveTypeRecursive()
@@ -173,11 +161,12 @@ void node_base::cleanUpRecursive()
 
 real node_base::derivative() const
 {
-    // return (neighbour(direction)->property() - neighbour(reverse(direction))->property())/(neighbour(direction)->center(dimX) - neighbour(reverse(direction))->center(dimX));
-    // assert(neighbour(reverse(direction))->level() == neighbour(direction)->level());
-    assert(g_velocity > 0);
+    // assert(neighbour(reversed)->level() == neighbour(direction)->level());
+    return (neighbour(c_direction)->property() - neighbour(c_reversed)->property())/(neighbour(c_direction)->center(dimX) - neighbour(c_reversed)->center(dimX));
+
+    // assert(g_velocity > 0);
     // for positive velocity we use the look-behind derivative
-    return (this->property() - neighbour(reverse(direction))->property())/(this->center(dimX) - neighbour(reverse(direction))->center(dimX));
+    // return (this->property() - neighbour(reversed)->property())/(this->center(dimX) - neighbour(reversed)->center(dimX));
 }
 
 void node_base::timeStepRecursive()
@@ -205,7 +194,15 @@ void node_base::timeStep()
     // we calculate the PDE for the right boundary manually
     node_p nodeEgo = c_root->boundary(posRight);
 
-    real derivativeEgo = nodeEgo->derivative();
+    real derivativeEgo = 0;
+    if(c_boundaryCondition == bcIndependent) {
+        // look-behind
+        derivativeEgo = (nodeEgo->property() - nodeEgo->neighbour(c_reversed)->property())/(nodeEgo->center(dimX) - nodeEgo->neighbour(c_reversed)->center(dimX));
+    } else if(c_boundaryCondition == bcPeriodic) {
+        derivativeEgo = nodeEgo->derivative();
+        // copy the result to the left boundary
+        c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
+    }
 
     updateDerivativeRecursive();
     timeStepRecursive();
@@ -227,8 +224,8 @@ void node_base::optimizeTree()
     if(c_boundaryCondition == bcIndependent) {
         //
     } else if(c_boundaryCondition == bcPeriodic) {
-        c_root->boundary(direction)->setNeighbour(c_root->boundary(reversed )->neighbour(direction), direction);
-        c_root->boundary(reversed )->setNeighbour(c_root->boundary(direction)->neighbour(reversed ), reversed );
+        c_root->boundary(c_direction)->setNeighbour(c_root->boundary(c_reversed )->neighbour(c_direction), c_direction);
+        c_root->boundary(c_reversed )->setNeighbour(c_root->boundary(c_direction)->neighbour(c_reversed ), c_reversed );
     }
 
     isActiveTypeRecursive();
@@ -246,7 +243,6 @@ void node_base::optimizeTree()
         } else if(levelDiff < 0) {
             boundaryRight->unpackRecursive(level_t(-levelDiff));
             boundaryRight = c_root->boundary(posLeft)->neighbour(posRight);
-
         }
 
         assert(boundaryRight->level() == boundaryLeft->level());
@@ -408,6 +404,7 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
     , m_position(position)
     , m_level(level)
     , m_boundaries(boundaries)
+    , m_neighbours({{nullptr}})
     , m_center(center)
     , m_property(c_propertyGenerator(center))
 {
@@ -419,5 +416,3 @@ node_base::node_u node_base::c_root = node_u(nullptr);
 node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
 
 node_base::propertyGenerator_t node_base::c_propertyGenerator = node_base::propertyGenerator_t();
-
-#include "node_base.hpp"
