@@ -5,7 +5,7 @@
 #include <array>
 
 #define DIMENSION 1
-#define EPSILON 0.005
+#define EPSILON 0.001
 
 const size_t g_dimension = DIMENSION;
 
@@ -18,7 +18,7 @@ const real g_velocity = 0.5;
 const real x0    = -1.0;
 const real x1    = +1.0;
 
-const real g_cs  = 0.2;
+const real g_cfl  = 0.2;
 const real g_timestep = 0.005;
 
 #endif // SETTINGS_H

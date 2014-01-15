@@ -34,7 +34,7 @@ int main()
 
     std::vector<real> boundaries = {x0, x1};
 
-    node_t::propertyGenerator_t propertyGenerator(&f_eval5);
+    node_t::propertyGenerator_t propertyGenerator(&f_eval_gauss);
 
     node_tp root = node_t::createRoot(boundaries, propertyGenerator);
 

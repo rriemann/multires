@@ -166,7 +166,7 @@ real node_base::derivative() const
 
     // assert(g_velocity > 0);
     // for positive velocity we use the look-behind derivative
-    // return (this->property() - neighbour(reversed)->property())/(this->center(dimX) - neighbour(reversed)->center(dimX));
+    // return (this->property() - neighbour(c_reversed)->property())/(this->center(dimX) - neighbour(c_reversed)->center(dimX));
 }
 
 void node_base::timeStepRecursive()
@@ -221,11 +221,9 @@ void node_base::timeStep()
 
 void node_base::optimizeTree()
 {
-    if(c_boundaryCondition == bcIndependent) {
-        //
-    } else if(c_boundaryCondition == bcPeriodic) {
-        c_root->boundary(c_direction)->setNeighbour(c_root->boundary(c_reversed )->neighbour(c_direction), c_direction);
-        c_root->boundary(c_reversed )->setNeighbour(c_root->boundary(c_direction)->neighbour(c_reversed ), c_reversed );
+    if(c_boundaryCondition == bcPeriodic) {
+        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight )->neighbour(posLeft ), posLeft );
+        c_root->boundary(posRight )->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
     }
 
     isActiveTypeRecursive();

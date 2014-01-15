@@ -61,7 +61,7 @@ real f_eval_square(realarray xa) {
 // sin
 const real pi2 = 2*std::atan(1.0);
 
-real f_eval5(realarray xa) {
+real f_eval_sin(realarray xa) {
     real x = xa[0];
 
     if(x > pi2/3) {
