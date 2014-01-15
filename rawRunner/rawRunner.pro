@@ -11,6 +11,9 @@ CONFIG -= qt
 
 SOURCES += main.cpp
 
+HEADERS += ../settings.h \
+           ../functions.h
+
 NODE_LIB = ../node/libnode.a
 
 PRE_TARGETDEPS = $${NODE_LIB}

@@ -138,10 +138,8 @@ struct node_base
 
     bool isActiveTypeRecursive();
 
-    inline void updateDerivative()
-    { m_derivative = derivative(); }
-
-    real derivative() const;
+    inline void updateBackupValue()
+    { m_propertyBackup = m_property; }
 
     void timeStep();
     void optimizeTree();
@@ -192,7 +190,6 @@ struct node_base
     { return m_center[dimension]; }
 
     real interpolation() const;
-    real m_derivative;
 
     static node_p root()
     { return c_root.get(); }
@@ -201,6 +198,7 @@ struct node_base
 
 
 protected:
+    real timeStepValue();
 
 private:
     node_base(const node_base&) = delete; // remove copy constructor
@@ -210,7 +208,7 @@ private:
     void createNode(const position_t position);
 
     void unpackRecursive(const level_t level);
-    void updateDerivativeRecursive();
+    void updateBackupValueRecursive();
     void cleanUpRecursive();
     void initPropertyRecursive();
     void timeStepRecursive();
@@ -234,8 +232,8 @@ private:
     static boundaryCondition_t c_boundaryCondition;
 
 public:
-
     real m_property;
+    real m_propertyBackup;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

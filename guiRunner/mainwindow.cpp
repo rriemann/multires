@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << QString("max level: %1").arg(g_level);
 
     customPlot->addGraph();
+    customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
     // give the axes some labels:
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
@@ -86,7 +87,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::initializeRoot()
 {
-    std::vector<real> boundaries = {x0, x1};
+    std::vector<real> boundaries {x0, x1};
     root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result

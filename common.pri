@@ -13,6 +13,6 @@ contains( QMAKE_CC, gcc ) {
 
 INCLUDEPATH += $$PWD
 
-HEADERS += \
-    $$PWD/settings.h \
-    $$PWD/functions.h
+#HEADERS += \
+#    $$PWD/settings.h \
+#    $$PWD/functions.h

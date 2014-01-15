@@ -17,6 +17,8 @@
 #include "node_base.hpp"
 
 #include <cmath>
+#include <limits>
+#include <iostream>
 
 /**
  * @brief node_base::next is used by the node_base iterator class to get the next node
@@ -159,20 +161,10 @@ void node_base::cleanUpRecursive()
     }
 }
 
-real node_base::derivative() const
-{
-    // assert(neighbour(reversed)->level() == neighbour(direction)->level());
-    return (neighbour(c_direction)->property() - neighbour(c_reversed)->property())/(neighbour(c_direction)->center(dimX) - neighbour(c_reversed)->center(dimX));
-
-    // assert(g_velocity > 0);
-    // for positive velocity we use the look-behind derivative
-    // return (this->property() - neighbour(c_reversed)->property())/(this->center(dimX) - neighbour(c_reversed)->center(dimX));
-}
-
 void node_base::timeStepRecursive()
 {
     if(isSavetyZone()) {
-        m_property = m_property - g_velocity*g_timestep*m_derivative;
+        m_property = timeStepValue();
         for(node_u const &child : m_childs) {
             if(child) {
                 child->timeStepRecursive();
@@ -187,27 +179,78 @@ void node_base::timeStepRecursive()
     m_type = typeUnset;
 }
 
+real node_base::timeStepValue()
+{
+
+    node_p neighbourLeft  = neighbour(posLeft);
+    node_p neighbourRight = neighbour(posRight);
+    // BEGIN bad hack
+    //
+    // due to the introduction of the savety-zone, the distance to the
+    // neighbours is not equal anymore. To get a symmetric case, we have to skip
+    // potentially one neighbour.
+    if(neighbourLeft->level() > lvlBoundary && neighbourRight->level() > lvlBoundary && (child(posLeft).get() || child(posRight).get())) {
+        int diffLevel = neighbourRight->level() - neighbourLeft->level();
+        if(diffLevel >= 1) {
+            neighbourRight = neighbourRight->neighbour(posRight);
+        } else if(diffLevel <= -1) {
+            neighbourLeft  = neighbourLeft->neighbour(posLeft);
+        } else {
+            // assert(diffLevel == 0);
+        }
+    }
+    // END bad hack
+
+    // Lax-Wendroff method
+    // see: http://www.exp.univie.ac.at/cp1/cp1-6/node72.html
+    const real dx    = (neighbourRight->center(dimX)-neighbourLeft->center(dimX))/2;
+    const real alpha = g_velocity*g_timestep/dx;
+
+#ifndef NDEBUG
+    static const real span = x1-x0;
+    static const real eps = std::numeric_limits<real>::epsilon();
+
+    // check if the neighbours are not too far away
+    // std::cerr << "2dx: " << 2*dx << " span/(1 << level()) " << span/(1 << level()) << std::endl;
+    assert(2*dx < span/(1 << level())+eps);
+
+    // check if the neighbours have equal distance
+    const real dxr    = (neighbourRight->center(dimX)-center(dimX));
+    const real dxl    = (center(dimX)-neighbourLeft->center(dimX));
+    if(level() > lvlBoundary) {
+        assert(fabs(dxr-dxl) <= eps);
+    } else {
+        assert(fabs(dxr-dxl+span) <= eps);
+    }
+#endif
+
+    const real er = neighbourRight->m_propertyBackup; // element right (j+1)
+    const real el = neighbour(posLeft )->m_propertyBackup; // element left  (j-1)
+    return m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
+}
+
 void node_base::timeStep()
 {
     assert(this == c_root.get());
 
     // we calculate the PDE for the right boundary manually
     node_p nodeEgo = c_root->boundary(posRight);
-
-    real derivativeEgo = 0;
     if(c_boundaryCondition == bcIndependent) {
-        // look-behind
-        derivativeEgo = (nodeEgo->property() - nodeEgo->neighbour(c_reversed)->property())/(nodeEgo->center(dimX) - nodeEgo->neighbour(c_reversed)->center(dimX));
+        assert(1);
     } else if(c_boundaryCondition == bcPeriodic) {
-        derivativeEgo = nodeEgo->derivative();
+        nodeEgo->updateBackupValue();
         // copy the result to the left boundary
-        c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
+        c_root->boundary(posLeft)->m_propertyBackup = nodeEgo->m_propertyBackup;
     }
 
-    updateDerivativeRecursive();
+    updateBackupValueRecursive();
     timeStepRecursive();
 
-    nodeEgo->m_property  = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
+    if(c_boundaryCondition == bcPeriodic) {
+        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight )->neighbour(posLeft ), posLeft );
+        c_root->boundary(posRight )->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
+    }
+    nodeEgo->m_property  = nodeEgo->timeStepValue();
 
     if(c_boundaryCondition == bcIndependent) {
         //
@@ -322,14 +365,14 @@ void node_base::unpackRecursive(const level_t level)
     }
 }
 
-void node_base::updateDerivativeRecursive()
+void node_base::updateBackupValueRecursive()
 {
     if(isSavetyZone()) {
-        updateDerivative();
+        updateBackupValue();
     }
     for(node_u &child : m_childs) {
         if(child) {
-            child->updateDerivativeRecursive();
+            child->updateBackupValueRecursive();
         }
     }
 }
