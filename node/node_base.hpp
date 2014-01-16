@@ -77,8 +77,9 @@ struct node_base
     };
 
     enum boundaryCondition_t {
-          bcIndependent = 0
-        , bcPeriodic    = 1
+          bcNone        = 0
+        , bcIndependent = 1
+        , bcPeriodic    = 2
     };
 
     static const unsigned int dimensions = DIMENSION;
@@ -108,7 +109,7 @@ struct node_base
     inline node_u &child(const position_t position)
     { return m_childs[position]; }
 
-    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), boundaryCondition_t boundaryCondition = bcIndependent);
+    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), boundaryCondition_t boundaryCondition = bcPeriodic);
 
     inline position_t position() const
     { return m_position; }
@@ -184,7 +185,7 @@ struct node_base
     { return m_parent; }
 
     inline real detail() const
-    { real detail = (m_propertyBackup - interpolation()); return detail; }
+    { real detail = (m_property - interpolation()); return detail; }
 
     inline realarray center() const
     { return m_center; }
