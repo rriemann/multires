@@ -150,6 +150,9 @@ struct node_base
     real property() const
     { return m_property; }
 
+    real propertyBackup() const
+    { return m_propertyBackup; }
+
     inline void set(type_t type)
     { m_type = type_t(m_type | type); }
 
@@ -181,7 +184,7 @@ struct node_base
     { return m_parent; }
 
     inline real detail() const
-    { real detail = (m_property - interpolation()); return detail; }
+    { real detail = (m_propertyBackup - interpolation()); return detail; }
 
     inline realarray center() const
     { return m_center; }

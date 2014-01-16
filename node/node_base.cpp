@@ -43,6 +43,9 @@ bool node_base::isActiveTypeRecursive()
     // active or virtual or savetyzone or none
 
     if(!is(typeCached)) {
+        if((m_center[0] > 0.210937) && (m_center[0] < 0.210939)) {
+            std::cerr << "here we are" << std::endl;
+        }
         // We try to find active children
         for(node_u const &child : m_childs) {
             if(child) {
@@ -137,6 +140,9 @@ bool node_base::isActiveTypeRecursive()
 
         if(is(typeActive)) {
             if(level() < level_t(g_level)) {
+                if(level() > level_t(6)) {
+                    std::cerr << "center: " << m_center[dimX] << std::endl;
+                }
                 for(size_t i = 0; i < childsByDimension; ++i) {
                     createNode(position_t(i)); // create node, if not existing
                     m_childs[i]->set(typeSavetyZone);
@@ -223,10 +229,13 @@ real node_base::timeStepValue()
         assert(fabs(dxr-dxl+span) <= eps);
     }
 #endif
-
     const real er = neighbourRight->m_propertyBackup; // element right (j+1)
     const real el = neighbour(posLeft )->m_propertyBackup; // element left  (j-1)
-    return m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
+    const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
+
+    assert(fabs(property - m_property) < 0.5);
+
+    return property;
 }
 
 void node_base::timeStep()
@@ -354,9 +363,12 @@ node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value,
  */
 void node_base::unpackRecursive(const level_t level)
 {
+#ifndef NDEBUG
     for(const node_p &bounding : m_boundaries) {
         assert(bounding != 0);
     }
+#endif
+
     if(level > lvlNoChilds) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
             createNode(position_t(i));
@@ -402,9 +414,9 @@ real node_base::interpolation() const
 #endif
     assert(m_level > lvlBoundary);
     real property = 0;
-    // # TODO explicitly unroll this loop?
-    for(size_t i = 0; i < childsByDimension; ++i) {
-        property += boundary(position_t(i))->property();
+    // TODO explicitly unroll this loop?
+    for(const node_p &boundary: m_boundaries) {
+        property += boundary->property();
     }
     return property/childsByDimension;
 }
@@ -427,6 +439,7 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     , m_neighbours(boundaries)
     // , m_center initialization (make m_center const) TODO
     , m_property(interpolation())
+    , m_propertyBackup(m_property) // TODO do we need it? (obviously yes)
 {
     assert(level > lvlRoot);
     position_t reversed = reverse(position);
@@ -448,6 +461,7 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
     , m_neighbours({{nullptr}})
     , m_center(center)
     , m_property(c_propertyGenerator(center))
+    , m_propertyBackup(m_property) // TODO do we need it? (not so expensive)
 {
     assert(level < lvlFirst);
 }

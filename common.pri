@@ -16,3 +16,5 @@ INCLUDEPATH += $$PWD
 #HEADERS += \
 #    $$PWD/settings.h \
 #    $$PWD/functions.h
+
+Release:DEFINES += NDEBUG
