@@ -57,7 +57,10 @@ MainWindow::MainWindow(QWidget *parent) :
     customPlot->xAxis->setRange(x0, x1);
     customPlot->yAxis->setRange(-0.2, 1.2);
 
-    customPlot->graph(0)->setPen(QPen(Qt::green));
+    customPlot->graph(0)->setPen(QPen(Qt::black));
+
+    customPlot->addGraph();
+    customPlot->graph(1)->setPen(QPen(Qt::green));
 
     for(size_t i = 0; i < bars.size() ; ++i) {
         bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
@@ -113,11 +116,12 @@ void MainWindow::replot()
 {
     count_nodes_packed = 0;
 
-    QVector<real> xvalues, yvalues;
+    QVector<real> xvalues, yvalues, yvaluestheory;
     QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues, lvlstaticvalues;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(node_t::dimX));
         yvalues.push_back(node.property());
+        yvaluestheory.push_back(node.propertyTheory());
 
         if(node.level() > node_t::lvlRoot) {
             real bar = pow(2,-node.level());
@@ -148,7 +152,8 @@ void MainWindow::replot()
 
     qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
 
-    customPlot->graph(0)->setData(xvalues, yvalues);
+    customPlot->graph(0)->setData(xvalues, yvalues); // black
+    customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
     bars[0]->setData(xvalues, lvlvalues); // blue
     bars[1]->setData(xvalues, lvlvirtualvalues); // red
     bars[2]->setData(xvalues, lvlsavetyvalues); // yellow

@@ -85,6 +85,7 @@ struct node_base
     static const unsigned int dimensions = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real c_epsilon;
+    static real c_time;
 
     static const position_t c_direction = posRight;
     static const position_t c_reversed  = posLeft;
@@ -139,13 +140,20 @@ struct node_base
 
     static real inDomain(const real x)
     {
-        return fmod(fabs(x - x0), g_span) + x0;
+        return std::fmod(std::fabs(x - x0), g_span) + x0;
     }
 
     bool isActiveTypeRecursive();
 
     inline void updateBackupValue()
     { m_propertyBackup = m_property; }
+
+    inline void updateTheoryValue()
+    {
+        realarray center = m_center;
+        center[0] = inDomain(center[0]-c_time*g_velocity);
+        m_propertyTheory = c_propertyGenerator(center);
+    }
 
     void timeStep();
     void optimizeTree();
@@ -158,6 +166,9 @@ struct node_base
 
     real propertyBackup() const
     { return m_propertyBackup; }
+
+    real propertyTheory() const
+    { return m_propertyTheory; }
 
     inline void set(type_t type)
     { m_type = type_t(m_type | type); }
@@ -243,6 +254,7 @@ private:
 public:
     real m_property;
     real m_propertyBackup;
+    real m_propertyTheory;
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

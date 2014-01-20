@@ -71,7 +71,7 @@ real f_eval_sin(realarray xa) {
 }
 
 real f_eval_gauss(realarray xa) {
-    real x = xa[0]-0.05;
+    real x = xa[0];
 
     return exp(-10*x*x);
 }

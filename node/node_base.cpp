@@ -176,6 +176,7 @@ void node_base::timeStepRecursive()
         m_property = interpolation();
         // ^- cut off the datail
     }
+    updateTheoryValue();
 
     // if type is not unset, the derivative is not computed again
     m_type = typeUnset;
@@ -232,7 +233,7 @@ real node_base::timeStepValue()
     const real el = neighbourLeft ->m_propertyBackup; // element left  (j-1)
     const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
 
-    assert(fabs(property - m_propertyBackup) < 0.5);
+    // assert(fabs(property - m_propertyBackup) < 0.5);
 
     return property;
 }
@@ -240,6 +241,7 @@ real node_base::timeStepValue()
 void node_base::timeStep()
 {
     assert(this == c_root.get());
+    c_time += g_timestep;
 
     // we calculate the PDE for the right boundary manually
 
@@ -251,6 +253,7 @@ void node_base::timeStep()
     updateBackupValueRecursive();
     for(const node_p &bounding: m_boundaries) {
         bounding->updateBackupValue();
+        bounding->updateTheoryValue();
     }
 
     if(c_boundaryCondition == bcPeriodic) {
@@ -343,6 +346,8 @@ node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value,
 {
     assert(boundary_value.size() == childsByDimension);
 
+    c_time = 0;
+
     c_propertyGenerator = propertyGenerator;
 
     c_boundaryCondition = boundaryCondition;
@@ -406,6 +411,7 @@ void node_base::initPropertyRecursive()
         }
         m_property = c_propertyGenerator(m_center);
         updateBackupValue();
+        updateTheoryValue();
     }
 }
 
@@ -461,6 +467,8 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     assert(boundary(m_position)->level() + 2 <= m_level);
 
     m_center[dimX] = (parent->center(dimX)+parent->boundary(position)->center(dimX))/2;
+
+    updateTheoryValue();
 }
 
 node_base::node_base(realarray center, node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)
@@ -477,6 +485,7 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
 }
 
 real node_base::c_epsilon = EPSILON;
+real node_base::c_time    = 0;
 node_base::node_u node_base::c_root = node_u(nullptr);
 node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
 
