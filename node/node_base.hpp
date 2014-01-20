@@ -148,11 +148,11 @@ struct node_base
     inline void updateBackupValue()
     { m_propertyBackup = m_property; }
 
-    inline void updateTheoryValue()
+    inline real propertyTheory() const
     {
         realarray center = m_center;
         center[0] = inDomain(center[0]-c_time*g_velocity);
-        m_propertyTheory = c_propertyGenerator(center);
+        return c_propertyGenerator(center);
     }
 
     void timeStep();
@@ -166,9 +166,6 @@ struct node_base
 
     real propertyBackup() const
     { return m_propertyBackup; }
-
-    real propertyTheory() const
-    { return m_propertyTheory; }
 
     inline void set(type_t type)
     { m_type = type_t(m_type | type); }
