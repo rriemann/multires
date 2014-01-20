@@ -88,7 +88,7 @@ MainWindow::~MainWindow()
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcNone);
+    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));

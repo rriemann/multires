@@ -45,9 +45,6 @@ bool node_base::isActiveTypeRecursive()
     // active or virtual or savetyzone or none
 
     if(!is(typeCached)) {
-        if((m_center[0] > 0.210937) && (m_center[0] < 0.210939)) {
-            std::cerr << "here we are" << std::endl;
-        }
         // We try to find active children
         for(node_u const &child : m_childs) {
             if(child) {
@@ -142,9 +139,6 @@ bool node_base::isActiveTypeRecursive()
 
         if(is(typeActive)) {
             if(level() < level_t(g_level)) {
-                if(level() > level_t(6)) {
-                    std::cerr << "center: " << m_center[dimX] << std::endl;
-                }
                 for(size_t i = 0; i < childsByDimension; ++i) {
                     createNode(position_t(i)); // create node, if not existing
                     m_childs[i]->set(typeSavetyZone);
@@ -210,29 +204,32 @@ real node_base::timeStepValue()
 
     // Lax-Wendroff method
     // see: http://www.exp.univie.ac.at/cp1/cp1-6/node72.html
-    const real dx    = (neighbourRight->center(dimX)-neighbourLeft->center(dimX))/2;
+    real dx    = (neighbourRight->center(dimX)-neighbourLeft->center(dimX))/2;
+    if(level() == lvlBoundary) {
+        // we have crossed the border and have to apply the offset
+       dx += g_span/2;
+    }
     const real alpha = g_velocity*g_timestep/dx;
 
 #ifndef NDEBUG
-    static const real span = x1-x0;
-
-    // check if the neighbours are not too far away
-    // std::cerr << "2dx: " << 2*dx << " span/(1 << level()) " << span/(1 << level()) << std::endl;
-    assert(2*dx < span/(1 << level())+eps);
+    assert(dx > 0);
 
     // check if the neighbours have equal distance
-    const real dxr    = (neighbourRight->center(dimX)-center(dimX));
-    const real dxl    = (center(dimX)-neighbourLeft->center(dimX));
+    const real dxr    = neighbourRight->center(dimX)-center(dimX);
+    const real dxl    = center(dimX)-neighbourLeft->center(dimX);
+
     if(level() > lvlBoundary) {
         if(c_boundaryCondition != bcNone) {
             assert(fabs(dxr-dxl) <= eps);
         }
+        // check if the neighbours are not too far away
+        assert(2*dx < g_span/(1 << level())+eps);
     } else {
-        assert(fabs(dxr-dxl+span) <= eps);
+        assert(fabs(dxr-dxl+g_span) <= eps);
     }
 #endif
     const real er = neighbourRight->m_propertyBackup; // element right (j+1)
-    const real el = neighbour(posLeft )->m_propertyBackup; // element left  (j-1)
+    const real el = neighbourLeft ->m_propertyBackup; // element left  (j-1)
     const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
 
     assert(fabs(property - m_propertyBackup) < 0.5);
@@ -248,12 +245,6 @@ void node_base::timeStep()
 
 
     node_p nodeEgo = c_root->boundary(posRight);
-    if(c_boundaryCondition == bcIndependent) {
-        assert(1);
-    } else if(c_boundaryCondition == bcPeriodic) {
-        // copy the result to the left boundary
-        c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
-    }
 
     // the timeStepRecursive method calls timeStepValue which uses the back!
     // Thus it needs to be uptodate!
@@ -262,28 +253,29 @@ void node_base::timeStep()
         bounding->updateBackupValue();
     }
 
-    // m_type = type_t(m_type | typeSavetyZone);
+    if(c_boundaryCondition == bcPeriodic) {
+        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
+        c_root->boundary(posRight)->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
+    }
     timeStepRecursive();
 
-    if(c_boundaryCondition == bcPeriodic) {
-        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight )->neighbour(posLeft ), posLeft );
-        c_root->boundary(posRight )->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
-    }
-    if(c_boundaryCondition != bcNone) {
-        nodeEgo->m_property  = nodeEgo->timeStepValue();
-    }
-
     if(c_boundaryCondition == bcIndependent) {
-        //
+        // up-wind derivative
+        real derivativeEgo = (nodeEgo->propertyBackup() - nodeEgo->neighbour(c_reversed)->propertyBackup())/(nodeEgo->center(dimX) - nodeEgo->neighbour(c_reversed)->center(dimX));
+        nodeEgo->m_property = nodeEgo->m_property - g_velocity*g_timestep*derivativeEgo;
     } else if(c_boundaryCondition == bcPeriodic) {
+        nodeEgo->m_property = nodeEgo->timeStepValue();
+
         // copy the result to the left boundary
         c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
     }
 
+    /*
     updateBackupValueRecursive();
     for(const node_p &bounding: m_boundaries) {
         bounding->updateBackupValue();
     }
+    */
 
     optimizeTree();
 }
@@ -291,8 +283,8 @@ void node_base::timeStep()
 void node_base::optimizeTree()
 {
     if(c_boundaryCondition == bcPeriodic) {
-        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight )->neighbour(posLeft ), posLeft );
-        c_root->boundary(posRight )->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
+        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
+        c_root->boundary(posRight)->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
     }
 
     isActiveTypeRecursive();

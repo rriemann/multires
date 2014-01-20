@@ -137,6 +137,11 @@ struct node_base
         }
     }
 
+    static real inDomain(const real x)
+    {
+        return fmod(fabs(x - x0), g_span) + x0;
+    }
+
     bool isActiveTypeRecursive();
 
     inline void updateBackupValue()
