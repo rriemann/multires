@@ -277,22 +277,18 @@ void node_base::timeStep()
 
 void node_base::optimizeTree()
 {
+    static size_t counter = 0;
+    std::cerr << "counter: " << counter << std::endl;
+    counter++;
+
     isActiveTypeRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
-
+        // we have to manually extend the tree in a way that the level of the
+        // nearest active nodes to the boundaries don't differ more than by 1
         node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
         node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
 
-        // ignore elements that are only savetyZone zone
-        /*
-        while(boundaryRight->is(typeSavetyZone) && !boundaryRight->is(typeActive) && !boundaryRight->is(typeVirtual)) {
-            boundaryRight = boundaryRight->parent();
-        }
-        while(boundaryLeft->is(typeSavetyZone) && !boundaryLeft->is(typeActive) && !boundaryLeft->is(typeVirtual)) {
-            boundaryLeft = boundaryLeft->parent();
-        }
-        */
         while(!boundaryLeft->parent()->is(typeActive)) {
             boundaryLeft = boundaryLeft->parent();
         }
@@ -306,30 +302,15 @@ void node_base::optimizeTree()
 
         if(levelDiff > 0) {
             boundaryLeft->unpackRecursive(level_t(levelDiff));
-            // boundaryLeft->setVirtual();
-            boundaryLeft = c_root->boundary(posRight)->neighbour(posLeft);
+            boundaryLeft = boundaryLeft->child(posRight).get();
             boundaryLeft->setSavetyZone();
         } else if(levelDiff < 0) {
             boundaryRight->unpackRecursive(level_t(-levelDiff));
-            // boundaryRight->setVirtual();
-            boundaryRight = c_root->boundary(posLeft)->neighbour(posRight);
+            boundaryRight = boundaryRight->child(posLeft).get();
             boundaryRight->setSavetyZone();
         }
 
-        // assert(boundaryRight->level() == boundaryLeft->level());
-
-        // make sure, that both outermost (inactive) nodes have the same level
-        bool  done = false;
-        do {
-            if(boundaryRight->isVirtual() || boundaryLeft->isVirtual()) {
-                boundaryRight->setVirtual();
-                boundaryLeft ->setVirtual();
-                done = true;
-            } else {
-                boundaryRight = boundaryRight->parent();
-                boundaryLeft  = boundaryLeft ->parent();
-            }
-        } while(!done);
+        assert(boundaryRight->level() == boundaryLeft->level());
     }
 
     cleanUpRecursive();
