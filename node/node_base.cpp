@@ -191,8 +191,7 @@ real node_base::timeStepValue()
     // due to the introduction of the savety-zone, the distance to the
     // neighbours is not equal anymore. To get a symmetric case, we have to skip
     // potentially one neighbour.
-    // TODO revise the condition in the line below
-    if(neighbourLeft->level() > lvlBoundary && neighbourRight->level() > lvlBoundary && (child(posLeft).get() || child(posRight).get())) {
+    if(child(posLeft).get() || child(posRight).get()) {
         int diffLevel = neighbourRight->level() - neighbourLeft->level();
         if(diffLevel >= 1) {
             neighbourRight = neighbourRight->neighbour(posRight);
