@@ -12,7 +12,7 @@ const size_t g_dimension = DIMENSION;
 typedef double real;
 typedef std::array<real,g_dimension> realarray;
 
-const size_t g_level = 12;
+const size_t g_level = 8;
 const real g_velocity = 0.5;
 
 const real x0    = -1.0;

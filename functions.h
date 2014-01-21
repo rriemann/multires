@@ -62,30 +62,47 @@ real f_eval_square(realarray xa) {
 const real pi2 = 2*std::atan(1.0);
 
 real f_eval_sin(realarray xa) {
-    real x = xa[0];
+    const real x = xa[0];
 
+    /*
     if(x > pi2/3) {
         return 1;
     }
-    return std::sin(3*x)*0.5+0.5;
+    */
+    // return std::sin(3*x)*0.5+0.5;
+
+    return std::sin(pi2*2*x)*0.5+0.5;
 }
 
 real f_eval_gauss(realarray xa) {
-    real x = xa[0];
+    const real x = xa[0];
 
     return exp(-10*x*x);
 }
 
 real f_eval_step(realarray xa) {
-    real x = xa[0];
+    const real x = xa[0];
 
     return (x < 0) ? 0 : 1;
 }
 
 real f_eval_linear(realarray xa) {
-    real x = xa[0];
+    const real x = xa[0];
 
     return x;
+}
+
+real f_eval_triangle(realarray xa) {
+    const real x = xa[0];
+
+    // http://mathworld.wolfram.com/FourierSeriesTriangleWave.html
+    real sum = 0;
+    real factor = 1;
+    for(size_t n = 1; n <= 11; n += 2) {
+        sum += 2/(pi2*pi2)*factor/(n*n)*std::sin(n*pi2*2*x);
+        factor = -1*factor;
+    }
+    return sum;
 }
 
 #endif // FUNCTIONS_H

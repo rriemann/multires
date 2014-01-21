@@ -45,6 +45,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionInitializeRoot"/>
+   <addaction name="actionRescale"/>
    <addaction name="actionRun"/>
    <addaction name="actionAutoPlay"/>
   </widget>
@@ -70,7 +71,9 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="player-time"/>
+    <iconset theme="player-time">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>autoPlay</string>
@@ -78,13 +81,26 @@
   </action>
   <action name="actionInitializeRoot">
    <property name="icon">
-    <iconset theme="view-refresh"/>
+    <iconset theme="view-refresh">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>initializeRoot</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
+   </property>
+  </action>
+  <action name="actionRescale">
+   <property name="icon">
+    <iconset theme="zoom-select"/>
+   </property>
+   <property name="text">
+    <string>rescale</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+0</string>
    </property>
   </action>
  </widget>

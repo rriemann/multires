@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
     connect(timer, SIGNAL(timeout()), this, SLOT(actionRun()));
     connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeRoot()));
+    connect(ui->actionRescale, SIGNAL(triggered()), this, SLOT(rescale()));
 
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 
@@ -81,6 +82,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[3]->setBrush(QBrush(Qt::black));
 
     initializeRoot();
+    rescale();
 }
 
 MainWindow::~MainWindow()
@@ -91,7 +93,7 @@ MainWindow::~MainWindow()
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
+    root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
@@ -153,14 +155,19 @@ void MainWindow::replot()
     qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
-    customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
+    // customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
     bars[0]->setData(xvalues, lvlvalues); // blue
     bars[1]->setData(xvalues, lvlvirtualvalues); // red
     bars[2]->setData(xvalues, lvlsavetyvalues); // yellow
     bars[3]->setData(xvalues, lvlstaticvalues); // black
 
-    customPlot->rescaleAxes();
     customPlot->replot();
+}
+
+void MainWindow::rescale()
+{
+    customPlot->rescaleAxes();
+    replot();
 }
 
 void MainWindow::autoPlayToggled(bool checked)

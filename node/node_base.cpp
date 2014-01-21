@@ -191,6 +191,7 @@ real node_base::timeStepValue()
     // due to the introduction of the savety-zone, the distance to the
     // neighbours is not equal anymore. To get a symmetric case, we have to skip
     // potentially one neighbour.
+    // TODO revise the condition in the line below
     if(neighbourLeft->level() > lvlBoundary && neighbourRight->level() > lvlBoundary && (child(posLeft).get() || child(posRight).get())) {
         int diffLevel = neighbourRight->level() - neighbourLeft->level();
         if(diffLevel >= 1) {
@@ -243,11 +244,6 @@ void node_base::timeStep()
     assert(this == c_root.get());
     c_time += g_timestep;
 
-    // we calculate the PDE for the right boundary manually
-
-
-    node_p nodeEgo = c_root->boundary(posRight);
-
     // the timeStepRecursive method calls timeStepValue which uses the back!
     // Thus it needs to be uptodate!
     updateBackupValueRecursive();
@@ -262,6 +258,9 @@ void node_base::timeStep()
     }
     timeStepRecursive();
 
+
+    // we calculate the PDE for the right boundary manually
+    node_p nodeEgo = c_root->boundary(posRight);
     if(c_boundaryCondition == bcIndependent) {
         // up-wind derivative
         real derivativeEgo = (nodeEgo->propertyBackup() - nodeEgo->neighbour(c_reversed)->propertyBackup())/(nodeEgo->center(dimX) - nodeEgo->neighbour(c_reversed)->center(dimX));
@@ -273,44 +272,54 @@ void node_base::timeStep()
         c_root->boundary(posLeft)->m_property = nodeEgo->m_property;
     }
 
-    /*
-    updateBackupValueRecursive();
-    for(const node_p &bounding: m_boundaries) {
-        bounding->updateBackupValue();
-    }
-    */
-
     optimizeTree();
 }
 
 void node_base::optimizeTree()
 {
-    if(c_boundaryCondition == bcPeriodic) {
-        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
-        c_root->boundary(posRight)->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
-    }
-
     isActiveTypeRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
+
         node_p boundaryRight = c_root->boundary(posLeft )->neighbour(posRight);
         node_p boundaryLeft  = c_root->boundary(posRight)->neighbour(posLeft );
 
+        // ignore elements that are only savetyZone zone
+        /*
+        while(boundaryRight->is(typeSavetyZone) && !boundaryRight->is(typeActive) && !boundaryRight->is(typeVirtual)) {
+            boundaryRight = boundaryRight->parent();
+        }
+        while(boundaryLeft->is(typeSavetyZone) && !boundaryLeft->is(typeActive) && !boundaryLeft->is(typeVirtual)) {
+            boundaryLeft = boundaryLeft->parent();
+        }
+        */
+        while(!boundaryLeft->parent()->is(typeActive)) {
+            boundaryLeft = boundaryLeft->parent();
+        }
+        while(!boundaryRight->parent()->is(typeActive)) {
+            boundaryRight = boundaryRight->parent();
+        }
+
         int levelDiff = int(boundaryRight->level()) - int(boundaryLeft->level());
         assert(abs(levelDiff) <= 1);
+        std::cerr << "diff: " << levelDiff << " left: " << boundaryLeft->type() << ", right: " << boundaryRight->type() << std::endl;
 
         if(levelDiff > 0) {
             boundaryLeft->unpackRecursive(level_t(levelDiff));
+            // boundaryLeft->setVirtual();
             boundaryLeft = c_root->boundary(posRight)->neighbour(posLeft);
+            boundaryLeft->setSavetyZone();
         } else if(levelDiff < 0) {
             boundaryRight->unpackRecursive(level_t(-levelDiff));
+            // boundaryRight->setVirtual();
             boundaryRight = c_root->boundary(posLeft)->neighbour(posRight);
+            boundaryRight->setSavetyZone();
         }
 
-        assert(boundaryRight->level() == boundaryLeft->level());
+        // assert(boundaryRight->level() == boundaryLeft->level());
 
         // make sure, that both outermost (inactive) nodes have the same level
-        bool done = false;
+        bool  done = false;
         do {
             if(boundaryRight->isVirtual() || boundaryLeft->isVirtual()) {
                 boundaryRight->setVirtual();
@@ -367,6 +376,11 @@ node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value,
 
     c_root->unpackRecursive(levels);
     c_root->initPropertyRecursive();
+
+    if(c_boundaryCondition == bcPeriodic) {
+        c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
+        c_root->boundary(posRight)->setNeighbour(c_root->boundary(posLeft )->neighbour(posRight), posRight);
+    }
 
     return c_root.get();
 }

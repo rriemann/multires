@@ -58,6 +58,7 @@ private slots:
 
     void actionRun();
     void replot();
+    void rescale();
     void autoPlayToggled(bool checked);
 
     void initializeRoot();
