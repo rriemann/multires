@@ -86,6 +86,8 @@ struct node_base
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real c_epsilon;
     static real c_time;
+    static real c_timestep;
+    static level_t c_maxlevel;
 
     static const position_t c_direction = posRight;
     static const position_t c_reversed  = posLeft;
@@ -109,6 +111,9 @@ struct node_base
 
     inline node_u &child(const position_t position)
     { return m_childs[position]; }
+
+    inline const node_u_array &childs() const
+    { return m_childs; }
 
     static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), boundaryCondition_t boundaryCondition = bcPeriodic);
 
@@ -155,7 +160,7 @@ struct node_base
         m_propertyTheory = c_propertyGenerator(center);
     }
 
-    void timeStep();
+    real timeStep();
     void optimizeTree();
 
     inline level_t level() const
@@ -255,6 +260,12 @@ public:
     real m_property;
     real m_propertyBackup;
     real m_propertyTheory;
+
+#ifdef BURGER
+    const real &m_speed = m_propertyBackup;
+#else
+    const real &m_speed = g_velocity;
+#endif
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

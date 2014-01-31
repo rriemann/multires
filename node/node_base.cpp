@@ -158,6 +158,10 @@ void node_base::cleanUpRecursive()
             child->cleanUpRecursive();
             if(!child->isVirtual()) {
                 child.reset();
+            } else {
+                if(child->level() > c_maxlevel) {
+                    c_maxlevel = child->level();
+                }
             }
         }
     }
@@ -184,6 +188,7 @@ void node_base::timeStepRecursive()
 
 real node_base::timeStepValue()
 {
+
     node_p neighbourLeft  = neighbour(posLeft);
     node_p neighbourRight = neighbour(posRight);
     // BEGIN bad hack
@@ -210,7 +215,8 @@ real node_base::timeStepValue()
         // we have crossed the border and have to apply the offset
        dx += g_span/2;
     }
-    const real alpha = g_velocity*g_timestep/dx;
+    // const real alpha = g_velocity*g_timestep/dx;
+    // const real alpha = m_property*c_timestep/g_span*(2 << c_maxlevel);
 
 #ifndef NDEBUG
     assert(dx > 0);
@@ -229,27 +235,40 @@ real node_base::timeStepValue()
         assert(fabs(dxr-dxl+g_span) <= eps);
     }
 #endif
-    const real er = neighbourRight->m_propertyBackup; // element right (j+1)
-    const real el = neighbourLeft ->m_propertyBackup; // element left  (j-1)
-    const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
+
+    const real  er = neighbourRight->m_speed; // element right (j+1)
+    const real  el = neighbourLeft ->m_speed; // element left  (j-1)
+    const real &ee = m_speed;
+
+    // u_j+0.5
+    const real ujp = 0.5*(er+ee)-(er+ee)*c_timestep/(4*dx)*(er-ee);
+    // u_j-0.5
+    const real ujm = 0.5*(el+ee)-(el+ee)*c_timestep/(4*dx)*(ee-el);
+
+    const real property = ee - (ujp+ujm)*c_timestep/(4*dx)*(ujp-ujm);
+
+    // const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
 
     // assert(fabs(property - m_propertyBackup) < 0.5);
 
     return property;
 }
 
-void node_base::timeStep()
+real node_base::timeStep()
 {
     assert(this == c_root.get());
-    c_time += g_timestep;
 
     // the timeStepRecursive method calls timeStepValue which uses the back!
     // Thus it needs to be uptodate!
+    c_timestep = g_timestep;
     updateBackupValueRecursive();
     for(const node_p &bounding: m_boundaries) {
         bounding->updateBackupValue();
         bounding->updateTheoryValue();
     }
+    c_time += c_timestep;
+
+    std::cerr << "max level: " << c_maxlevel << " dt: " << c_timestep << std::endl;
 
     if(c_boundaryCondition == bcPeriodic) {
         c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
@@ -272,14 +291,12 @@ void node_base::timeStep()
     }
 
     optimizeTree();
+
+    return c_timestep;
 }
 
 void node_base::optimizeTree()
 {
-    static size_t counter = 0;
-    std::cerr << "counter: " << counter << std::endl;
-    counter++;
-
     isActiveTypeRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
@@ -297,7 +314,7 @@ void node_base::optimizeTree()
 
         int levelDiff = int(boundaryRight->level()) - int(boundaryLeft->level());
         assert(abs(levelDiff) <= 1);
-        std::cerr << "diff: " << levelDiff << " left: " << boundaryLeft->type() << ", right: " << boundaryRight->type() << std::endl;
+        // std::cerr << "diff: " << levelDiff << " left: " << boundaryLeft->type() << ", right: " << boundaryRight->type() << std::endl;
 
         if(levelDiff > 0) {
             boundaryLeft->unpackRecursive(level_t(levelDiff));
@@ -312,6 +329,7 @@ void node_base::optimizeTree()
         assert(boundaryRight->level() == boundaryLeft->level());
     }
 
+    c_maxlevel = level();
     cleanUpRecursive();
 }
 
@@ -389,6 +407,10 @@ void node_base::updateBackupValueRecursive()
 {
     if(isSavetyZone()) {
         updateBackupValue();
+        real dt = std::fabs(g_cfl/m_speed*g_span/(2 << level())); // TODO optimize
+        if(dt < c_timestep) {
+            c_timestep = dt;
+        }
     }
     for(node_u &child : m_childs) {
         if(child) {
@@ -478,8 +500,10 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
     assert(level < lvlFirst);
 }
 
-real node_base::c_epsilon = EPSILON;
-real node_base::c_time    = 0;
+real node_base::c_epsilon  = EPSILON;
+real node_base::c_time     = 0;
+real node_base::c_timestep = 0;
+node_base::level_t node_base::c_maxlevel;
 node_base::node_u node_base::c_root = node_u(nullptr);
 node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
 

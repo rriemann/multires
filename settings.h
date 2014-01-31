@@ -7,6 +7,8 @@
 #define DIMENSION 1
 #define EPSILON 0.001
 
+// #define BURGER 1
+
 const size_t g_dimension = DIMENSION;
 
 typedef double real;
