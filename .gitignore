@@ -6,6 +6,7 @@ rawRunner
 *.ko
 *.obj
 *.elf
+.*
 
 # Libraries
 *.lib
