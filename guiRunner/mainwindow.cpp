@@ -117,6 +117,7 @@ void MainWindow::initializeRoot()
 
 void MainWindow::actionRun()
 {
+    static real overalltime = 0;
     if(root) {
         int stepAtOnce = spinBox->value();
         real timeInterval = g_timestep*stepAtOnce;
@@ -126,14 +127,10 @@ void MainWindow::actionRun()
             runTime += root->timeStep();
             counter++;
         } while(runTime < timeInterval);
+        overalltime += runTime;
         qDebug() << "counter:" << counter++;
+        qDebug() << "overalltime: " << overalltime;
 
-
-        /*
-        for(int i = 0; i < stepAtOnce; ++i) {
-            qDebug() << root->timeStep();
-        }
-        */
         replot();
     }
 }
@@ -178,7 +175,7 @@ void MainWindow::replot()
     qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
-    // customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
+    customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
     bars[0]->setData(xvalues, lvlvalues); // blue
     bars[1]->setData(xvalues, lvlvirtualvalues); // red
     bars[2]->setData(xvalues, lvlsavetyvalues); // yellow

@@ -246,7 +246,7 @@ real node_base::timeStepValue()
 
     const real property = ee - (ujp+ujm)*c_timestep/(4*dx)*(ujp-ujm);
 #else
-    const real alpha = g_velocity*g_timestep/dx;
+    const real alpha = g_velocity*c_timestep/dx;
     const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
 #endif
 
@@ -292,6 +292,8 @@ real node_base::timeStep()
     }
 
     optimizeTree();
+
+    std::cerr << "c_time: " << c_time << std::endl;
 
     return c_timestep;
 }
