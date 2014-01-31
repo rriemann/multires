@@ -6,17 +6,40 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>580</width>
-    <height>398</height>
+    <width>775</width>
+    <height>491</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QVBoxLayout" name="verticalLayout">
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QCustomPlot" name="customPlot" native="true"/>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QCustomPlot" name="customPlot" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+      </widget>
+      <widget class="QGraphicsView" name="graphicsView">
+       <property name="frameShape">
+        <enum>QFrame::NoFrame</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="dragMode">
+        <enum>QGraphicsView::NoDrag</enum>
+       </property>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,7 +48,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>580</width>
+     <width>775</width>
      <height>20</height>
     </rect>
    </property>
@@ -94,7 +117,9 @@
   </action>
   <action name="actionRescale">
    <property name="icon">
-    <iconset theme="zoom-select"/>
+    <iconset theme="zoom-select">
+     <normaloff/>
+    </iconset>
    </property>
    <property name="text">
     <string>rescale</string>

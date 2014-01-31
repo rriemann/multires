@@ -260,6 +260,12 @@ public:
     real m_property;
     real m_propertyBackup;
     real m_propertyTheory;
+
+#ifdef BURGER
+    const real &m_speed = m_propertyBackup;
+#else
+    const real &m_speed = g_velocity;
+#endif
 };
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)

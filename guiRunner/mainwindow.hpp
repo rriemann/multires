@@ -27,6 +27,8 @@ struct node_base;
 class QSpinBox;
 class QTimer;
 
+QT_FORWARD_DECLARE_CLASS(QGraphicsScene)
+
 namespace Ui {
 class MainWindow;
 }
@@ -54,6 +56,11 @@ private:
     QSpinBox *spinBox;
     QTimer *timer;
 
+    QGraphicsScene *scene;
+
+protected:
+    void resizeEvent(QResizeEvent * event );
+
 private slots:
 
     void actionRun();
@@ -62,6 +69,8 @@ private slots:
     void autoPlayToggled(bool checked);
 
     void initializeRoot();
+
+    void blockBuilder(node_t::node_p node);
 };
 
 #endif // MAINWINDOW_HPP

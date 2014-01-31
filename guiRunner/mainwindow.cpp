@@ -22,11 +22,17 @@
 #include <QSpinBox>
 #include <QTimer>
 
+#include <QGraphicsScene>
+#include <QGraphicsRectItem>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    scene(new QGraphicsScene)
 {
     ui->setupUi(this);
+    ui->splitter->setSizes(QList<int>() << 100 << 100);
+    ui->graphicsView->setScene(scene);
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
@@ -90,6 +96,12 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+    QMainWindow::resizeEvent(event);
+}
+
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
@@ -107,9 +119,21 @@ void MainWindow::actionRun()
 {
     if(root) {
         int stepAtOnce = spinBox->value();
+        real timeInterval = g_timestep*stepAtOnce;
+        real runTime = 0;
+        size_t counter = 0;
+        do {
+            runTime += root->timeStep();
+            counter++;
+        } while(runTime < timeInterval);
+        qDebug() << "counter:" << counter++;
+
+
+        /*
         for(int i = 0; i < stepAtOnce; ++i) {
-            root->timeStep();
+            qDebug() << root->timeStep();
         }
+        */
         replot();
     }
 }
@@ -146,7 +170,6 @@ void MainWindow::replot()
             lvlvalues       .push_back(0);
             lvlsavetyvalues .push_back(0);
             lvlvirtualvalues.push_back(0);
-
             lvlstaticvalues .push_back(1);
         }
         ++count_nodes_packed;
@@ -162,6 +185,40 @@ void MainWindow::replot()
     bars[3]->setData(xvalues, lvlstaticvalues); // black
 
     customPlot->replot();
+
+    scene->clear();
+    blockBuilder(root);
+    ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+
+void MainWindow::blockBuilder(node_base::node_p node)
+{
+    const static qreal height = 20;
+    const qreal stretchX = 300;
+    qreal width = stretchX/(1 << node->level());
+    qreal center = node->center(node_t::dimX)*stretchX/2;
+    qreal bottom = node->level()*height;
+    qreal x = qFloor(center-0.5*width);
+
+    static QBrush brush(Qt::SolidPattern);
+    if(node->isActive()) {
+        brush.setColor(Qt::blue);
+    } else if(node->isSavetyZone()) {
+        brush.setColor(Qt::yellow);
+    } else if(node->isVirtual()) {
+        brush.setColor(Qt::red);
+    } else {
+        abort();
+    }
+    const QPen pen(Qt::transparent);
+    scene->addRect(x, -bottom, width, height, pen, brush);
+    scene->addLine(x, -bottom+height, x + width, -bottom+height, QPen(Qt::black));
+
+    for(node_t::node_u const &child : node->childs()) {
+        if(child) {
+           blockBuilder(child.get());
+        }
+    }
 }
 
 void MainWindow::rescale()
