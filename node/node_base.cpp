@@ -293,8 +293,6 @@ real node_base::timeStep()
 
     optimizeTree();
 
-    std::cerr << "c_time: " << c_time << std::endl;
-
     return c_timestep;
 }
 

@@ -105,10 +105,10 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), node_t::bcPeriodic);
+    root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), node_t::bcPeriodic);
 
     // it is not clear if this gives the right result
-    count_nodes = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator(root->boundary(node_t::posRight)));
+    count_nodes = (1 << g_level)+1;
 
     root->optimizeTree();
 
@@ -117,7 +117,6 @@ void MainWindow::initializeRoot()
 
 void MainWindow::actionRun()
 {
-    static real overalltime = 0;
     if(root) {
         int stepAtOnce = spinBox->value();
         real timeInterval = g_timestep*stepAtOnce;
@@ -127,9 +126,7 @@ void MainWindow::actionRun()
             runTime += root->timeStep();
             counter++;
         } while(runTime < timeInterval);
-        overalltime += runTime;
         qDebug() << "counter:" << counter++;
-        qDebug() << "overalltime: " << overalltime;
 
         replot();
     }
@@ -144,8 +141,9 @@ void MainWindow::replot()
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(node_t::dimX));
         yvalues.push_back(node.property());
+#ifndef BURGERS
         yvaluestheory.push_back(node.propertyTheory());
-
+#endif
         if(node.level() > node_t::lvlRoot) {
             real bar = pow(2,-node.level());
             if(node.is(node_t::typeActive)) {
@@ -172,10 +170,14 @@ void MainWindow::replot()
         ++count_nodes_packed;
     });
 
-    qDebug() << QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
+    QString pack_rate = QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
+    qDebug() << pack_rate;
+    statusBar()->showMessage(pack_rate);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
+#ifndef BURGERS
     customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
+#endif
     bars[0]->setData(xvalues, lvlvalues); // blue
     bars[1]->setData(xvalues, lvlvirtualvalues); // red
     bars[2]->setData(xvalues, lvlsavetyvalues); // yellow
@@ -195,7 +197,7 @@ void MainWindow::blockBuilder(node_base::node_p node)
     qreal width = stretchX/(1 << node->level());
     qreal center = node->center(node_t::dimX)*stretchX/2;
     qreal bottom = node->level()*height;
-    qreal x = qFloor(center-0.5*width);
+    qreal x = center-0.5*width;
 
     static QBrush brush(Qt::SolidPattern);
     if(node->isActive()) {
@@ -210,6 +212,8 @@ void MainWindow::blockBuilder(node_base::node_p node)
     const QPen pen(Qt::transparent);
     scene->addRect(x, -bottom, width, height, pen, brush);
     scene->addLine(x, -bottom+height, x + width, -bottom+height, QPen(Qt::black));
+    scene->addLine(center, -bottom+height, center+0.25*width, -bottom, QPen(Qt::black));
+    scene->addLine(center, -bottom+height, center-0.25*width, -bottom, QPen(Qt::black));
 
     for(node_t::node_u const &child : node->childs()) {
         if(child) {

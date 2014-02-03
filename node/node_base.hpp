@@ -145,7 +145,7 @@ struct node_base
 
     static real inDomain(const real x)
     {
-        return std::fmod(std::fabs(x - x0), g_span) + x0;
+        return std::fmod(std::fabs(x - x0 + g_span), g_span) + x0;
     }
 
     bool isActiveTypeRecursive();
@@ -156,7 +156,9 @@ struct node_base
     inline void updateTheoryValue()
     {
         realarray center = m_center;
-        center[0] = inDomain(center[0]-c_time*g_velocity);
+        // we have to use fmod here again because inDomain() is buggy
+        center[0] = inDomain(center[0]-std::fmod(c_time*g_velocity, g_span));
+        assert(center[0] >= x0 && center[0] <= x1);
         m_propertyTheory = c_propertyGenerator(center);
     }
 

@@ -98,7 +98,7 @@ real f_eval_triangle(realarray xa) {
     // http://mathworld.wolfram.com/FourierSeriesTriangleWave.html
     real sum = 0;
     real factor = 1;
-    for(size_t n = 1; n <= 11; n += 2) {
+    for(size_t n = 1; n <= 15; n += 2) {
         sum += 2/(pi2*pi2)*factor/(n*n)*std::sin(n*pi2*2*x);
         factor = -1*factor;
     }
