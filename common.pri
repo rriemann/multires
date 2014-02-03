@@ -12,9 +12,10 @@ contains( QMAKE_CC, gcc ) {
 }
 
 INCLUDEPATH += $$PWD
+DEPENDPATH  += $$PWD
 
-#HEADERS += \
-#    $$PWD/settings.h \
-#    $$PWD/functions.h
+HEADERS += \
+    $$PWD/settings.h \
+    $$PWD/functions.h
 
 Release:DEFINES += NDEBUG

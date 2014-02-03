@@ -34,7 +34,7 @@ int main()
 
     std::vector<real> boundaries = {x0, x1};
 
-    node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), node_t::bcPeriodic);
+    node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
     root->optimizeTree();
 
 
@@ -56,7 +56,7 @@ int main()
         // std::cerr << node << std::endl;
 
         file << boost::format("%e %e %e %e %e %e\n")
-                % node.center(node_t::dimX)
+                % node.center(dimX)
                 % node.m_property
                 // % ((node.level() > node_t::lvlBoundary) ? node.interpolation() : node.m_property)
                 % 12.0

@@ -105,7 +105,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), node_t::bcPeriodic);
+    root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = (1 << g_level)+1;
@@ -139,7 +139,7 @@ void MainWindow::replot()
     QVector<real> xvalues, yvalues, yvaluestheory;
     QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues, lvlstaticvalues;
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
-        xvalues.push_back(node.center(node_t::dimX));
+        xvalues.push_back(node.center(dimX));
         yvalues.push_back(node.property());
 #ifndef BURGERS
         yvaluestheory.push_back(node.propertyTheory());
@@ -195,7 +195,7 @@ void MainWindow::blockBuilder(node_base::node_p node)
     const static qreal height = 20;
     const qreal stretchX = 300;
     qreal width = stretchX/(1 << node->level());
-    qreal center = node->center(node_t::dimX)*stretchX/2;
+    qreal center = node->center(dimX)*stretchX/2;
     qreal bottom = node->level()*height;
     qreal x = center-0.5*width;
 

@@ -341,7 +341,7 @@ void node_base::optimizeTree()
 void node_base::createNode(const position_t position)
 {
     if(!m_childs[position]) {
-        assert(dimensions == 1);
+        assert(g_dimension == 1);
         node_p_array boundaries;
         boundaries[reverse(position)] = this;
         boundaries[position] = this->boundary(position);
@@ -350,7 +350,7 @@ void node_base::createNode(const position_t position)
     }
 }
 
-node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels, boundaryCondition_t boundaryCondition)
+node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels, const boundaryCondition_t boundaryCondition)
 {
     assert(boundary_value.size() == childsByDimension);
 
@@ -510,6 +510,6 @@ real node_base::c_time     = 0;
 real node_base::c_timestep = 0;
 node_base::level_t node_base::c_maxlevel;
 node_base::node_u node_base::c_root = node_u(nullptr);
-node_base::boundaryCondition_t node_base::c_boundaryCondition = node_base::bcIndependent;
+boundaryCondition_t node_base::c_boundaryCondition = bcIndependent;
 
-node_base::propertyGenerator_t node_base::c_propertyGenerator = node_base::propertyGenerator_t();
+propertyGenerator_t node_base::c_propertyGenerator = propertyGenerator_t();

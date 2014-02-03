@@ -1,5 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS  = node \
+           regular \
            rawRunner \
            guiRunner
 

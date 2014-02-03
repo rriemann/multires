@@ -72,17 +72,6 @@ struct node_base
         , typeActive     = 1 << 4
     };
 
-    enum dimension_t {
-          dimX = 0
-    };
-
-    enum boundaryCondition_t {
-          bcNone        = 0
-        , bcIndependent = 1
-        , bcPeriodic    = 2
-    };
-
-    static const unsigned int dimensions = DIMENSION;
     static const unsigned int childsByDimension = (1 << DIMENSION);
     static real c_epsilon;
     static real c_time;
@@ -97,9 +86,6 @@ struct node_base
     typedef std::unique_ptr<node_base> node_u;
     typedef std::array<node_p,childsByDimension> node_p_array;
     typedef std::array<node_u,childsByDimension> node_u_array;
-    typedef std::array<real,dimensions> realvector;
-
-    typedef std::function<real(realarray)> propertyGenerator_t;
 
     // virtual static node_ptr factory(const node_ptr &parent, Position position, level_t level = 0) = 0;
 
@@ -115,7 +101,7 @@ struct node_base
     inline const node_u_array &childs() const
     { return m_childs; }
 
-    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), boundaryCondition_t boundaryCondition = bcPeriodic);
+    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), const boundaryCondition_t boundaryCondition = bcPeriodic);
 
     inline position_t position() const
     { return m_position; }
@@ -144,11 +130,6 @@ struct node_base
         } else {
             return position_t(position - 1);
         }
-    }
-
-    static real inDomain(const real x)
-    {
-        return std::fmod(std::fabs(x - x0 + g_span), g_span) + x0;
     }
 
     bool isActiveTypeRecursive();
@@ -275,7 +256,7 @@ public:
 
 inline std::ostream& operator<<(std::ostream& stream, node_base const& node)
 {
-    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.isActive()) + int(node.isVirtual())) % node.center(node_base::dimX) % node.property() % node.interpolation();
+    stream << boost::format("< < level: % 3d, pos: % 2d, act: % 01d, center: % 1.3f > property: % 3.3f interpolation: % 3.3f >") % node.level() % node.position() % (int(node.isActive()) + int(node.isVirtual())) % node.center(dimX) % node.property() % node.interpolation();
     return stream;
 }
 
