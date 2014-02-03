@@ -34,21 +34,17 @@ int main()
 
     std::vector<real> boundaries = {x0, x1};
 
-    node_t::propertyGenerator_t propertyGenerator(&f_eval_gauss);
+    node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), node_t::bcPeriodic);
+    root->optimizeTree();
 
-    node_tp root = node_t::createRoot(boundaries, propertyGenerator);
 
+    size_t count_nodes = (1 << g_level) + 1;
 
-    size_t count_nodes = 0;
-
-    for(size_t timestep = 0; timestep < 10; ++timestep) {
-        /*
-        root->setNodeStateRecursive();
-        root->cleanUpRecursive();
-        root->flow();
-        */
+    // for(size_t timestep = 0; timestep < 100; ++timestep) {
+    while(root->getTime() < 0.6) {
         root->timeStep();
     }
+    std::cerr << "time passed: " << root->getTime() << std::endl;
 
     size_t count_nodes_packed = 0;
 
@@ -57,15 +53,16 @@ int main()
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         ++count_nodes_packed;
 
-        std::cout << node << std::endl;
+        // std::cerr << node << std::endl;
 
         file << boost::format("%e %e %e %e %e %e\n")
                 % node.center(node_t::dimX)
                 % node.m_property
-                % node.interpolation()
+                // % ((node.level() > node_t::lvlBoundary) ? node.interpolation() : node.m_property)
+                % 12.0
                 % ((node.level() > node_t::lvlRoot) ? node.level() : 0)
-                % (node.is(node_t::typeActive) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0)
-                % (node.is(node_t::typeVirtual) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
+                % (node.is(node_t::typeActive)     ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0)
+                % (node.is(node_t::typeSavetyZone) && !node.is(node_t::typeActive) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
     });
     file.close();
     std::cerr << boost::format("pack rate: %d/%d = %f\n") % count_nodes_packed % count_nodes % (real(count_nodes_packed)/count_nodes);

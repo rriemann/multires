@@ -269,7 +269,7 @@ real node_base::timeStep()
     }
     c_time += c_timestep;
 
-    std::cerr << "max level: " << c_maxlevel << " dt: " << c_timestep << std::endl;
+    // std::cerr << "max level: " << c_maxlevel << " dt: " << c_timestep << std::endl;
 
     if(c_boundaryCondition == bcPeriodic) {
         c_root->boundary(posLeft )->setNeighbour(c_root->boundary(posRight)->neighbour(posLeft ), posLeft );
@@ -443,13 +443,13 @@ void node_base::initPropertyRecursive()
  */
 real node_base::interpolation() const
 {
-#if 0 // before NDEBUG
+#ifndef NDEBUG
     // only in debugging mode interpolation should be called on the boundary
     if(m_level == lvlBoundary) {
-        return m_property();
+        return m_property;
     }
 #endif
-    assert(m_level > lvlBoundary);
+    assert(m_level > lvlBoundary || c_boundaryCondition == bcPeriodic);
     real property = 0;
     // TODO explicitly unroll this loop?
     for(const node_p &boundary: m_boundaries) {

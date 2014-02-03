@@ -170,9 +170,9 @@ void MainWindow::replot()
         ++count_nodes_packed;
     });
 
-    QString pack_rate = QString("pack rate: %1/%2 = %3").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes);
-    qDebug() << pack_rate;
-    statusBar()->showMessage(pack_rate);
+    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(root->getTime());
+    qDebug() << pack_rate_time;
+    statusBar()->showMessage(pack_rate_time);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
 #ifndef BURGERS

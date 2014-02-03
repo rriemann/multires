@@ -131,6 +131,9 @@ struct node_base
         return m_boundaries[position];
     }
 
+    static real getTime()
+    { return c_time; }
+
     static position_t reverse(position_t position)
     {
         // attention: this doesn't make sense for posRoot = -1
