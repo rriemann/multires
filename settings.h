@@ -18,7 +18,7 @@ typedef double real;
 typedef std::array<real,g_dimension> realarray;
 typedef std::vector<real> realvector;
 
-const size_t g_level = 8;
+const size_t g_level = 10;
 const real g_velocity = 0.5;
 
 const real x0    = -1.0;
