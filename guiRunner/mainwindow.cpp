@@ -69,6 +69,11 @@ MainWindow::MainWindow(QWidget *parent) :
     customPlot->addGraph();
     customPlot->graph(1)->setPen(QPen(Qt::green));
 
+#ifdef REGULAR
+    customPlot->addGraph();
+    customPlot->graph(2)->setPen(QPen(Qt::magenta));
+#endif
+
     for(size_t i = 0; i < bars.size() ; ++i) {
         bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
         customPlot->addPlottable(bars[i]);
@@ -105,31 +110,46 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
+    m_root = node_t::createRoot(boundaries, f_eval_gauss, node_t::level_t(g_level), bcPeriodic);
 
     // it is not clear if this gives the right result
     count_nodes = (1 << g_level)+1;
 
-    root->optimizeTree();
+    m_root->optimizeTree();
+
+#ifdef REGULAR
+    m_root_regular = regular_t::createRoot(f_eval_gauss, bcPeriodic);
+#endif
 
     replot();
 }
 
 void MainWindow::actionRun()
 {
-    if(root) {
-        int stepAtOnce = spinBox->value();
-        real timeInterval = g_timestep*stepAtOnce;
+    int stepAtOnce = spinBox->value();
+    real timeInterval = g_timestep*stepAtOnce;
+    if(m_root) {
         real runTime = 0;
         size_t counter = 0;
         do {
-            runTime += root->timeStep();
+            runTime += m_root->timeStep();
             counter++;
         } while(runTime < timeInterval);
         qDebug() << "counter:" << counter++;
-
-        replot();
     }
+
+#ifdef REGULAR
+    if(m_root_regular) {
+        size_t counter = 0;
+        do {
+            m_root_regular->timeStep();
+            counter++;
+        } while(m_root_regular->getTime() < m_root->getTime());
+        qDebug() << "counter_regular:" << counter++;
+    }
+#endif
+
+    replot();
 }
 
 void MainWindow::replot()
@@ -138,7 +158,7 @@ void MainWindow::replot()
 
     QVector<real> xvalues, yvalues, yvaluestheory;
     QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues, lvlstaticvalues;
-    std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
+    std::for_each(node_iterator(m_root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(dimX));
         yvalues.push_back(node.property());
 #ifndef BURGERS
@@ -170,7 +190,7 @@ void MainWindow::replot()
         ++count_nodes_packed;
     });
 
-    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(root->getTime());
+    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(m_root->getTime());
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
 
@@ -183,10 +203,22 @@ void MainWindow::replot()
     bars[2]->setData(xvalues, lvlsavetyvalues); // yellow
     bars[3]->setData(xvalues, lvlstaticvalues); // black
 
+#ifdef REGULAR
+    QVector<real> yvalues_regular;
+    for(const real& val: m_root_regular->getData()) {
+        yvalues_regular << val;
+    }
+    QVector<real> xvalues_regular;
+    for(const real& val: m_root_regular->getCenter()) {
+        xvalues_regular << val;
+    }
+    customPlot->graph(2)->setData(xvalues_regular, yvalues_regular); // magenta
+#endif
+
     customPlot->replot();
 
     scene->clear();
-    blockBuilder(root);
+    blockBuilder(m_root);
     ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 

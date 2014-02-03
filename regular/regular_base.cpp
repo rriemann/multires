@@ -20,7 +20,7 @@ regular_base::regular_base(const propertyGenerator_t &propertyGenerator, const b
     m_propertyGenerator(propertyGenerator)
   , m_boundaryCondition(boundaryCondition)
   , N((1 << g_level) + 1)
-  , dx(N/g_span)
+  , dx(g_span/N)
   , dt(g_cfl*dx/g_velocity)
   , alpha(g_velocity*dt/dx)
   , m_time(0)
@@ -32,7 +32,9 @@ regular_base::regular_base(const propertyGenerator_t &propertyGenerator, const b
     for(size_t i = 0; i < N; ++i) {
         real x = i*dx+x0;
         xvalues.push_back(x);
-        data.push_back(propertyGeneratorWrapper(x));
+        realarray center;
+        center[dimX] = x;
+        data.push_back(m_propertyGenerator(center));
     }
 }
 
@@ -44,12 +46,12 @@ real regular_base::timeStep()
     // http://www.exp.univie.ac.at/cp1/cp1-6/node72.html (closed form)
     // time step with Lax-Wendroff method
     for(size_t j = 1; j < N-1; ++j){
-        data[j] = data2[j] - alpha/2*(data2[j+1]-data2[j-1]-alpha*(data2[j+1]-2*data2[j]+data2[j-1]));
+        data[j]   = data2[j]   - alpha/2*(data2[j+1]-data2[j-1]-alpha*(data2[j+1]-2*data2[j]+data2[j-1]));
     }
 
     // deal with boundaries
     if(m_boundaryCondition == bcPeriodic) {
-        data[0] = data2[0] - alpha/2*(data2[1]-data2[N-2]-alpha*(data2[1]-2*data2[0]+data2[N-2]));
+        data[0]   = data2[0]   - alpha/2*(data2[1]-data2[N-1]-alpha*(data2[1]-2*data2[0]  +data2[N-1]));
         data[N-1] = data2[N-1] - alpha/2*(data2[0]-data2[N-2]-alpha*(data2[0]-2*data2[N-1]+data2[N-2]));
     } else abort();
 

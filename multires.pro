@@ -5,5 +5,11 @@ SUBDIRS  = node \
            guiRunner
 
 # http://blog.rburchell.com/2013/10/every-time-you-configordered-kitten-dies.html
-rawRunner.depends = node
-guiRunner.depends = node
+
+guiRunner.depends = regular node
+
+contains($$DEFINES, REGULAR) {
+    rawRunner.depends = regular
+} else {
+    rawRunner.depends = node
+}

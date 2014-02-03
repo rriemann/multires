@@ -18,7 +18,7 @@ typedef double real;
 typedef std::array<real,g_dimension> realarray;
 typedef std::vector<real> realvector;
 
-const size_t g_level = 10;
+const size_t g_level = 8;
 const real g_velocity = 0.5;
 
 const real x0    = -1.0;
@@ -26,7 +26,7 @@ const real x1    = +1.0;
 const real g_span  = x1 - x0;
 
 const real g_cfl  = 0.1;
-const real g_timestep = 0.005;
+const real g_timestep = 0.002;
 
 enum dimension_t {
       dimX = 0
@@ -39,7 +39,6 @@ enum boundaryCondition_t {
 };
 
 typedef std::function<real(realarray)> propertyGenerator_t;
-
 
 static real inDomain(const real x)
 {

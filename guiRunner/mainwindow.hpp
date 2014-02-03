@@ -21,6 +21,8 @@
 
 #include "node/node_iterator.hpp"
 
+#include "regular/regular_base.hpp"
+
 class QCustomPlot;
 class QCPBars;
 struct node_base;
@@ -45,12 +47,10 @@ private:
     Ui::MainWindow *ui;
 
     node_t::node_p m_root = nullptr;
-
-
+    regular_t::regular_p m_root_regular = nullptr;
 
     QCustomPlot *customPlot;
     std::array<QCPBars*,4> bars;
-    node_base* root = nullptr;
     size_t count_nodes;
     size_t count_nodes_packed;
     QSpinBox *spinBox;

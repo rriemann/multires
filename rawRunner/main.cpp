@@ -23,7 +23,11 @@
 
 // using namespace std;
 
+#ifndef REGULAR
 #include "node/node_iterator.hpp"
+#else
+#include "regular/regular_base.hpp"
+#endif
 
 #include "functions.h"
 
@@ -34,8 +38,12 @@ int main()
 
     std::vector<real> boundaries = {x0, x1};
 
+#ifndef REGULAR
     node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
     root->optimizeTree();
+#else
+    regular_tp root = regular_t::createRoot(f_eval_triangle, bcPeriodic);
+#endif
 
 
     size_t count_nodes = (1 << g_level) + 1;
@@ -48,6 +56,7 @@ int main()
 
     size_t count_nodes_packed = 0;
 
+#ifndef REGULAR
     // output file
     std::ofstream file("/tmp/output.txt");
     std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
@@ -64,6 +73,15 @@ int main()
                 % (node.is(node_t::typeActive)     ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0)
                 % (node.is(node_t::typeSavetyZone) && !node.is(node_t::typeActive) ? ((node.level() > node_t::lvlRoot) ? (pow(2,-node.level())) : 1) : 0);
     });
+#else
+    // output file
+    std::ofstream file("/tmp/output_regular.txt");
+    for(size_t i = 0; i < root->size(); i++) {
+        file << boost::format("%e %e\n")
+                % root->getData().at(i)
+                % root->getCenter().at(i);
+    }
+#endif
     file.close();
     std::cerr << boost::format("pack rate: %d/%d = %f\n") % count_nodes_packed % count_nodes % (real(count_nodes_packed)/count_nodes);
     std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:5 with boxes, '' using 1:6 with boxes\"" << std::endl;

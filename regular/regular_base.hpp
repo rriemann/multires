@@ -41,9 +41,17 @@ struct regular_base
     real operator[](size_t i) const
     { return data[i]; }
 
+    const realvector& getData() const
+    { return data; }
+    const realvector& getCenter() const
+    { return xvalues; }
+
+    size_t size() const
+    { return N; }
+
     real timeStep();
 
-    ~regular_base();
+    ~regular_base() {}
 
 private:
     regular_base(const regular_base&) = delete; // remove copy constructor
@@ -57,9 +65,6 @@ private:
     const real dt;
     const real alpha;
     real m_time;
-
-    real propertyGeneratorWrapper(real x) const
-    { realarray center; center[dimX] = x; return m_propertyGenerator(center); }
 
     realvector data, data2, xvalues;
 };
