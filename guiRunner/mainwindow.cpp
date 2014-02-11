@@ -110,15 +110,15 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    m_root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
+    m_root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic, false);
 
     // it is not clear if this gives the right result
-    count_nodes = (1 << g_level)+1;
+    count_nodes = (2 << g_level)+1;
 
     m_root->optimizeTree();
 
 #ifdef REGULAR
-    m_root_regular = regular_t::createRoot(f_eval_triangle, bcPeriodic);
+    m_root_regular = regular_t::createRoot(f_eval_triangle, g_level, bcPeriodic);
 #endif
 
     replot();

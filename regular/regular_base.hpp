@@ -32,8 +32,8 @@ struct regular_base
     typedef regular_base* regular_p;
     typedef std::unique_ptr<regular_base> regular_u;
 
-    static regular_p createRoot(const propertyGenerator_t &propertyGenerator, const boundaryCondition_t boundaryCondition = bcPeriodic)
-    { c_root = regular_u(new regular_base(propertyGenerator, boundaryCondition)); return c_root.get(); }
+    static regular_p createRoot(const propertyGenerator_t &propertyGenerator, const size_t level = g_level, const boundaryCondition_t boundaryCondition = bcPeriodic)
+    { c_root = regular_u(new regular_base(propertyGenerator, level, boundaryCondition)); return c_root.get(); }
 
     real getTime() const
     { return m_time; }
@@ -55,7 +55,7 @@ struct regular_base
 
 private:
     regular_base(const regular_base&) = delete; // remove copy constructor
-    regular_base(const propertyGenerator_t &propertyGenerator, const boundaryCondition_t boundaryCondition = bcPeriodic);
+    regular_base(const propertyGenerator_t &propertyGenerator, const size_t level = g_level, const boundaryCondition_t boundaryCondition = bcPeriodic);
 
     const propertyGenerator_t m_propertyGenerator;
     const boundaryCondition_t m_boundaryCondition;

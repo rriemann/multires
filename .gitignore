@@ -1,5 +1,8 @@
 guiRunner
 rawRunner
+compaRunner
+
+*callgrind.*
 
 # Object files
 *.o

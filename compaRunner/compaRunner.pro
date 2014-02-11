@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-TARGET   = rawRunner
+TARGET   = compaRunner
 VERSION  = 0.1.0
 
 include(../common.pri)
@@ -14,11 +14,8 @@ SOURCES += main.cpp
 HEADERS += ../settings.h \
            ../functions.h
 
-contains(DEFINES, REGULAR) {
-    BACKEND_LIB = ../regular/libregular.a
-} else {
-    BACKEND_LIB = ../node/libnode.a
-}
+BACKEND_LIB  = ../node/libnode.a
+BACKEND_LIB += ../regular/libregular.a
 
 PRE_TARGETDEPS = $${BACKEND_LIB}
 LIBS          += $${BACKEND_LIB}

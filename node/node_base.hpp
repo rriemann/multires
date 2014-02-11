@@ -72,10 +72,11 @@ struct node_base
         , typeActive     = 1 << 4
     };
 
-    static const unsigned int childsByDimension = (1 << DIMENSION);
+    static const unsigned int childsByDimension = (1 << g_dimension);
     static real c_epsilon;
     static real c_time;
     static real c_timestep;
+    static level_t c_currentmaxlevel;
     static level_t c_maxlevel;
 
     static const position_t c_direction = posRight;
@@ -101,7 +102,7 @@ struct node_base
     inline const node_u_array &childs() const
     { return m_childs; }
 
-    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels = level_t(g_level), const boundaryCondition_t boundaryCondition = bcPeriodic);
+    static node_p createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t level = level_t(g_level), const boundaryCondition_t boundaryCondition = bcPeriodic, const bool auto_timestep = true);
 
     inline position_t position() const
     { return m_position; }
@@ -205,6 +206,13 @@ struct node_base
     static node_p root()
     { return c_root.get(); }
 
+    // for testing purposes only
+    void unpackRecursiveTesting(const level_t level)
+    { unpackRecursive(level); }
+
+    static void setEpsilon(real epsilon)
+    { c_epsilon = epsilon; }
+
     ~node_base();
 
 
@@ -219,6 +227,7 @@ private:
     void createNode(const position_t position);
 
     void unpackRecursive(const level_t level);
+    static real getdt(const real velocity, const size_t level = c_maxlevel);
     void updateBackupValueRecursive();
     void cleanUpRecursive();
     void initPropertyRecursive();
@@ -241,6 +250,8 @@ private:
     static propertyGenerator_t c_propertyGenerator;
 
     static boundaryCondition_t c_boundaryCondition;
+
+    static bool c_auto_timestep;
 
 public:
     real m_property;

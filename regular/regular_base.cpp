@@ -16,18 +16,20 @@
 
 #include "regular_base.hpp"
 
-regular_base::regular_base(const propertyGenerator_t &propertyGenerator, const boundaryCondition_t boundaryCondition) :
+regular_base::regular_base(const propertyGenerator_t &propertyGenerator, const size_t level, const boundaryCondition_t boundaryCondition) :
     m_propertyGenerator(propertyGenerator)
   , m_boundaryCondition(boundaryCondition)
-  , N((1 << g_level) + 1)
+  , N((2 << level) + 1)
   , dx(g_span/N)
   , dt(g_cfl*dx/g_velocity)
-  , alpha(g_velocity*dt/dx)
+  , alpha(g_velocity*dt/dx) // in this case: alpha = g_clf
   , m_time(0)
 {
     data.reserve(N);
     data2.reserve(N);
     xvalues.reserve(N);
+
+    // std::cerr << "regular dt: " << dt << std::endl;
 
     for(size_t i = 0; i < N; ++i) {
         real x = i*dx+x0;

@@ -42,7 +42,7 @@ int main()
     node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
     root->optimizeTree();
 #else
-    regular_tp root = regular_t::createRoot(f_eval_triangle, bcPeriodic);
+    regular_tp root = regular_t::createRoot(f_eval_triangle, g_level, bcPeriodic);
 #endif
 
 

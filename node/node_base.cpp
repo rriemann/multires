@@ -138,7 +138,7 @@ bool node_base::isActiveTypeRecursive()
         }
 
         if(is(typeActive)) {
-            if(level() < level_t(g_level)) {
+            if(level() < level_t(c_maxlevel)) {
                 for(size_t i = 0; i < childsByDimension; ++i) {
                     createNode(position_t(i)); // create node, if not existing
                     m_childs[i]->set(typeSavetyZone);
@@ -159,8 +159,8 @@ void node_base::cleanUpRecursive()
             if(!child->isVirtual()) {
                 child.reset();
             } else {
-                if(child->level() > c_maxlevel) {
-                    c_maxlevel = child->level();
+                if(child->level() > c_currentmaxlevel) {
+                    c_currentmaxlevel = child->level();
                 }
             }
         }
@@ -261,7 +261,13 @@ real node_base::timeStep()
 
     // the timeStepRecursive method calls timeStepValue which uses the back!
     // Thus it needs to be uptodate!
-    c_timestep = g_timestep;
+    if(c_auto_timestep) {
+        c_timestep = g_timestep;
+    } else {
+#ifndef BURGERS
+        c_timestep = getdt(g_velocity, c_maxlevel);
+#endif
+    }
     updateBackupValueRecursive();
     for(const node_p &bounding: m_boundaries) {
         bounding->updateBackupValue();
@@ -330,7 +336,7 @@ void node_base::optimizeTree()
         assert(boundaryRight->level() == boundaryLeft->level());
     }
 
-    c_maxlevel = level();
+    c_currentmaxlevel = level();
     cleanUpRecursive();
 }
 
@@ -350,15 +356,19 @@ void node_base::createNode(const position_t position)
     }
 }
 
-node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t levels, const boundaryCondition_t boundaryCondition)
+node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value, const propertyGenerator_t &propertyGenerator, level_t level, const boundaryCondition_t boundaryCondition, const bool auto_timestep)
 {
     assert(boundary_value.size() == childsByDimension);
 
     c_time = 0;
 
+    c_auto_timestep = auto_timestep;
+
     c_propertyGenerator = propertyGenerator;
 
     c_boundaryCondition = boundaryCondition;
+
+    c_maxlevel = level;
 
     node_p_array boundaries = {};
     const node_p_array empty = {};
@@ -373,7 +383,7 @@ node_base::node_p node_base::createRoot(const std::vector<real> &boundary_value,
     c_root = node_u(new node_base(rootcenter, posRoot, lvlRoot, boundaries));
 
 
-    c_root->unpackRecursive(levels);
+    c_root->unpackRecursive(c_maxlevel);
     c_root->initPropertyRecursive();
 
     if(c_boundaryCondition == bcPeriodic) {
@@ -396,7 +406,7 @@ void node_base::unpackRecursive(const level_t level)
     }
 #endif
 
-    if(level > lvlNoChilds) { // there is still a need of children ;)
+    if(level > lvlNoChilds && m_level < c_maxlevel) { // there is still a need of children ;)
         for(size_t i = 0; i < childsByDimension; ++i) {
             createNode(position_t(i));
             m_childs[i]->unpackRecursive(level_t(level - 1));
@@ -404,18 +414,35 @@ void node_base::unpackRecursive(const level_t level)
     }
 }
 
+real node_base::getdt(const real velocity, const size_t level)
+{
+    return std::fabs(g_cfl*g_span/(((2 << level) + 1)*velocity));
+}
+
 void node_base::updateBackupValueRecursive()
 {
     if(isSavetyZone()) {
         updateBackupValue();
 #ifdef BURGER
-        real dt = std::fabs(g_cfl/m_propertyBackup*g_span/(2 << level())); // TODO optimize
-#else
-        real dt = std::fabs(g_cfl/g_velocity*g_span/(2 << level())); // TODO optimize
-#endif
+        real dt;
+        if(c_auto_timestep) {
+            dt = getdt(m_propertyBackup, level());
+        } else {
+            dt = getdt(m_propertyBackup, c_maxlevel);
+        }
         if(dt < c_timestep) {
             c_timestep = dt;
         }
+#else
+        if(c_auto_timestep) {
+            real dt = getdt(g_velocity, level());
+            if(dt < c_timestep) {
+                c_timestep = dt;
+            }
+        }
+#endif
+
+
     }
     for(node_u &child : m_childs) {
         if(child) {
@@ -505,11 +532,14 @@ node_base::node_base(realarray center, node_base::position_t position, node_base
     assert(level < lvlFirst);
 }
 
-real node_base::c_epsilon  = EPSILON;
+real node_base::c_epsilon  = g_epsilon;
 real node_base::c_time     = 0;
 real node_base::c_timestep = 0;
-node_base::level_t node_base::c_maxlevel;
+node_base::level_t node_base::c_currentmaxlevel;
+node_base::level_t node_base::c_maxlevel = node_base::level_t(g_level);
 node_base::node_u node_base::c_root = node_u(nullptr);
 boundaryCondition_t node_base::c_boundaryCondition = bcIndependent;
 
 propertyGenerator_t node_base::c_propertyGenerator = propertyGenerator_t();
+
+bool node_base::c_auto_timestep = true;

@@ -7,17 +7,16 @@
 #include <vector>
 #include <functional>
 
-#define DIMENSION 1
-#define EPSILON 0.001
-
 // #define BURGERS 1
 
-const size_t g_dimension = DIMENSION;
+const size_t g_dimension = 1;
 
 typedef double real;
 typedef std::array<real,g_dimension> realarray;
 typedef std::vector<real> realvector;
 
+
+const real g_epsilon = 0.0001;
 const size_t g_level = 10;
 const real g_velocity = 0.5;
 
