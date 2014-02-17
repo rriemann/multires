@@ -21,7 +21,7 @@
 
 #include <cmath>
 
-real f_eval(realarray xa) {
+real f_eval0(realarray xa) {
     real x = xa[0];
 
     if(x < -0.5) {

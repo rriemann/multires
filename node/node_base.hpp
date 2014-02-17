@@ -141,6 +141,7 @@ struct node_base
     inline void updateTheoryValue()
     {
         realarray center = m_center;
+        // FIXME TODO : dublication, see theory_base.hpp
         // we have to use fmod here again because inDomain() is buggy
         center[0] = inDomain(center[0]-std::fmod(c_time*g_velocity, g_span));
         assert(center[0] >= x0 && center[0] <= x1);

@@ -14,66 +14,56 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#ifndef THEORY_BASE_HPP
+#define THEORY_BASE_HPP
 
-#include <QMainWindow>
+#include "settings.h"
+#include <iostream>
 
-#include "node/node_iterator.hpp"
+class theory_base;
 
-#include "regular/regular_base.hpp"
-
-#include "theory_base.hpp"
-
-class QCustomPlot;
-class QCPBars;
-class QSpinBox;
-class QTimer;
-
-
-QT_FORWARD_DECLARE_CLASS(QGraphicsScene)
-
-namespace Ui {
-class MainWindow;
-}
-
-class MainWindow : public QMainWindow
+class theory_base
 {
-    Q_OBJECT
-    
-public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-    
+
 private:
-    Ui::MainWindow *ui;
+    const propertyGenerator_t m_propertyGenerator;
+    // const size_t level;
+    const size_t N;
+    const real dx;
+    // const real dt;
 
-    node_t::node_p m_root = nullptr;
-    regular_t::regular_p m_root_regular = nullptr;
-    theory_t::theory_p m_root_theory = nullptr;
+public:
+    theory_base(const propertyGenerator_t &propertyGenerator, const size_t level = g_level) :
+        m_propertyGenerator(propertyGenerator)
+      // , level(level)
+      , N(level2N(level))
+      , dx(g_span/N)
+      // , dt(g_cfl*dx/g_velocity)
+    {
 
-    QCustomPlot *customPlot;
-    std::array<QCPBars*,4> bars;
-    size_t count_nodes;
-    size_t count_nodes_packed;
-    QSpinBox *spinBox;
-    QTimer *timer;
+    }
 
-    QGraphicsScene *scene;
+    real at(const realarray center, const real time) const {
+        realarray tmp = center;
+        tmp[0] = inDomain(center[0]-std::fmod(time*g_velocity, g_span));
+        assert(tmp[0] >= x0 && tmp[0] <= x1);
+        return m_propertyGenerator(tmp);
+    }
 
-protected:
-    void resizeEvent(QResizeEvent * event );
+    real at(const real center, const real time) const {
+        realarray tmp {{center}};
+        return at(tmp, time);
+    }
 
-private slots:
+    real at(const size_t i, const real time) const {
+        // FIXME why minus? probably due to inDomain?
+        return at(-dx*i, time);
+    }
 
-    void actionRun();
-    void replot();
-    void rescale();
-    void autoPlayToggled(bool checked);
+    typedef theory_base* theory_p;
 
-    void initializeRoot();
-
-    void blockBuilder(node_t::node_p node);
 };
+typedef theory_base theory_t;
 
-#endif // MAINWINDOW_HPP
+
+#endif // THEORY_BASE_HPP

@@ -39,6 +39,10 @@ enum boundaryCondition_t {
 
 typedef std::function<real(realarray)> propertyGenerator_t;
 
+inline size_t level2N(const size_t level) {
+    return (2 << level) + 1;
+}
+
 static real inDomain(const real x)
 {
     return std::fmod(std::fabs(x - x0 + g_span), g_span) + x0;

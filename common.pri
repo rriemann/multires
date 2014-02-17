@@ -16,6 +16,7 @@ DEPENDPATH  += $$PWD
 
 HEADERS += \
     $$PWD/settings.h \
-    $$PWD/functions.h
+    $$PWD/functions.h \
+    $$PWD/theory_base.hpp
 
 Release:DEFINES += NDEBUG

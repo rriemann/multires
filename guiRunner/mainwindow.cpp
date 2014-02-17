@@ -92,12 +92,14 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[3]->setName("Static Elements");
     bars[3]->setBrush(QBrush(Qt::black));
 
+    m_root_theory = new theory_base(f_eval_triangle, g_level);
     initializeRoot();
     rescale();
 }
 
 MainWindow::~MainWindow()
 {
+    delete m_root_theory;
     delete ui;
 }
 
@@ -162,7 +164,9 @@ void MainWindow::replot()
         xvalues.push_back(node.center(dimX));
         yvalues.push_back(node.property());
 #ifndef BURGERS
-        yvaluestheory.push_back(node.propertyTheory());
+        // yvaluestheory.push_back(node.propertyTheory());
+        yvaluestheory.push_back(m_root_theory->at(node.center(), m_root->getTime()));
+
 #endif
         if(node.level() > node_t::lvlRoot) {
             real bar = pow(2,-node.level());
