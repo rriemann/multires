@@ -19,3 +19,6 @@ BACKEND_LIB += ../regular/libregular.a
 
 PRE_TARGETDEPS = $${BACKEND_LIB}
 LIBS          += $${BACKEND_LIB}
+
+OTHER_FILES += \
+    plots.gp

@@ -33,33 +33,40 @@
 #include <limits>
 static const real eps = std::numeric_limits<real>::epsilon();
 
-#define NORM_L_INF 1.0
-
 realarray center(real x) {
     return realarray{{x}};
 }
 
 int main()
 {
-#ifdef NORM_L_INF
-    std::cerr << "use NORM_L_INF (max)" << std::endl;
-#else
-    std::cerr << "use NORM_L_1 (sum)" << std::endl;
-#endif
+    ///////////// CONFIG //////////////////////
+#define NORM_L_INF // uncomment to use L_1 norm
+
 
     real simulationTime = g_span/g_velocity; // 1 period
 
-    // size_t level_0 = 6;
-    // size_t level_1 = 6; // level_1 >= level_0
+    /*
     std::array<real, 3> steps_level {{6, 7, 8}};
 
-    real epsilon_0 = 0.0001;
     std::array<real,10> steps_epsilon;
     for(size_t i = 0; i < steps_epsilon.size(); ++i) {
-         steps_epsilon[i] = epsilon_0*pow(2,i);
+         steps_epsilon[i] = 0.0001*pow(2,i);
     }
+    */
+
+    std::array<real,6> steps_level;
+    for(size_t i = 0; i < steps_level.size(); ++i) {
+         steps_level[i] = 6+i;
+    }
+    std::array<real,1> steps_epsilon {{0.0001}};
+
 
     propertyGenerator_t f_eval = f_eval_triangle;
+
+    // setup output stream
+    std::ofstream file("/tmp/output.txt");
+    ///////////// CONFIG END //////////////////////
+
 
     enum {
           yTheory = 0
@@ -67,13 +74,15 @@ int main()
         , yGridMulti
     };
 
-
-
-    // setup output stream
-    std::ofstream file("/tmp/output.txt");
     file << "# format: level N epsilon norm" << std::endl;
 
     std::array<std::array<real,2+steps_epsilon.size()>,steps_level.size()> y_values_diff_norm = {{}}; // initialize zero
+
+#ifdef NORM_L_INF
+    std::cerr << "use NORM_L_INF (max)" << std::endl;
+#else
+    std::cerr << "use NORM_L_1 (sum)" << std::endl;
+#endif
 
     for(size_t i_level = 0; i_level < steps_level.size(); ++i_level) {
         const size_t level = steps_level[i_level];
