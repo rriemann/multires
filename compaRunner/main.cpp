@@ -39,7 +39,7 @@ int main()
 
     size_t level = 6;
     size_t N = (2 << level) + 1;
-    real simulationTime = 1.0;
+    real simulationTime = g_span/g_velocity;
     const size_t series = 10;
 
     enum {
@@ -52,8 +52,8 @@ int main()
     y_values_l_inf[yTheory] = eps;
     std::vector<real> y_values_theory;
     std::vector<real> epsilon_values;
-    epsilon_values.push_back(eps); // theory
-    epsilon_values.push_back(eps*10); // regular grid
+    epsilon_values.push_back(N*eps); // theory
+    epsilon_values.push_back(N*eps*10); // regular grid
 
     // tree grid and analytic computation
     for(size_t i = 0; i < series; ++i) {
