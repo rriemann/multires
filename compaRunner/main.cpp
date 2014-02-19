@@ -64,7 +64,7 @@ int main()
     propertyGenerator_t f_eval = f_eval_triangle;
 
     // setup output stream
-    std::ofstream file("/tmp/output.txt");
+    std::ofstream file("/tmp/output.dat");
     ///////////// CONFIG END //////////////////////
 
 
@@ -169,7 +169,7 @@ int main()
 
             // output row for multiresolution grid
             // format: level N epsilon norm
-            file << boost::format("%d %d %e %e\n")
+            file << boost::format("%d %d %e %e # multires\n")
                     % level
                     % N
                     % epsilon

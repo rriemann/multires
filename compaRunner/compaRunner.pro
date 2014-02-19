@@ -22,3 +22,6 @@ LIBS          += $${BACKEND_LIB}
 
 OTHER_FILES += \
     plots.gp
+
+#QMAKE_CLEAN += \
+#    output.dat
