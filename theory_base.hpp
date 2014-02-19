@@ -57,7 +57,7 @@ public:
 
     real at(const size_t i, const real time) const {
         // FIXME why minus? probably due to inDomain?
-        return at(-dx*i, time);
+        return at(x0+dx*i, time);
     }
 
     typedef theory_base* theory_p;
