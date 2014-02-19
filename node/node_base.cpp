@@ -180,7 +180,6 @@ void node_base::timeStepRecursive()
         m_property = interpolation();
         // ^- cut off the datail
     }
-    updateTheoryValue();
 
     // if type is not unset, the derivative is not computed again
     m_type = typeUnset;
@@ -271,7 +270,6 @@ real node_base::timeStep()
     updateBackupValueRecursive();
     for(const node_p &bounding: m_boundaries) {
         bounding->updateBackupValue();
-        bounding->updateTheoryValue();
     }
     c_time += c_timestep;
 
@@ -459,7 +457,6 @@ void node_base::initPropertyRecursive()
         }
         m_property = c_propertyGenerator(m_center);
         updateBackupValue();
-        updateTheoryValue();
     }
 }
 
@@ -515,8 +512,6 @@ node_base::node_base(const node_p &parent, node_base::position_t position, node_
     assert(boundary(m_position)->level() + 2 <= m_level);
 
     m_center[dimX] = (parent->center(dimX)+parent->boundary(position)->center(dimX))/2;
-
-    updateTheoryValue();
 }
 
 node_base::node_base(realarray center, node_base::position_t position, node_base::level_t level, const node_p_array &boundaries)

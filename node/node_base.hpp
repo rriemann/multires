@@ -138,16 +138,6 @@ struct node_base
     inline void updateBackupValue()
     { m_propertyBackup = m_property; }
 
-    inline void updateTheoryValue()
-    {
-        realarray center = m_center;
-        // FIXME TODO : dublication, see theory_base.hpp
-        // we have to use fmod here again because inDomain() is buggy
-        center[0] = inDomain(center[0]-std::fmod(c_time*g_velocity, g_span));
-        assert(center[0] >= x0 && center[0] <= x1);
-        m_propertyTheory = c_propertyGenerator(center);
-    }
-
     real timeStep();
     void optimizeTree();
 
@@ -159,9 +149,6 @@ struct node_base
 
     real propertyBackup() const
     { return m_propertyBackup; }
-
-    real propertyTheory() const
-    { return m_propertyTheory; }
 
     inline void set(type_t type)
     { m_type = type_t(m_type | type); }
@@ -257,7 +244,6 @@ private:
 public:
     real m_property;
     real m_propertyBackup;
-    real m_propertyTheory;
 
 #ifdef BURGER
     const real &m_speed = m_propertyBackup;
