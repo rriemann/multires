@@ -45,23 +45,28 @@ int main()
 
     real simulationTime = g_span/g_velocity; // 1 period
 
-    /*
-    std::array<real, 3> steps_level {{6, 7, 8}};
-
-    std::array<real,10> steps_epsilon;
-    for(size_t i = 0; i < steps_epsilon.size(); ++i) {
-         steps_epsilon[i] = 0.0001*pow(2,i);
-    }
-    */
-
     std::array<real,6> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
-         steps_level[i] = 6+i;
+         steps_level[i] = 4+i;
+    }
+
+    std::array<real,8> steps_epsilon;
+    for(size_t i = 0; i < steps_epsilon.size(); ++i) {
+         steps_epsilon[i] = 0.0001*pow(2,0.5*i);
+    }
+
+    /*
+    std::array<real, 1> steps_level {{7}};
+
+    std::array<real,8> steps_level;
+    for(size_t i = 0; i < steps_level.size(); ++i) {
+         steps_level[i] = 4+i;
     }
     std::array<real,1> steps_epsilon {{0.0001}};
+    */
 
 
-    propertyGenerator_t f_eval = f_eval_triangle;
+    propertyGenerator_t f_eval = f_eval_gauss;
 
     // setup output stream
     std::ofstream file("/tmp/output.dat");
@@ -96,7 +101,7 @@ int main()
         file << boost::format("%d %d %e %e # theory\n")
                 % level
                 % N
-                % eps
+                % steps_epsilon[0]
                 % eps;
 
         // regular grid computation
@@ -129,7 +134,7 @@ int main()
             file << boost::format("%d %d %e %e # regular\n")
                     % level
                     % N
-                    % (eps*10)
+                    % steps_epsilon[0]
                     % y_values_diff_norm[i_level][yGridRegular];
         }
 
@@ -156,7 +161,7 @@ int main()
             y_values_diff_norm[i_level][yGridMulti+i_epsilon] = 0;
 #endif
             std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
-                real diff = std::fabs(node.property() - node.propertyTheory());
+                real diff = std::fabs(node.property() - theory.at(node.center(), root->getTime()));
 #ifdef NORM_L_INF
                 if(y_values_diff_norm[i_level][yGridMulti+i_epsilon] < diff) {
                     y_values_diff_norm[i_level][yGridMulti+i_epsilon] = diff;
