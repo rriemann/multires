@@ -2,7 +2,7 @@
 # kate: hl gnuplot;
 
 f(x) = m*x + n
-# fit f(x) '< grep "regular" < data/output.dat' using (log($2)):(log($4)) via m,n
+fit f(x) '< grep "regular" < data/output.dat' using (log($2)):(log($4)) via m,n
 # plot '< grep "regular" < data/output_regular_triangle.dat' using (log($2)):(log($4)), f(x) with lines
 # print m
 # print n
@@ -23,10 +23,10 @@ f(x) = m*x + n
 
 # fit f(x) '< grep "multires" < data/output.dat' using (log($3)):(log($4)) via m,n
 plot '< grep "regular" < data/output.dat' using (log($2)):(log($4)) title "regular" with linespoints ls 1, \
-     '< grep "1.000000e-04" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=1e4", \
-     '< grep "2.000000e-04" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=2e4", \
-     '< grep "4.000000e-04" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=4e4", \
-     '< grep "8.000000e-04" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=8e4"
+     '< grep "1.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=1e4", \
+     '< grep "2.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=2e4", \
+     '< grep "4.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=4e4", \
+     '< grep "8.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=8e4"
      
 set term qt 1
 
