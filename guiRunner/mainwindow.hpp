@@ -51,6 +51,7 @@ private:
     node_t::node_p m_root = nullptr;
     regular_t::regular_p m_root_regular = nullptr;
     theory_t::theory_p m_root_theory = nullptr;
+    propertyGenerator_t m_f_eval;
 
     QCustomPlot *customPlot;
     std::array<QCPBars*,4> bars;

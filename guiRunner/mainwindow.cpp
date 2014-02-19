@@ -28,7 +28,8 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
-    scene(new QGraphicsScene)
+    scene(new QGraphicsScene),
+    m_f_eval(f_eval_gauss)
 {
     ui->setupUi(this);
     ui->splitter->setSizes(QList<int>() << 100 << 100);
@@ -92,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bars[3]->setName("Static Elements");
     bars[3]->setBrush(QBrush(Qt::black));
 
-    m_root_theory = new theory_base(f_eval_triangle, g_level);
+    m_root_theory = new theory_base(m_f_eval, g_level);
     initializeRoot();
     rescale();
 }
@@ -112,7 +113,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 void MainWindow::initializeRoot()
 {
     std::vector<real> boundaries {x0, x1};
-    m_root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic, false);
+    m_root = node_t::createRoot(boundaries, m_f_eval, node_t::level_t(g_level), bcPeriodic, false);
 
     // it is not clear if this gives the right result
     count_nodes = (2 << g_level)+1;
@@ -120,7 +121,7 @@ void MainWindow::initializeRoot()
     m_root->optimizeTree();
 
 #ifdef REGULAR
-    m_root_regular = regular_t::createRoot(f_eval_triangle, g_level, bcPeriodic);
+    m_root_regular = regular_t::createRoot(m_f_eval, g_level, bcPeriodic);
 #endif
 
     replot();
