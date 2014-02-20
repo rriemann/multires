@@ -50,6 +50,7 @@ struct regular_base
     { return N; }
 
     real timeStep();
+    real timeStepHelper(const real &ee, const real &el, const real &er);
 
     ~regular_base() {}
 
@@ -63,7 +64,6 @@ private:
     const size_t N;
     const real dx;
     const real dt;
-    const real alpha;
     real m_time;
 
     realvector data, data2, xvalues;

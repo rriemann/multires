@@ -236,7 +236,7 @@ real node_base::timeStepValue()
     const real  er = neighbourRight->m_propertyBackup; // element right (j+1)
     const real  el = neighbourLeft ->m_propertyBackup; // element left  (j-1)
 
-#ifdef BURGERS
+#ifdef BURGER
     const real &ee = m_propertyBackup;
     // u_j+0.5
     const real ujp = 0.5*(er+ee)-(er+ee)*c_timestep/(4*dx)*(er-ee);
@@ -263,8 +263,10 @@ real node_base::timeStep()
     if(c_auto_timestep) {
         c_timestep = g_timestep;
     } else {
-#ifndef BURGERS
+#ifndef BURGER
         c_timestep = getdt(g_velocity, c_maxlevel);
+#else
+        c_timestep = 1; // FIXME with which value should we start?
 #endif
     }
     updateBackupValueRecursive();

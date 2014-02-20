@@ -164,7 +164,7 @@ void MainWindow::replot()
     std::for_each(node_iterator(m_root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
         xvalues.push_back(node.center(dimX));
         yvalues.push_back(node.property());
-#ifndef BURGERS
+#ifndef BURGER
         // yvaluestheory.push_back(node.propertyTheory());
         yvaluestheory.push_back(m_root_theory->at(node.center(), m_root->getTime()));
 
@@ -200,7 +200,7 @@ void MainWindow::replot()
     statusBar()->showMessage(pack_rate_time);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
-#ifndef BURGERS
+#ifndef BURGER
     customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
 #endif
     bars[0]->setData(xvalues, lvlvalues); // blue

@@ -7,8 +7,6 @@
 #include <vector>
 #include <functional>
 
-// #define BURGERS 1
-
 const size_t g_dimension = 1;
 
 typedef double real;
@@ -16,8 +14,8 @@ typedef std::array<real,g_dimension> realarray;
 typedef std::vector<real> realvector;
 
 
-const real g_epsilon = 0.0001;
-const size_t g_level = 10;
+const real g_epsilon  = 1e-4;
+const size_t g_level  = 7;
 const real g_velocity = 0.5;
 
 const real x0    = -1.0;
