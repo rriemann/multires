@@ -46,4 +46,30 @@ static real inDomain(const real x)
     return std::fmod(std::fabs(x - x0 + g_span), g_span) + x0;
 }
 
+
+/**
+ * @brief regular_base::timeStepHelper
+ * @param ee element to calculate new value for
+ * @param el element to the left
+ * @param er element to the right
+ * @return new value for element
+ */
+inline real timeStepHelper(const real &ee, const real &el, const real &er, const real &dx, const real &dt)
+{
+    // http://www.exp.univie.ac.at/cp1/cp1-6/node72.html (closed form)
+    // time step with Lax-Wendroff method
+#ifdef BURGER
+    // u_j+0.5
+    const real ujp = 0.5*(er+ee)-(er+ee)*dt/(4*dx)*(er-ee);
+    // u_j-0.5
+    const real ujm = 0.5*(el+ee)-(el+ee)*dt/(4*dx)*(ee-el);
+
+    const real property = ee - (ujp+ujm)*dt/(4*dx)*(ujp-ujm);
+#else
+    static const real alpha = g_velocity*dt/dx;
+    const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));
+#endif
+    return property;
+}
+
 #endif // SETTINGS_H

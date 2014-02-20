@@ -187,7 +187,6 @@ void node_base::timeStepRecursive()
 
 real node_base::timeStepValue()
 {
-
     node_p neighbourLeft  = neighbour(posLeft);
     node_p neighbourRight = neighbour(posRight);
     // BEGIN bad hack
@@ -233,25 +232,7 @@ real node_base::timeStepValue()
     }
 #endif
 
-    const real  er = neighbourRight->m_propertyBackup; // element right (j+1)
-    const real  el = neighbourLeft ->m_propertyBackup; // element left  (j-1)
-
-#ifdef BURGER
-    const real &ee = m_propertyBackup;
-    // u_j+0.5
-    const real ujp = 0.5*(er+ee)-(er+ee)*c_timestep/(4*dx)*(er-ee);
-    // u_j-0.5
-    const real ujm = 0.5*(el+ee)-(el+ee)*c_timestep/(4*dx)*(ee-el);
-
-    const real property = ee - (ujp+ujm)*c_timestep/(4*dx)*(ujp-ujm);
-#else
-    const real alpha = g_velocity*c_timestep/dx;
-    const real property = m_propertyBackup - alpha/2*(er-el-alpha*(er-2*m_propertyBackup+el));
-#endif
-
-    // assert(fabs(property - m_propertyBackup) < 0.5);
-
-    return property;
+    return timeStepHelper(m_propertyBackup, neighbourLeft ->m_propertyBackup, neighbourRight->m_propertyBackup, dx, c_timestep);
 }
 
 real node_base::timeStep()

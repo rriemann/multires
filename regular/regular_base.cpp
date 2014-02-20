@@ -50,41 +50,17 @@ real regular_base::timeStep()
 
     // update inner cell values
     for(size_t j = 1; j < N-1; ++j){
-        data[j] = timeStepHelper(data2[j], data2[j-1], data2[j+1]);
+        data[j] = timeStepHelper(data2[j], data2[j-1], data2[j+1], dx, dt);
     }
 
     // deal with boundaries
     if(m_boundaryCondition == bcPeriodic) {
-        data[0]   = timeStepHelper(data2[0  ], data2[N-1], data2[1]);
-        data[N-1] = timeStepHelper(data2[N-1], data2[N-2], data2[0]);
+        data[0]   = timeStepHelper(data2[0  ], data2[N-1], data2[1], dx, dt);
+        data[N-1] = timeStepHelper(data2[N-1], data2[N-2], data2[0], dx, dt);
     } else abort();
 
     m_time += dt;
     return dt;
-}
-/**
- * @brief regular_base::timeStepHelper
- * @param ee element to calculate new value for
- * @param el element to the left
- * @param er element to the right
- * @return new value for element
- */
-real regular_base::timeStepHelper(const real &ee, const real &el, const real &er)
-{
-    // http://www.exp.univie.ac.at/cp1/cp1-6/node72.html (closed form)
-    // time step with Lax-Wendroff method
-#ifdef BURGER
-    // u_j+0.5
-    const real ujp = 0.5*(er+ee)-(er+ee)*dt/(4*dx)*(er-ee);
-    // u_j-0.5
-    const real ujm = 0.5*(el+ee)-(el+ee)*dt/(4*dx)*(ee-el);
-
-    const real property = ee - (ujp+ujm)*dt/(4*dx)*(ujp-ujm);
-#else
-    static const real alpha = g_velocity*dt/dx;
-    const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));
-#endif
-    return property;
 }
 
 regular_base::regular_u regular_base::c_root = regular_u(nullptr);

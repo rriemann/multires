@@ -28,16 +28,16 @@ plot '< grep "regular" < data/output.dat' using (log($2)):(log($4)) title "regul
      '< grep "4.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=4e4", \
      '< grep "8.000000e-04 .* multires" < data/output.dat' using (log($2)):(log($4)) title "multi, eps=8e4"
      
-# set term qt 1
-# 
-# set xlabel "N" # offset -3,-2
-# set ylabel "epsilon" # offset 3,-2
-# set zlabel "norm" # offset -5
-# 
-# set dgrid3d 6,6 splines
-# set style data lines
-# 
-# # splot 'data/output.dat' using (log($2)):(log($3)):(log($4))
-# splot '< grep "multires" < data/output.dat' using (log($2)):(log($3)):(log($4)), '< grep "regular" < data/output.dat' using (log($2)):(log($3)):(log($4))
+set term qt 1
+
+set xlabel "N" # offset -3,-2
+set ylabel "epsilon" # offset 3,-2
+set zlabel "norm" # offset -5
+
+set dgrid3d 6,6 splines
+set style data lines
+
+# splot 'data/output.dat' using (log($2)):(log($3)):(log($4))
+splot '< grep "multires" < data/output.dat' using (log($2)):(log($3)):(log($4)), '< grep "regular" < data/output.dat' using (log($2)):(log($3)):(log($4))
 
 pause -1
