@@ -66,7 +66,7 @@ inline real timeStepHelper(const real &ee, const real &el, const real &er, const
 
     const real property = ee - (ujp+ujm)*dt/(4*dx)*(ujp-ujm);
 #else
-    static const real alpha = g_velocity*dt/dx;
+    const real alpha = g_velocity*dt/dx;
     const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));
 #endif
     return property;
