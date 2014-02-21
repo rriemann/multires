@@ -56,15 +56,20 @@ static real inDomain(const real x)
  */
 inline real timeStepHelper(const real &ee, const real &el, const real &er, const real &dx, const real &dt)
 {
-    // http://www.exp.univie.ac.at/cp1/cp1-6/node72.html (closed form)
-    // time step with Lax-Wendroff method
 #ifdef BURGER
     // u_j+0.5
     const real ujp = 0.5*(er+ee)-(er+ee)*dt/(4*dx)*(er-ee);
     // u_j-0.5
     const real ujm = 0.5*(el+ee)-(el+ee)*dt/(4*dx)*(ee-el);
 
-    const real property = ee - (ujp+ujm)*dt/(4*dx)*(ujp-ujm);
+    // http://www.exp.univie.ac.at/cp1/cp1-6/node72.html (closed form)
+    // time step with Lax-Wendroff method
+    // const real property = ee - (ujp+ujm)*dt/(4*dx)*(ujp-ujm);
+
+    // Godunov method (finite volume), visoucous burgers eqn
+    static const real viscosity = 0.005;
+    const real property = ee + dt*(viscosity*(er-2*ee+el)/(dx*dx)+(-pow(er+ee,2)+pow(el+ee,2))/(8*dx));
+
 #else
     const real alpha = g_velocity*dt/dx;
     const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));
