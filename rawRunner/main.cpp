@@ -20,6 +20,7 @@
 #include <iostream>
 #include <algorithm>
 #include <functional>
+#include <chrono>
 
 // using namespace std;
 
@@ -38,21 +39,29 @@ int main()
 
     std::vector<real> boundaries = {x0, x1};
 
+    propertyGenerator_t f_eval = f_eval_gauss;
+
+    real simulationTime = g_span/g_velocity*50; // 50 periods
+
 #ifndef REGULAR
-    node_tp root = node_t::createRoot(boundaries, f_eval_triangle, node_t::level_t(g_level), bcPeriodic);
+    node_tp root = node_t::createRoot(boundaries, f_eval, node_t::level_t(g_level), bcPeriodic, false);
     root->optimizeTree();
 #else
-    regular_tp root = regular_t::createRoot(f_eval_triangle, g_level, bcPeriodic);
+    regular_tp root = regular_t::createRoot(f_eval, g_level, bcPeriodic);
 #endif
 
 
     size_t count_nodes = (1 << g_level) + 1;
 
+    auto start = std::chrono::steady_clock::now();
     // for(size_t timestep = 0; timestep < 100; ++timestep) {
-    while(root->getTime() < 0.6) {
+    do {
         root->timeStep();
-    }
+    } while(root->getTime() < simulationTime);
+    auto done = std::chrono::steady_clock::now();
     std::cerr << "time passed: " << root->getTime() << std::endl;
+    double elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(done - start).count();
+    std::cerr << "calculation time: " << elapsed_time << std::endl;
 
     size_t count_nodes_packed = 0;
 
@@ -84,6 +93,6 @@ int main()
 #endif
     file.close();
     std::cerr << boost::format("pack rate: %d/%d = %f\n") % count_nodes_packed % count_nodes % (real(count_nodes_packed)/count_nodes);
-    std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:5 with boxes, '' using 1:6 with boxes\"" << std::endl;
+    // std::cerr << "try: gnuplot -p -e \"set style fill solid 1.0; set boxwidth 0.005; plot '/tmp/output.txt' using 1:2 with lines, '' using 1:5 with boxes, '' using 1:6 with boxes\"" << std::endl;
     return 0;
 }
