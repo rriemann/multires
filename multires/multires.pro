@@ -12,8 +12,9 @@ CONFIG -= qt
 CONFIG += staticlib
 
 SOURCES += \
-    multires.cpp
+    node.cpp \
+    multires_grid.cpp
 
 HEADERS += \
-    multires.hpp \
-    node_iterator.hpp
+    node.hpp \
+    multires_grid.hpp

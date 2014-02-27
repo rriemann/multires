@@ -22,10 +22,10 @@
 #include <cmath>
 
 
-real f_eval_gauss(location_t x) {
-    const real x2 = x[0]*x[0];
+inline real f_eval_gauss(location_t x) {
+    const real x_shift = x[dimX]-0.5;
 
-    return exp(-10*x2);
+    return exp(-30*x_shift*x_shift);
 }
 
 const field_generator_t f_eval = f_eval_gauss;

@@ -20,20 +20,22 @@
 #include "settings.h"
 
 #include "grid.hpp"
-
-#include <iostream>
-#include <memory>
-#include <cassert>
-#include <boost/format.hpp>
+#include "point.hpp"
 
 class monores_grid_t : public grid_t
 {
+public:
     monores_grid_t(const size_t level_max);
 
     virtual real timeStep();
 
     size_t size() const
     { return N; }
+
+    // getters for ranged for, see:
+    // http://stackoverflow.com/questions/8164567/how-to-make-my-custom-type-to-work-with-range-based-for-loops
+    std::vector<point_t>::iterator begin();
+    std::vector<point_t>::iterator end();
 
     virtual ~monores_grid_t() {}
 
@@ -46,7 +48,7 @@ private:
     const real dx;
     const real dt;
 
-    realvector data, data2, xvalues;
+    std::vector<point_t> pointvector;
 };
 
 #endif // MONORES_GRID_HPP

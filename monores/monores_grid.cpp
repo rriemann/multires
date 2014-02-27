@@ -22,39 +22,43 @@ monores_grid_t::monores_grid_t(const size_t level_max) :
     grid_t()
   , N(1 << level_max)
   , dx(g_span/N)
-#ifndef BURGER
   , dt(g_cfl*dx/g_velocity)
-#else
-  , dt(g_cfl*dx/20) // assuming max(velocity = data[j]) <= 20
-#endif
 {
-    data.reserve(N);
-    data2.reserve(N);
-    xvalues.reserve(N);
+    pointvector.reserve(N);
 
     for(size_t i = 0; i < N; ++i) {
-        real x = i*dx+g_x0[0];
-        xvalues.push_back(x);
-        location_t location = {{x}};
-        data.push_back(f_eval(location));
+        const location_t location = {{i*dx+g_x0[0]}};
+        const point_t point(location, f_eval(location));
+        pointvector.push_back(point);
     }
 }
 
 real monores_grid_t::timeStep()
 {
     // update temporary data;
-    data2 = data;
+    for(point_t &point: pointvector) {
+        point.m_phiBackup = point.m_phi;
+    }
 
     // update inner cell values
-    for(size_t j = 1; j < N-1; ++j){
-        data[j] = timeStepHelper(data2[j], data2[j-1], data2[j+1], dx, dt);
+    for(size_t i = 1; i < pointvector.size()-1; ++i){
+        pointvector[i].m_phi = timeStepHelper(pointvector[i].m_phiBackup, pointvector[i-1].m_phiBackup, pointvector[i+1].m_phiBackup, dx, dt);
     }
 
     // deal with boundaries
-    data[0]   = timeStepHelper(data2[0  ], data2[N-1], data2[1], dx, dt);
-    data[N-1] = timeStepHelper(data2[N-1], data2[N-2], data2[0], dx, dt);
-
+    pointvector[0].m_phi   = timeStepHelper(pointvector[0  ].m_phiBackup, pointvector[N-1].m_phiBackup, pointvector[1].m_phiBackup, dx, dt);
+    pointvector[N-1].m_phi = timeStepHelper(pointvector[N-1].m_phiBackup, pointvector[N-2].m_phiBackup, pointvector[0].m_phiBackup, dx, dt);
 
     m_time += dt;
     return dt;
+}
+
+std::vector<point_t>::iterator monores_grid_t::begin()
+{
+    return pointvector.begin();
+}
+
+std::vector<point_t>::iterator monores_grid_t::end()
+{
+    return pointvector.end();
 }

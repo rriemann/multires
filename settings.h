@@ -10,9 +10,8 @@
 constexpr size_t g_dimension = 1;
 
 typedef double real;
-typedef std::array<real, g_dimension> realarray;
-typedef realarray location_t;
-typedef std::vector<real> realvector;
+typedef std::array<real, g_dimension> location_t;
+typedef std::vector<real> real_vector;
 
 typedef std::array<int, g_dimension> index_t;
 

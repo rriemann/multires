@@ -14,27 +14,42 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef POINT_HPP
-#define POINT_HPP
+#ifndef MULTIRES_GRID_HPP
+#define MULTIRES_GRID_HPP
+
+
+#include <iostream>
+#include <memory>
+#include <cassert>
+#include <functional>
+#include <boost/format.hpp>
 
 #include "settings.h"
+#include "grid.hpp"
 
-class point_t
+class node_t;
+class point_t;
+
+class multires_grid_t : public grid_t
 {
 public:
-    point_t();
+    multires_grid_t(const size_t level_max, const size_t level_min = 0);
 
-    point_t(location_t x, real phi = 0) :
-        m_x(x)
-      , m_phi(phi)
-      , m_phiBackup(phi)
-    {
-    }
+    virtual real timeStep();
 
-    index_t m_J = {};
-    location_t m_x = {};
-    real m_phi = 0;
-    real m_phiBackup = 0;
-    point_t *next = nullptr;
+    point_t *begin();
+    point_t *end();
+
+    virtual ~multires_grid_t();
+
+private:
+    multires_grid_t(const multires_grid_t&) = delete; // remove copy constructor
+
+    size_t m_level_max;
+    size_t m_level_min;
+    std::unique_ptr<node_t> m_root;
+
+    friend class node_t;
 };
-#endif // POINT_HPP
+
+#endif // MULTIRES_GRID_HPP

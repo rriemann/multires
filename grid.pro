@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS  = \
-           # multires \
+           multires \
            monores \
            rawRunner \
            # guiRunner \
@@ -12,4 +12,8 @@ SUBDIRS  = \
 # rawRunner.depends = monores multires
 # compaRunner.depends = monores multires
 
-rawRunner.depends = monores
+contains(DEFINES, REGULAR) {
+    rawRunner.depends = monores
+} else {
+    rawRunner.depends = multires
+}

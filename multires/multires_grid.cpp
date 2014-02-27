@@ -14,27 +14,20 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef POINT_HPP
-#define POINT_HPP
+#include "multires_grid.hpp"
+#include "node.hpp"
 
-#include "settings.h"
 
-class point_t
+multires_grid_t::multires_grid_t(const size_t level_max, const size_t level_min)
+    : m_level_max(level_max)
+    , m_level_min(level_min)
 {
-public:
-    point_t();
+    node_t::setGrid(this);
+    m_root = std::unique_ptr<node_t>(new node_t());
+    m_root->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
+    m_root->branch(level_max);
+}
 
-    point_t(location_t x, real phi = 0) :
-        m_x(x)
-      , m_phi(phi)
-      , m_phiBackup(phi)
-    {
-    }
-
-    index_t m_J = {};
-    location_t m_x = {};
-    real m_phi = 0;
-    real m_phiBackup = 0;
-    point_t *next = nullptr;
-};
-#endif // POINT_HPP
+multires_grid_t::~multires_grid_t()
+{
+}
