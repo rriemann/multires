@@ -22,7 +22,7 @@
 class point_t
 {
 public:
-    point_t();
+    point_t() {}
 
     point_t(location_t x, real phi = 0) :
         m_x(x)
@@ -31,10 +31,10 @@ public:
     {
     }
 
-    index_t m_J = {};
-    location_t m_x = {};
-    real m_phi = 0;
-    real m_phiBackup = 0;
-    point_t *next = nullptr;
+    index_t m_index;
+    location_t m_x;
+    real m_phi;
+    real m_phiBackup;
+    point_t *next;
 };
 #endif // POINT_HPP

@@ -19,10 +19,10 @@
 
 #include <memory>
 
-#include "point.hpp"
 #include "settings.h"
 
 class multires_grid_t;
+class point_t;
 
 class node_t
 {
@@ -73,13 +73,13 @@ public:
     static void setGrid(multires_grid_t *grid)
     { c_grid = grid; }
 
-    void initialize(node_t *parent, size_t level, position_t position, const index_t &index);
+    void initialize(node_t *parent, u_char level, char position, const index_t &index);
 
 
-    static const unsigned int c_childs = (1 << g_dimension);
+    static const short c_childs = (1 << g_dimension);
     typedef std::array<node_t, c_childs> node_array_t;
 
-    const node_t *getNeighbour(const position_t position) const;
+    const node_t *getNeighbour(const char position) const;
 
     inline bool isLeaf() const
     { return !m_childs; }
@@ -88,18 +88,21 @@ public:
     void initialCondition(const field_generator_t &f_eval);
 
     const point_t *getPoint() const
-    { return &m_point; }
+    { return m_point; }
+
+    void setPoint(point_t *point)
+    { m_point = point; }
 
     ~node_t();
 
 private:
     node_t *m_parent;
-    size_t m_level;
-    position_t m_position;
+    u_char m_level;
+    char m_position;
     index_t m_index; // index at m_level
-    flags_t m_flags;
+    u_char m_flags;
     // std::unique_ptr<point_t> m_point;
-    point_t m_point;
+    point_t *m_point;
     node_array_t *m_childs;
     static multires_grid_t *c_grid;
 };

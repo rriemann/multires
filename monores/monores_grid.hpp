@@ -25,7 +25,7 @@
 class monores_grid_t : public grid_t
 {
 public:
-    monores_grid_t(const size_t level_max);
+    monores_grid_t(const u_char level_max);
 
     virtual real timeStep();
 

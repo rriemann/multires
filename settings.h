@@ -24,7 +24,7 @@ const real g_timestep = 0.002;
 
 const location_t g_x0 = {{0}};
 const location_t g_x1 = {{1}};
-const real g_span  = g_x1[0] - g_x0[0];
+const location_t g_span = {{g_x1[0] - g_x0[0]}};
 
 enum dimension_t {
       dimX = 0

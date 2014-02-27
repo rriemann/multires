@@ -33,21 +33,23 @@ class point_t;
 class multires_grid_t : public grid_t
 {
 public:
-    multires_grid_t(const size_t level_max, const size_t level_min = 0);
+    multires_grid_t(const u_char level_max, const u_char level_min = 0);
 
     virtual real timeStep();
 
-    point_t *begin();
-    point_t *end();
+    const point_t *begin() const;
+    const point_t *end() const;
 
     virtual ~multires_grid_t();
 
 private:
     multires_grid_t(const multires_grid_t&) = delete; // remove copy constructor
 
-    size_t m_level_max;
-    size_t m_level_min;
-    std::unique_ptr<node_t> m_root;
+    u_char m_level_max;
+    u_char m_level_min;
+    node_t *m_root_node;
+    point_t *m_root_point;
+
 
     friend class node_t;
 };

@@ -25,7 +25,12 @@
 
 // using namespace std;
 
+#ifdef REGULAR
 #include "monores/monores_grid.hpp"
+#else
+#include "point.hpp"
+#include "multires/multires_grid.hpp"
+#endif
 
 #include "functions.h"
 
@@ -34,10 +39,12 @@ int main()
     // generation of childrens, e.g.: only root = 0, grand-children = 2
     // total number of nodes, including (childsbyDimension) boundary elements
 
-    real simulationTime = g_span/g_velocity*10; // 50 periods
+    real simulationTime = g_span[dimX]/g_velocity*10; // 50 periods
 
 #ifdef REGULAR
     monores_grid_t grid(g_level);
+#else
+    multires_grid_t grid(g_level);
 #endif
 
     auto start = std::chrono::steady_clock::now();

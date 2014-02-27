@@ -16,12 +16,13 @@
 
 #include "node.hpp"
 #include "multires_grid.hpp"
+#include "point.hpp"
 
 node_t::node_t()
 {
 }
 
-void node_t::initialize(node_t *parent, size_t level, position_t position, const index_t &index)
+void node_t::initialize(node_t *parent, u_char level, char position, const index_t &index)
 {
     m_parent = parent;
     m_level = level;
@@ -29,9 +30,23 @@ void node_t::initialize(node_t *parent, size_t level, position_t position, const
     m_index = index;
     m_flags = flUnset;
     m_childs = nullptr;
+
+    // construct point for non-root and
+    //   not the one (pos = 0) which just gets the copy of the parent
+    if (position > 0) {
+        assert(g_dimension == 1);
+
+        real phi = 0;
+        for (char pos = 0; pos < c_childs; ++pos) {
+            phi += getNeighbour(pos)->getPoint()->m_phi;
+        }
+
+        location_t location = {{ parent->getPoint()->m_x[dimX] + g_span[dimX]/(1 << m_level) }};
+        m_point = new point_t(location, phi/c_childs);
+    }
 }
 
-const node_t *node_t::getNeighbour(const node_t::position_t position) const
+const node_t *node_t::getNeighbour(const char position) const
 {
     // Check the parent cell's children
     if (m_position == posRoot) {
@@ -52,13 +67,20 @@ const node_t *node_t::getNeighbour(const node_t::position_t position) const
     }
 }
 
+/*!
+   \brief node_t::branch
+   \param level gives the number of relative layers to append
+
+   \note this function doesn't check if m_level_max is reached or not
+*/
 void node_t::branch(size_t level)
 {
-    if (m_level < c_grid->m_level_max) {
+    if(level > 0) {
         // check if memory is not yet allocated in memory
         if(!m_childs) {
             // allocate memory for all child nodes
             m_childs = new node_array_t;
+            (*m_childs)[0].setPoint(m_point);
             for (size_t pos = 0; pos < g_dimension; ++pos) {
                 index_t index = m_index;
                 for (auto &ind: index) {
@@ -79,7 +101,13 @@ node_t::~node_t()
 {
     if(m_childs) {
         delete m_childs;
-        m_childs = nullptr;
+        // m_childs = nullptr;
+    }
+
+    // we delete the position pointers except the one we got from parent
+    if(m_position > position_t(0)) {
+        delete m_point;
+        // m_point = nullptr;
     }
 }
 

@@ -18,10 +18,10 @@
 
 #include "functions.h"
 
-monores_grid_t::monores_grid_t(const size_t level_max) :
+monores_grid_t::monores_grid_t(const u_char level_max) :
     grid_t()
   , N(1 << level_max)
-  , dx(g_span/N)
+  , dx(g_span[dimX]/N)
   , dt(g_cfl*dx/g_velocity)
 {
     pointvector.reserve(N);
