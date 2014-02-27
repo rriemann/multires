@@ -69,7 +69,7 @@ class multires_grid_t : public grid_t
     };
 
 public:
-    multires_grid_t(const u_char level_max, const u_char level_min = 0);
+    multires_grid_t(const u_char level_max, const u_char level_min = 0, real epsilon = g_epsilon);
 
     virtual real timeStep();
     virtual size_t size() const;

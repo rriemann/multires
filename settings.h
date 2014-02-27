@@ -15,8 +15,8 @@ typedef std::vector<real> real_vector;
 
 typedef std::array<int, g_dimension> index_t;
 
-const real g_epsilon  = 1e-4;
-const size_t g_level  = 6;
+const real g_epsilon  = 1e-3;
+const size_t g_level  = 8;
 const real g_velocity = 0.5;
 
 const real g_cfl  = 0.1;

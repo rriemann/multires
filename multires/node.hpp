@@ -70,8 +70,12 @@ public:
     };
 
     node_t();
+
     static void setGrid(multires_grid_t *grid)
     { c_grid = grid; }
+
+    static void setEpsilon(real epsilon)
+    { c_epsilon = epsilon; }
 
     void initialize(node_t *parent, u_char level, char position, const index_t &index);
 
@@ -87,6 +91,10 @@ public:
     void branch(size_t level = 1);
 
     void debranch();
+
+    bool remesh();
+
+    real interpolation();
 
     const point_t *getPoint() const
     { return m_point; }
@@ -109,6 +117,7 @@ private:
     point_t *m_point;
     node_array_t *m_childs;
     static multires_grid_t *c_grid;
+    static real c_epsilon;
 };
 
 #endif // NODE_HPP

@@ -59,6 +59,9 @@ int main()
     double elapsed_time = std::chrono::duration_cast<std::chrono::duration<double>>(done - start).count();
     std::cerr << "calculation time: " << elapsed_time << std::endl;
 
+    size_t size = grid.size();
+    std::cerr << "used nodes: " << size << "/" << (1 << g_level) << "=" << real(size)/(1 << g_level) << std::endl;
+
     // output file
     std::ofstream file("/tmp/output.txt");
     for(const point_t point: grid) {

@@ -106,21 +106,58 @@ void node_t::branch(size_t level)
     }
 }
 
+/*!
+   \brief node_t::debranch
+   \note check if m_childs is non-zero before
+ */
 void node_t::debranch()
 {
-    if(m_childs) {
-        point_t *point = (*m_childs)[c_childs-1].getPoint()->m_next;
+    point_t *point = (*m_childs)[c_childs-1].getPoint()->m_next;
 
-        delete m_childs;
-        m_childs = nullptr;
+    delete m_childs;
+    m_childs = nullptr;
 
-        m_point->m_next = point;
+    m_point->m_next = point;
+}
+
+bool node_t::remesh()
+{
+    bool hold = false;
+    if (m_childs) {
+        for (node_t &node: *m_childs) {
+            hold = node.remesh() || hold;
+        }
+        if (!hold) {
+            debranch();
+        }
     }
+
+    if (!hold) {
+        real residual = std::fabs(m_point->m_phi - interpolation());
+        std::cerr << residual << std::endl;
+        if (residual > c_epsilon) {
+            hold = true;
+        }
+    }
+
+    return hold;
+}
+
+real node_t::interpolation()
+{
+    real phi = 0;
+    for (char pos = 0; pos < c_childs; ++pos) {
+        const node_t *neighbour = getNeighbour(pos);
+        phi += neighbour->getPoint()->m_phi;
+    }
+    return phi/c_childs;
 }
 
 node_t::~node_t()
 {
-    debranch();
+    if (m_childs) {
+        debranch();
+    }
 
     // we delete the position pointers except the one we got from parent
     if(m_position > position_t(0)) {
@@ -130,3 +167,4 @@ node_t::~node_t()
 }
 
 multires_grid_t *node_t::c_grid = nullptr;
+real node_t::c_epsilon = 0;

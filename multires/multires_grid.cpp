@@ -20,7 +20,7 @@
 #include "functions.h"
 
 
-multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
+multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min, real epsilon)
     : m_level_max(level_max)
     , m_level_min(level_min)
 {
@@ -29,6 +29,8 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
     m_root_point->setNext(nullptr);
 
     node_t::setGrid(this);
+    node_t::setEpsilon(epsilon);
+
     m_root_node = new node_t();
     m_root_node->setPoint(m_root_point);
     m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
@@ -41,6 +43,8 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
         point.m_phi = f_eval(point.m_x);
         point.m_phiBackup = point.m_phi;
     }
+
+    m_root_node->remesh();
 }
 
 real multires_grid_t::timeStep()
@@ -51,7 +55,6 @@ real multires_grid_t::timeStep()
 
 size_t multires_grid_t::size() const
 {
-
     return std::distance(begin(), end());
 }
 
