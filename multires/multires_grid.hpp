@@ -23,22 +23,56 @@
 #include <cassert>
 #include <functional>
 #include <boost/format.hpp>
+#include <boost/iterator/iterator_facade.hpp>
 
 #include "settings.h"
 #include "grid.hpp"
+#include "point.hpp"
 
 class node_t;
-class point_t;
+// class point_t;
 
 class multires_grid_t : public grid_t
 {
+    class iterator
+            : public boost::iterator_facade<
+            iterator
+            , point_t
+            , boost::forward_traversal_tag
+            //, boost::bidirectional_traversal_tag
+            >
+    {
+    public:
+        iterator()
+            : m_point(nullptr)
+        {}
+
+        explicit iterator(point_t* p)
+            : m_point(p)
+        {}
+
+    private:
+        friend class boost::iterator_core_access;
+
+        void increment()
+        { m_point = m_point->m_next; }
+
+        bool equal(iterator const &other) const
+        { return this->m_point == other.m_point; }
+
+        point_t& dereference() const
+        { return *m_point; }
+
+        point_t *m_point;
+    };
+
 public:
     multires_grid_t(const u_char level_max, const u_char level_min = 0);
 
     virtual real timeStep();
 
-    const point_t *begin() const;
-    const point_t *end() const;
+    const iterator begin() const;
+    const iterator end() const;
 
     virtual ~multires_grid_t();
 
@@ -53,5 +87,6 @@ private:
 
     friend class node_t;
 };
+
 
 #endif // MULTIRES_GRID_HPP

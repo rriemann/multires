@@ -61,7 +61,8 @@ int main()
 
     // output file
     std::ofstream file("/tmp/output.txt");
-    for(const point_t &point: grid) {
+    for(const point_t point: grid) {
+        // std::cerr << point.m_x[dimX] << " : " << point.m_phi << std::endl;
         file << boost::format("%e %e\n")
                 % point.m_x[dimX]
                 % point.m_phi;

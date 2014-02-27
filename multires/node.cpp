@@ -37,9 +37,12 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
         assert(g_dimension == 1);
 
         real phi = 0;
+        /*
         for (char pos = 0; pos < c_childs; ++pos) {
-            phi += getNeighbour(pos)->getPoint()->m_phi;
+            const node_t *neighbour = getNeighbour(pos);
+            phi += neighbour->getPoint()->m_phi;
         }
+        */
 
         location_t location = {{ parent->getPoint()->m_x[dimX] + g_span[dimX]/(1 << m_level) }};
         m_point = new point_t(location, phi/c_childs);
@@ -63,7 +66,8 @@ const node_t *node_t::getNeighbour(const char position) const
     if (cnode->isLeaf()) {
         return cnode;
     } else {
-        return &(*cnode->m_childs)[position];
+        assert(this == &(*m_parent->m_childs)[m_position]);
+        return &(*cnode->m_childs)[(position+1)%2];
     }
 }
 
@@ -81,7 +85,7 @@ void node_t::branch(size_t level)
             // allocate memory for all child nodes
             m_childs = new node_array_t;
             (*m_childs)[0].setPoint(m_point);
-            for (size_t pos = 0; pos < g_dimension; ++pos) {
+            for (size_t pos = 0; pos < c_childs; ++pos) {
                 index_t index = m_index;
                 for (auto &ind: index) {
                     assert(g_dimension == 1);
@@ -90,6 +94,11 @@ void node_t::branch(size_t level)
                 (*m_childs)[pos].initialize(this, m_level+1, position_t(pos), index);
 
             }
+
+            // put new child nodes into the next-chain of the points
+            (*m_childs)[1].getPoint()->m_next = m_point->m_next;
+            m_point->m_next = (*m_childs)[1].getPoint();
+            // (*m_childs)[0].getPoint()->m_next = (*m_childs)[1].getPoint();
         }
         for (node_t &node: *m_childs) {
             node.branch(level-1);
@@ -97,12 +106,21 @@ void node_t::branch(size_t level)
     }
 }
 
-node_t::~node_t()
+void node_t::debranch()
 {
     if(m_childs) {
+        point_t *point = (*m_childs)[c_childs-1].getPoint()->m_next;
+
         delete m_childs;
-        // m_childs = nullptr;
+        m_childs = nullptr;
+
+        m_point->m_next = point;
     }
+}
+
+node_t::~node_t()
+{
+    debranch();
 
     // we delete the position pointers except the one we got from parent
     if(m_position > position_t(0)) {

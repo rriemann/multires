@@ -31,10 +31,16 @@ public:
     {
     }
 
+    void setNext(point_t *point)
+    { m_next = point; }
+
+    const point_t *getNext() const
+    { return m_next; }
+
     index_t m_index;
     location_t m_x;
     real m_phi;
     real m_phiBackup;
-    point_t *next;
+    point_t *m_next;
 };
 #endif // POINT_HPP

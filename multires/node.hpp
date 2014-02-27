@@ -87,7 +87,12 @@ public:
     void branch(size_t level = 1);
     void initialCondition(const field_generator_t &f_eval);
 
+    void debranch();
+
     const point_t *getPoint() const
+    { return m_point; }
+
+    point_t *getPoint()
     { return m_point; }
 
     void setPoint(point_t *point)

@@ -23,9 +23,12 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
     : m_level_max(level_max)
     , m_level_min(level_min)
 {
+
+    m_root_point = new point_t(g_x0, 0);
+    m_root_point->setNext(nullptr);
+
     node_t::setGrid(this);
     m_root_node = new node_t();
-    m_root_point = new point_t(g_x0, 0);
     m_root_node->setPoint(m_root_point);
     m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
     m_root_node->branch(level_max);
@@ -37,14 +40,14 @@ real multires_grid_t::timeStep()
     return m_time;
 }
 
-const point_t *multires_grid_t::begin() const
+const multires_grid_t::iterator multires_grid_t::begin() const
 {
-    return m_root_point;
+    return iterator(m_root_point);
 }
 
-const point_t *multires_grid_t::end() const
+const multires_grid_t::iterator multires_grid_t::end() const
 {
-    return nullptr;
+    return iterator();
 }
 
 multires_grid_t::~multires_grid_t()
