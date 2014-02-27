@@ -85,7 +85,6 @@ public:
     { return !m_childs; }
 
     void branch(size_t level = 1);
-    void initialCondition(const field_generator_t &f_eval);
 
     void debranch();
 

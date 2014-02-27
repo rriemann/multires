@@ -68,6 +68,7 @@ int main()
                 % point.m_phi;
     }
     file.close();
+    std::cerr << "try: gnuplot -p -e \"plot '/tmp/output.txt' using 1:2\"" << std::endl;
 
     return 0;
 }

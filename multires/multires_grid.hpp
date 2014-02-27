@@ -43,11 +43,13 @@ class multires_grid_t : public grid_t
             >
     {
     public:
+        /*
         iterator()
             : m_point(nullptr)
         {}
+        */
 
-        explicit iterator(point_t* p)
+        explicit iterator(point_t* p = nullptr)
             : m_point(p)
         {}
 
@@ -70,6 +72,7 @@ public:
     multires_grid_t(const u_char level_max, const u_char level_min = 0);
 
     virtual real timeStep();
+    virtual size_t size() const;
 
     const iterator begin() const;
     const iterator end() const;

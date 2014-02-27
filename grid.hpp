@@ -27,6 +27,7 @@ public:
     { return m_time; }
 
     virtual real timeStep() = 0;
+    virtual size_t size() const = 0;
 
 protected:
     real m_time = 0;

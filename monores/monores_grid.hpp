@@ -29,7 +29,7 @@ public:
 
     virtual real timeStep();
 
-    size_t size() const
+    virtual size_t size() const
     { return N; }
 
     // getters for ranged for, see:

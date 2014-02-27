@@ -17,6 +17,7 @@
 #include "multires_grid.hpp"
 #include "node.hpp"
 #include "point.hpp"
+#include "functions.h"
 
 
 multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
@@ -31,13 +32,27 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min)
     m_root_node = new node_t();
     m_root_node->setPoint(m_root_point);
     m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
+
+    // create level_max-depth new children
     m_root_node->branch(level_max);
+
+    // initialize data points
+    for(point_t &point: *this) {
+        point.m_phi = f_eval(point.m_x);
+        point.m_phiBackup = point.m_phi;
+    }
 }
 
 real multires_grid_t::timeStep()
 {
     m_time += 1;
     return m_time;
+}
+
+size_t multires_grid_t::size() const
+{
+
+    return std::distance(begin(), end());
 }
 
 const multires_grid_t::iterator multires_grid_t::begin() const
