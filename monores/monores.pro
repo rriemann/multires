@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-TARGET   = regular
+TARGET   = monores
 VERSION  = 0.1.0
 
 include(../common.pri)
@@ -12,7 +12,7 @@ CONFIG -= qt
 CONFIG += staticlib
 
 SOURCES += \
-    regular_base.cpp
+    monores_grid.cpp
 
 HEADERS += \
-    regular_base.hpp
+    monores_grid.hpp

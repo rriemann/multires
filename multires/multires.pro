@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-TARGET   = node
+TARGET   = multires
 VERSION  = 0.1.0
 
 include(../common.pri)
@@ -12,8 +12,8 @@ CONFIG -= qt
 CONFIG += staticlib
 
 SOURCES += \
-    node_base.cpp
+    multires.cpp
 
 HEADERS += \
-    node_base.hpp \
+    multires.hpp \
     node_iterator.hpp

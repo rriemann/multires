@@ -14,61 +14,39 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef REGULAR_BASE_HPP
-#define REGULAR_BASE_HPP
+#ifndef MONORES_GRID_HPP
+#define MONORES_GRID_HPP
 
 #include "settings.h"
+
+#include "grid.hpp"
 
 #include <iostream>
 #include <memory>
 #include <cassert>
 #include <boost/format.hpp>
 
-struct regular_base;
-
-struct regular_base
+class monores_grid_t : public grid_t
 {
+    monores_grid_t(const size_t level_max);
 
-    typedef regular_base* regular_p;
-    typedef std::unique_ptr<regular_base> regular_u;
-
-    static regular_p createRoot(const propertyGenerator_t &propertyGenerator, const size_t level = g_level, const boundaryCondition_t boundaryCondition = bcPeriodic)
-    { c_root = regular_u(new regular_base(propertyGenerator, level, boundaryCondition)); return c_root.get(); }
-
-    real getTime() const
-    { return m_time; }
-
-    real operator[](size_t i) const
-    { return data[i]; }
-
-    const realvector& getData() const
-    { return data; }
-    const realvector& getCenter() const
-    { return xvalues; }
+    virtual real timeStep();
 
     size_t size() const
     { return N; }
 
-    real timeStep();
-
-    ~regular_base() {}
+    virtual ~monores_grid_t() {}
 
 private:
-    regular_base(const regular_base&) = delete; // remove copy constructor
-    regular_base(const propertyGenerator_t &propertyGenerator, const size_t level = g_level, const boundaryCondition_t boundaryCondition = bcPeriodic);
+    monores_grid_t(const monores_grid_t&) = delete; // remove copy constructor
 
-    const propertyGenerator_t m_propertyGenerator;
-    const boundaryCondition_t m_boundaryCondition;
-    static regular_u c_root;
+
+
     const size_t N;
     const real dx;
     const real dt;
-    real m_time;
 
     realvector data, data2, xvalues;
 };
 
-typedef regular_base::regular_p regular_tp;
-typedef regular_base regular_t;
-
-#endif // REGULAR_BASE_HPP
+#endif // MONORES_GRID_HPP

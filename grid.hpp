@@ -14,20 +14,22 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef FUNCTIONS_H
-#define FUNCTIONS_H
+#ifndef GRID_HPP
+#define GRID_HPP
 
 #include "settings.h"
 
-#include <cmath>
+class grid_t
+{
+public:
+    grid_t();
+    real getTime()
+    { return m_time; }
 
+    virtual real timeStep() = 0;
 
-real f_eval_gauss(location_t x) {
-    const real x2 = x[0]*x[0];
+protected:
+    real m_time = 0;
+};
 
-    return exp(-10*x2);
-}
-
-const field_generator_t f_eval = f_eval_gauss;
-
-#endif // FUNCTIONS_H
+#endif // GRID_HPP

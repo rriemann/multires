@@ -17,6 +17,11 @@ DEPENDPATH  += $$PWD
 HEADERS += \
     $$PWD/settings.h \
     $$PWD/functions.h \
-    $$PWD/theory_base.hpp
+    $$PWD/theory_base.hpp \
+    $$PWD/point.hpp \
+    $$PWD/grid.hpp
 
 Release:DEFINES += NDEBUG
+
+SOURCES += \
+    $$PWD/grid.cpp

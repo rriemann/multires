@@ -15,9 +15,9 @@ HEADERS += ../settings.h \
            ../functions.h
 
 contains(DEFINES, REGULAR) {
-    BACKEND_LIB = ../regular/libregular.a
+    BACKEND_LIB = ../multires/libmultires.a
 } else {
-    BACKEND_LIB = ../node/libnode.a
+    BACKEND_LIB = ../monores/libmonores.a
 }
 
 PRE_TARGETDEPS = $${BACKEND_LIB}

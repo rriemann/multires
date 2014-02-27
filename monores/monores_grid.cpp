@@ -14,36 +14,33 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "regular_base.hpp"
+#include "monores_grid.hpp"
 
-regular_base::regular_base(const propertyGenerator_t &propertyGenerator, const size_t level, const boundaryCondition_t boundaryCondition) :
-    m_propertyGenerator(propertyGenerator)
-  , m_boundaryCondition(boundaryCondition)
-  , N((2 << level) + 1)
+#include "functions.h"
+
+monores_grid_t::monores_grid_t(const size_t level_max) :
+    grid_t()
+  , N(1 << level_max)
   , dx(g_span/N)
 #ifndef BURGER
   , dt(g_cfl*dx/g_velocity)
 #else
   , dt(g_cfl*dx/20) // assuming max(velocity = data[j]) <= 20
 #endif
-  , m_time(0)
 {
     data.reserve(N);
     data2.reserve(N);
     xvalues.reserve(N);
 
-    // std::cerr << "regular dt: " << dt << std::endl;
-
     for(size_t i = 0; i < N; ++i) {
-        real x = i*dx+x0;
+        real x = i*dx+g_x0[0];
         xvalues.push_back(x);
-        realarray center;
-        center[dimX] = x;
-        data.push_back(m_propertyGenerator(center));
+        location_t location = {{x}};
+        data.push_back(f_eval(location));
     }
 }
 
-real regular_base::timeStep()
+real monores_grid_t::timeStep()
 {
     // update temporary data;
     data2 = data;
@@ -54,13 +51,10 @@ real regular_base::timeStep()
     }
 
     // deal with boundaries
-    if(m_boundaryCondition == bcPeriodic) {
-        data[0]   = timeStepHelper(data2[0  ], data2[N-1], data2[1], dx, dt);
-        data[N-1] = timeStepHelper(data2[N-1], data2[N-2], data2[0], dx, dt);
-    } else abort();
+    data[0]   = timeStepHelper(data2[0  ], data2[N-1], data2[1], dx, dt);
+    data[N-1] = timeStepHelper(data2[N-1], data2[N-2], data2[0], dx, dt);
+
 
     m_time += dt;
     return dt;
 }
-
-regular_base::regular_u regular_base::c_root = regular_u(nullptr);
