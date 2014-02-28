@@ -14,7 +14,7 @@ typedef double real;
 typedef std::array<real, g_dimension> location_t;
 typedef std::vector<real> real_vector;
 
-typedef std::array<int, g_dimension> index_t;
+typedef std::array<size_t, g_dimension> index_t;
 
 const real g_epsilon  = 1e-3;
 const size_t g_level  = 8;

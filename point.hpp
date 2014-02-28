@@ -24,11 +24,24 @@ class point_t
 public:
     point_t() {}
 
-    point_t(location_t x, real phi = 0) :
-        m_x(x)
-      , m_phi(phi)
-      , m_phiBackup(phi)
+    point_t(index_t index, u_char level_max) :
+        m_index(index)
     {
+        for (u_char i = 0; i < g_dimension; ++i) {
+            m_x[i] = g_x0[i] + g_span[0]/(1 << level_max)*m_index[0];
+        }
+    }
+
+    point_t(index_t index, u_char level_max, field_generator_t f_eval) :
+        point_t(index, level_max)
+    {
+        m_phi = f_eval(m_x);
+    }
+
+    point_t(index_t index, u_char level_max, real phi) :
+        point_t(index, level_max)
+    {
+        m_phi = phi;
     }
 
     void setNext(point_t *point)
@@ -37,6 +50,10 @@ public:
     const point_t *getNext() const
     { return m_next; }
 
+    void setIndex(index_t index)
+    { m_index = index; }
+
+    /*! the index with respect to level_max */
     index_t m_index;
     location_t m_x;
     real m_phi;

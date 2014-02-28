@@ -27,7 +27,8 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     , dt(g_cfl*g_span[dimX]/((1 << level_max)*g_velocity))
 {
 
-    m_root_point = new point_t(g_x0, 0);
+    m_root_point = new point_t({{}}, m_level_max);
+    assert(m_root_point->m_index[0] == 0);
     m_root_point->setNext(nullptr);
 
     node_t::setGrid(this);

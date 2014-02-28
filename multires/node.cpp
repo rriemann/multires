@@ -35,17 +35,15 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
     //   not the one (pos = 0) which just gets the copy of the parent
     if (position > 0) {
         assert(g_dimension == 1);
+        index_t index_level_max = parent->getPoint()->m_index;
+        index_level_max[position] += pow(2, c_grid->m_level_max - m_level);
 
         real phi = 0;
-        /*
         for (char pos = 0; pos < c_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
             phi += neighbour->getPoint()->m_phi;
         }
-        */
-
-        location_t location = {{ parent->getPoint()->m_x[dimX] + g_span[dimX]/(1 << m_level) }};
-        m_point = new point_t(location, phi/c_childs);
+        m_point = new point_t(index, c_grid->m_level_max, phi/c_childs);
     }
 }
 /*!

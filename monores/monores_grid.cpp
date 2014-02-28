@@ -14,8 +14,9 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#include "monores_grid.hpp"
+#include <assert.h>
 
+#include "monores_grid.hpp"
 #include "functions.h"
 
 monores_grid_t::monores_grid_t(const u_char level_max) :
@@ -27,8 +28,9 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
     pointvector.reserve(N);
 
     for(size_t i = 0; i < N; ++i) {
-        const location_t location = {{i*dx+g_x0[0]}};
-        const point_t point(location, g_f_eval(location));
+        assert(g_dimension == 1);
+        index_t index({{i}});
+        const point_t point(index, level_max, g_f_eval);
         pointvector.push_back(point);
     }
 }
@@ -42,12 +44,21 @@ real monores_grid_t::timeStep()
 
     // update inner cell values
     for(size_t i = 1; i < pointvector.size()-1; ++i){
-        pointvector[i].m_phi = timeStepHelper(pointvector[i].m_phiBackup, pointvector[i-1].m_phiBackup, pointvector[i+1].m_phiBackup, dx, dt);
+        pointvector[i].m_phi = timeStepHelper(pointvector[i].m_phiBackup,
+                                              pointvector[i-1].m_phiBackup,
+                                              pointvector[i+1].m_phiBackup,
+                                              dx, dt);
     }
 
     // deal with boundaries
-    pointvector[0].m_phi   = timeStepHelper(pointvector[0  ].m_phiBackup, pointvector[N-1].m_phiBackup, pointvector[1].m_phiBackup, dx, dt);
-    pointvector[N-1].m_phi = timeStepHelper(pointvector[N-1].m_phiBackup, pointvector[N-2].m_phiBackup, pointvector[0].m_phiBackup, dx, dt);
+    pointvector[0].m_phi   = timeStepHelper(pointvector[0  ].m_phiBackup,
+                                            pointvector[N-1].m_phiBackup,
+                                            pointvector[1].m_phiBackup,
+                                            dx, dt);
+    pointvector[N-1].m_phi = timeStepHelper(pointvector[N-1].m_phiBackup,
+                                            pointvector[N-2].m_phiBackup,
+                                            pointvector[0].m_phiBackup,
+                                            dx, dt);
 
     m_time += dt;
     return dt;
