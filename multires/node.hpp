@@ -128,6 +128,9 @@ public:
     void setPoint(point_t *point)
     { m_point = point; }
 
+    const index_t &getIndex() const
+    { return m_index; }
+
     ~node_t();
 
 private:

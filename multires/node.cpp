@@ -14,6 +14,8 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
+#include <iostream>
+
 #include "node.hpp"
 #include "multires_grid.hpp"
 #include "point.hpp"
@@ -31,19 +33,31 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
     m_flags = flUnset;
     m_childs = nullptr;
 
-    // construct point for non-root and
-    //   not the one (pos = 0) which just gets the copy of the parent
     if (position > 0) {
+        // create new point for position > 0
+        // construct point-index
         assert(g_dimension == 1);
-        index_t index_level_max = parent->getPoint()->m_index;
-        index_level_max[position] += pow(2, c_grid->m_level_max - m_level);
+        index_t index_p = m_parent->getPoint()->m_index;
+        index_p[0] += pow(2, c_grid->m_level_max - m_level);
 
         real phi = 0;
+        /*
         for (char pos = 0; pos < c_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
             phi += neighbour->getPoint()->m_phi;
         }
-        m_point = new point_t(index, c_grid->m_level_max, phi/c_childs);
+        */
+        m_point = new point_t(index_p, c_grid->m_level_max, phi/c_childs);
+    }
+    /*
+    std::cerr << "this pos " << int(position)
+              << " this index " << m_point->m_index[0]
+              << " this level " << int(m_level)
+              << std::endl;
+    */
+
+    if(m_level == c_grid->m_level_max) {
+        assert(m_index == m_point->m_index);
     }
 }
 /*!
@@ -109,21 +123,27 @@ void node_t::branch(size_t level)
         if(!m_childs) {
             // allocate memory for all child nodes
             m_childs = new node_array_t;
+
+            // copy point for first child from parent (this)
             getChild(0)->setPoint(m_point);
+
             for (size_t pos = 0; pos < c_childs; ++pos) {
-                index_t index = m_index;
+                // construct node-index
+                index_t index = getIndex();
                 for (auto &ind: index) {
                     assert(g_dimension == 1);
                     ind = 2*ind+pos;
                 }
+
                 getChild(pos)->initialize(this, m_level+1, position_t(pos), index);
+                // std::cerr << "now index: " << getChild(pos)->getPoint()->m_index[dimX] << std::endl;
 
             }
 
             // put new child nodes into the next-chain of the points
+            assert(g_dimension == 1);
             getChild(1)->getPoint()->m_next = m_point->m_next;
             m_point->m_next = getChild(1)->getPoint();
-            // (*m_childs)[0].getPoint()->m_next = (*m_childs)[1].getPoint();
         }
         for (node_t &node: *m_childs) {
             node.branch(level-1);

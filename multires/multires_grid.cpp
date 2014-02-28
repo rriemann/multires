@@ -36,7 +36,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
 
     m_root_node = new node_t();
     m_root_node->setPoint(m_root_point);
-    m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
+    m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, {{}});
     // create level_start-depth new children
     m_root_node->branch(m_level_start);
 

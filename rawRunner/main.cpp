@@ -47,6 +47,8 @@ int main()
     multires_grid_t grid(g_level);
 #endif
 
+    std::cerr << "\nsize: " << grid.size() << std::endl;
+
     auto start = std::chrono::steady_clock::now();
 
     do {
