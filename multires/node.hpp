@@ -118,6 +118,9 @@ public:
     inline u_char getFlags() const
     { return m_flags; }
 
+    inline void setFlags(u_char flags)
+    { m_flags = flags; }
+
     point_t *getPoint()
     { return m_point; }
 

@@ -23,6 +23,7 @@
 multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min, real epsilon)
     : m_level_max(level_max)
     , m_level_min(level_min)
+    , m_level_start((level_max+level_min)/2)
 {
 
     m_root_point = new point_t(g_x0, 0);
@@ -34,19 +35,24 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     m_root_node = new node_t();
     m_root_node->setPoint(m_root_point);
     m_root_node->initialize(nullptr, node_t::lvlRoot, node_t::posRoot, index_t({{0}}));
+    // create level_start-depth new children
+    m_root_node->branch(m_level_start);
 
-    // create level_max-depth new children
-    m_root_node->branch(level_max);
-
-    // initialize data points
-    for(point_t &point: *this) {
-        point.m_phi = f_eval(point.m_x);
-        point.m_phiBackup = point.m_phi;
-    }
-
-    m_root_node->remesh_analyse();
-    m_root_node->remesh_savety();
-    m_root_node->remesh_clean();
+    // initialize data points and optimize mesh
+    size_t size_new = size();
+    size_t size_old;
+    do {
+        size_old = size_new;
+        for(point_t &point: *this) {
+            point.m_phi = f_eval(point.m_x);
+            point.m_phiBackup = point.m_phi;
+        }
+        m_root_node->remesh_analyse();
+        m_root_node->remesh_savety();
+        m_root_node->remesh_clean();
+        size_new = size();
+        std::cerr << "initalizing: " << size_old << " -> " << size_new << std::endl;
+    } while (size_old != size_new);
 }
 
 real multires_grid_t::timeStep()

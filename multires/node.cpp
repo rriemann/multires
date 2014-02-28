@@ -212,6 +212,7 @@ bool node_t::remesh_clean()
             debranch();
         }
     }
+    m_flags = m_flags & (~(flActive | flCached));
     return (!veto && (m_flags < flSavetyZone));
 }
 
@@ -227,9 +228,9 @@ bool node_t::remesh_clean()
 */
 void node_t::remesh_savety()
 {
-    // cumulative  flags of children
-    u_char cum_flags = flUnset;
-    if (m_childs) {
+    if (m_childs && (m_level+1 < c_grid->m_level_max)) {
+        // cumulative  flags of children
+        u_char cum_flags = flUnset;
         for (node_t &node: *m_childs) {
             node.remesh_savety();
             cum_flags = cum_flags | node.getFlags();
