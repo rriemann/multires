@@ -28,7 +28,7 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
 
     for(size_t i = 0; i < N; ++i) {
         const location_t location = {{i*dx+g_x0[0]}};
-        const point_t point(location, f_eval(location));
+        const point_t point(location, g_f_eval(location));
         pointvector.push_back(point);
     }
 }

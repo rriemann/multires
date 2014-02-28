@@ -14,8 +14,8 @@ SOURCES += main.cpp
 HEADERS += ../settings.h \
            ../functions.h
 
-BACKEND_LIB  = ../node/libnode.a
-BACKEND_LIB += ../regular/libregular.a
+BACKEND_LIB  = ../multires/libmultires.a
+BACKEND_LIB += ../monores/libmonores.a
 
 PRE_TARGETDEPS = $${BACKEND_LIB}
 LIBS          += $${BACKEND_LIB}

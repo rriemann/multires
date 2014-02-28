@@ -77,6 +77,8 @@ public:
     const iterator begin() const;
     const iterator end() const;
 
+    void unfold(u_char level_max);
+
     virtual ~multires_grid_t();
 
 private:

@@ -23,9 +23,9 @@
 
 // using namespace std;
 
-#include "node/node_iterator.hpp"
-#include "regular/regular_base.hpp"
-#include "theory_base.hpp"
+#include "multires/multires_grid.hpp"
+#include "monores/monores_grid.hpp"
+#include "theory.hpp"
 
 #include "functions.h"
 
@@ -33,8 +33,8 @@
 #include <limits>
 static const real eps = std::numeric_limits<real>::epsilon();
 
-realarray center(real x) {
-    return realarray{{x}};
+location_t center(real x) {
+    return location_t {{x}};
 }
 
 int main()
@@ -42,8 +42,7 @@ int main()
     ///////////// CONFIG //////////////////////
 #define NORM_L_INF // uncomment to use L_1 norm
 
-
-    real simulationTime = g_span/g_velocity; // 1 period
+    real simulationTime = g_span[dimX]/g_velocity; // 1 period
 
     std::array<real,6> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
@@ -64,9 +63,6 @@ int main()
     }
     std::array<real,1> steps_epsilon {{0.0001}};
     */
-
-
-    propertyGenerator_t f_eval = f_eval_gauss;
 
     // setup output stream
     std::ofstream file("/tmp/output.dat");
@@ -91,10 +87,10 @@ int main()
 
     for(size_t i_level = 0; i_level < steps_level.size(); ++i_level) {
         const size_t level = steps_level[i_level];
-        const size_t N     = level2N(level);
+        const size_t N     = (1 << level);
 
         y_values_diff_norm[i_level][yTheory] = eps;
-        const theory_base theory(f_eval, level);
+        const theory_t theory(level);
 
         // output row for theory
         // format: level N epsilon norm
@@ -107,18 +103,18 @@ int main()
         // regular grid computation
         {
 
-            regular_tp root = regular_t::createRoot(f_eval, level, bcPeriodic);
-            while(root->getTime() < simulationTime) {
-                root->timeStep();
-            }
+            monores_grid_t grid(level);
+            do {
+                grid.timeStep();
+            } while(grid.getTime() < simulationTime);
+
 #ifdef NORM_L_INF
             y_values_diff_norm[i_level][yGridRegular] = eps;
 #else
             y_values_diff_norm[i_level][yGridRegular] = 0;
 #endif
-            for(size_t i = 0; i < root->size(); i++) {
-                // std::cerr << "theory: " << theory.at(i, root->getTime()) << " exp: " << root->getData().at(i) << std::endl;
-                real diff = std::fabs(theory.at(i, root->getTime()) - root->getData().at(i));
+            for (const point_t &point: grid) {
+                real diff = std::fabs(theory.at(point.m_index, grid.getTime()) - point.m_phi);
 #ifdef NORM_L_INF
                 if(y_values_diff_norm[i_level][yGridRegular] < diff) {
                     y_values_diff_norm[i_level][yGridRegular] = diff;
@@ -143,25 +139,23 @@ int main()
             const real epsilon = steps_epsilon[i_epsilon];
 
 
-            std::vector<real> boundaries = {x0, x1};
-            node_tp root = node_t::createRoot(boundaries, f_eval, node_t::level_t(level), bcPeriodic, false);
-            root->setEpsilon(epsilon);
-            root->optimizeTree();
+            multires_grid_t grid(level, 0, epsilon);
+            do {
+                grid.timeStep();
+            } while(grid.getTime() < simulationTime);
 
-            while(root->getTime() < simulationTime) {
-                root->timeStep();
-            }
-            size_t elements = std::distance(node_iterator(root->boundary(node_t::posLeft)), node_iterator());
+            size_t size = grid.size();
 
-            root->unpackRecursiveTesting(node_t::level_t(level));
+            grid.unfold(level);
 
 #ifdef NORM_L_INF
             y_values_diff_norm[i_level][yGridMulti+i_epsilon] = eps;
 #else
             y_values_diff_norm[i_level][yGridMulti+i_epsilon] = 0;
 #endif
-            std::for_each(node_iterator(root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
-                real diff = std::fabs(node.property() - theory.at(node.center(), root->getTime()));
+
+            for (const point_t &point: grid) {
+                real diff = std::fabs(point.m_phi - theory.at(point.m_index, grid.getTime()));
 #ifdef NORM_L_INF
                 if(y_values_diff_norm[i_level][yGridMulti+i_epsilon] < diff) {
                     y_values_diff_norm[i_level][yGridMulti+i_epsilon] = diff;
@@ -169,8 +163,8 @@ int main()
 #else
                 y_values_diff_norm[i_level][yGridMulti+i_epsilon] += diff/N;
 #endif
-            });
-            std::cerr << "finished level " << level << " eps " << epsilon << " with nodes/N: " << real(elements)/N << std::endl;
+            }
+            std::cerr << "finished level " << level << " eps " << epsilon << " with nodes/N: " << real(size)/N << std::endl;
 
             // output row for multiresolution grid
             // format: level N epsilon norm

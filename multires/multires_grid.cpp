@@ -45,7 +45,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     do {
         size_old = size_new;
         for(point_t &point: *this) {
-            point.m_phi = f_eval(point.m_x);
+            point.m_phi = g_f_eval(point.m_x);
             point.m_phiBackup = point.m_phi;
         }
         m_root_node->remesh_analyse();
@@ -82,6 +82,11 @@ const multires_grid_t::iterator multires_grid_t::begin() const
 const multires_grid_t::iterator multires_grid_t::end() const
 {
     return iterator();
+}
+
+void multires_grid_t::unfold(u_char level_max)
+{
+    m_root_node->branch(level_max);
 }
 
 multires_grid_t::~multires_grid_t()

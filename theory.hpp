@@ -14,56 +14,44 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.                           *
  ****************************************************************************************/
 
-#ifndef THEORY_BASE_HPP
-#define THEORY_BASE_HPP
+#ifndef THEORY_HPP
+#define THEORY_HPP
 
 #include "settings.h"
+#include "functions.h"
 #include <iostream>
 
-class theory_base;
-
-class theory_base
+class theory_t
 {
 
 private:
-    const propertyGenerator_t m_propertyGenerator;
-    // const size_t level;
     const size_t N;
     const real dx;
-    // const real dt;
 
 public:
-    theory_base(const propertyGenerator_t &propertyGenerator, const size_t level = g_level) :
-        m_propertyGenerator(propertyGenerator)
-      // , level(level)
-      , N(level2N(level))
-      , dx(g_span/N)
-      // , dt(g_cfl*dx/g_velocity)
+    theory_t(const size_t level = g_level) :
+        N(1 << level)
+      , dx(g_span[dimX]/N)
     {
-
     }
 
-    real at(const realarray center, const real time) const {
-        realarray tmp = center;
-        tmp[0] = inDomain(center[0]-std::fmod(time*g_velocity, g_span));
-        assert(tmp[0] >= x0 && tmp[0] <= x1);
-        return m_propertyGenerator(tmp);
+    real at(const location_t center, const real time) const {
+        location_t tmp = center;
+        tmp[0] = inDomain(center[0]-std::fmod(time*g_velocity, g_span[dimX]));
+        assert(tmp[0] >= g_x0[dimX] && tmp[0] <= g_x1[dimX]);
+        return g_f_eval(tmp);
     }
 
     real at(const real center, const real time) const {
-        realarray tmp {{center}};
+        location_t tmp = {{center}};
         return at(tmp, time);
     }
 
-    real at(const size_t i, const real time) const {
-        // FIXME why minus? probably due to inDomain?
-        return at(x0+dx*i, time);
+    real at(const index_t index, const real time) const {
+        return at(g_x0[dimX]+dx*index[dimX], time);
     }
 
-    typedef theory_base* theory_p;
-
 };
-typedef theory_base theory_t;
 
 
-#endif // THEORY_BASE_HPP
+#endif // THEORY_HPP

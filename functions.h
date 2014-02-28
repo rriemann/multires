@@ -28,6 +28,6 @@ inline real f_eval_gauss(location_t x) {
     return exp(-30*x_shift*x_shift);
 }
 
-const field_generator_t f_eval = f_eval_gauss;
+const field_generator_t g_f_eval = f_eval_gauss;
 
 #endif // FUNCTIONS_H

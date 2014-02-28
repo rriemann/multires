@@ -17,7 +17,7 @@ DEPENDPATH  += $$PWD
 HEADERS += \
     $$PWD/settings.h \
     $$PWD/functions.h \
-    $$PWD/theory_base.hpp \
+    $$PWD/theory.hpp \
     $$PWD/point.hpp \
     $$PWD/grid.hpp
 
