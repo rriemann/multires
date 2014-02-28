@@ -103,6 +103,7 @@ public:
 
     bool remesh_analyse();
     bool remesh_clean();
+    void remesh_savety();
 
     real interpolation() const;
 
@@ -113,6 +114,9 @@ public:
 
     inline u_char getLevel() const
     { return m_level; }
+
+    inline u_char getFlags() const
+    { return m_flags; }
 
     point_t *getPoint()
     { return m_point; }

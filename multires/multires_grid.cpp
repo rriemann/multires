@@ -45,6 +45,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     }
 
     m_root_node->remesh_analyse();
+    m_root_node->remesh_savety();
     m_root_node->remesh_clean();
 }
 

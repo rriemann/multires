@@ -215,6 +215,36 @@ bool node_t::remesh_clean()
     return (!veto && (m_flags < flSavetyZone));
 }
 
+/*!
+   \brief node_t::remesh_savety adds savety zone
+
+   This methods walks recursively through the whole tree to find the nodes
+   with highest level in each branch which have a flActive flag set and creates
+   child nodes (if neccessary) with flSavetyZone flag set.
+
+   Ok, we do it differently. We just branch every node which has the flActive flag
+   itself or has a sibling with it.
+*/
+void node_t::remesh_savety()
+{
+    // cumulative  flags of children
+    u_char cum_flags = flUnset;
+    if (m_childs) {
+        for (node_t &node: *m_childs) {
+            node.remesh_savety();
+            cum_flags = cum_flags | node.getFlags();
+        }
+        if (cum_flags & flActive) {
+            for (node_t &node: *m_childs) {
+                node.branch();
+                for (node_t &node: *node.getChilds()) {
+                    node.set(flSavetyZone);
+                }
+            }
+        }
+    }
+}
+
 real node_t::interpolation() const
 {
     real phi = 0;
