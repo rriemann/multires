@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 #include <functional>
+#include <limits>
 
 constexpr size_t g_dimension = 1;
 
@@ -16,8 +17,9 @@ typedef std::vector<real> real_vector;
 typedef std::array<int, g_dimension> index_t;
 
 const real g_epsilon  = 1e-3;
-const size_t g_level  = 12;
+const size_t g_level  = 8;
 const real g_velocity = 0.5;
+const real g_eps = std::numeric_limits<real>::epsilon();
 
 const real g_cfl  = 0.1;
 const real g_timestep = 0.002;
@@ -41,7 +43,8 @@ typedef std::function<real(location_t)> field_generator_t;
  * @param er element to the right
  * @return new value for element
  */
-inline real timeStepHelper(const real &ee, const real &el, const real &er, const real &dx, const real &dt)
+inline real timeStepHelper(const real &ee, const real &el, const real &er,
+                           const real &dx, const real &dt)
 {
     const real alpha = g_velocity*dt/dx;
     const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));

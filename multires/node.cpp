@@ -48,7 +48,11 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
         m_point = new point_t(location, phi/c_childs);
     }
 }
-
+/*!
+   \brief node_t::getNeighbour
+   \param position to look for the neighbour
+   \return the neighbour at position with the same or smaller (coarser) one
+*/
 const node_t *node_t::getNeighbour(const char position) const
 {
     // Check the parent cell's children
@@ -196,27 +200,6 @@ bool node_t::remesh_analyse()
 }
 
 /*!
-   \brief node_t::remesh_clean
-   \return if the current node has no children
-*/
-bool node_t::remesh_clean()
-{
-    bool veto = false; // veto for removal of this node
-    if (m_childs) {
-        for (node_t &node: *m_childs) {
-            if (!node.remesh_clean()) {
-                veto = true;
-            }
-        }
-        if (!veto) {
-            debranch();
-        }
-    }
-    m_flags = m_flags & (~(flActive | flCached));
-    return (!veto && (m_flags < flSavetyZone));
-}
-
-/*!
    \brief node_t::remesh_savety adds savety zone
 
    This methods walks recursively through the whole tree to find the nodes
@@ -246,6 +229,27 @@ void node_t::remesh_savety()
     }
 }
 
+/*!
+   \brief node_t::remesh_clean
+   \return if the current node has no children
+*/
+bool node_t::remesh_clean()
+{
+    bool veto = false; // veto for removal of this node
+    if (m_childs) {
+        for (node_t &node: *m_childs) {
+            if (!node.remesh_clean()) {
+                veto = true;
+            }
+        }
+        if (!veto) {
+            debranch();
+        }
+    }
+    m_flags = m_flags & (~(flActive | flCached));
+    return (!veto && (m_flags < flSavetyZone));
+}
+
 real node_t::interpolation() const
 {
     real phi = 0;
@@ -259,6 +263,61 @@ real node_t::interpolation() const
 real node_t::residual() const
 {
     return fabs(m_point->m_phi - interpolation());
+}
+
+void node_t::timeStep()
+{
+    if(isLeaf()) {
+        std::array<const node_t *,  c_childs> neighbours;
+        // u_char level_diff_max = 0;
+        for (char pos = 0; pos < c_childs; ++pos) {
+            neighbours[pos] = getNeighbour(pos);
+            /* as we work with graded trees, we can expect that the level of our
+           neighbours is either the same or one level smaller (coarser).
+        */
+            assert(abs(neighbours[pos]->getLevel() - m_level) < 2);
+        }
+
+        assert(g_dimension == 1);
+        if (m_position == 0) {
+            short level_diff = neighbours[1]->getLevel() - neighbours[0]->getLevel();
+            if (level_diff > 0) {
+                // left node is coarser, we take a coarser neighbour for right as well
+                neighbours[1] = m_parent->getNeighbour(1);
+            } else if (level_diff < 0) {
+                // right node is coarser, we take a coaser neighbour for left as well
+                //neighbours[0] = m_parent->getNeighbour(1);
+                // automatically fullfiled
+            }
+        }
+
+        real dxl = m_point->m_x[dimX] - neighbours[posLeft]->getPoint()->m_x[dimX];
+        if (m_index[dimX] == 0 ) {
+            dxl += g_span[dimX];
+        }
+
+#ifndef NDEBUG
+        assert(dxl > 0);
+
+        // check if the neighbours have equal distance
+        real dxr = neighbours[posRight]->getPoint()->m_x[dimX] - m_point->m_x[dimX];
+        if (dxr < 0) {
+            dxr += g_span[dimX];
+        }
+
+        assert(fabs(dxr-dxl) <= g_eps);
+        // check if the neighbours are not too far away
+        // std::cerr << "dxr - est. " << dxr << " " << g_span[dimX]/(1 << (m_level-1))+g_eps << std::endl;
+        assert(dxl <= g_span[dimX]/(1 << (m_level-1))+g_eps);
+#endif
+        const real &phi_left  = neighbours[posLeft ]->getPoint()->m_phiBackup;
+        const real &phi_right = neighbours[posRight]->getPoint()->m_phiBackup;
+        m_point->m_phi = timeStepHelper(m_point->m_phiBackup, phi_left, phi_right, dxl, c_grid->dt);
+    } else {
+        for (node_t &node: *m_childs) {
+            node.timeStep();
+        }
+    }
 }
 
 node_t::~node_t()

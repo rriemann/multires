@@ -24,6 +24,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     : m_level_max(level_max)
     , m_level_min(level_min)
     , m_level_start((level_max+level_min)/2)
+    , dt(g_cfl*g_span[dimX]/((1 << level_max)*g_velocity))
 {
 
     m_root_point = new point_t(g_x0, 0);
@@ -57,8 +58,15 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
 
 real multires_grid_t::timeStep()
 {
-    m_time += 1;
-    return m_time;
+    // update temporary data;
+    for(point_t &point: *this) {
+        point.m_phiBackup = point.m_phi;
+    }
+
+    m_root_node->timeStep();
+
+    m_time += dt;
+    return dt;
 }
 
 size_t multires_grid_t::size() const

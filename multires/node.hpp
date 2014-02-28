@@ -102,12 +102,13 @@ public:
     void debranch();
 
     bool remesh_analyse();
-    bool remesh_clean();
     void remesh_savety();
+    bool remesh_clean();
 
     real interpolation() const;
-
     inline real residual() const;
+
+    void timeStep();
 
     const point_t *getPoint() const
     { return m_point; }

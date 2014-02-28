@@ -85,6 +85,7 @@ private:
     u_char m_level_max;
     u_char m_level_min;
     u_char m_level_start;
+    real dt;
     node_t *m_root_node;
     point_t *m_root_point;
 
