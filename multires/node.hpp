@@ -60,7 +60,7 @@ public:
     };
 
     // this is designed to allow: if(type>typeVirtual) { eval(); }
-    enum flags_t {
+    enum flag_t {
           flUnset      = 0
         , flCached     = 1 << 0
         , flDeletable  = 1 << 1
@@ -68,6 +68,12 @@ public:
         , flSavetyZone = 1 << 3
         , flActive     = 1 << 4
     };
+
+    inline bool has(flag_t flag) const
+    { return m_flags & flag; }
+
+    inline void set(flag_t flag)
+    { m_flags = m_flags | flag; }
 
     node_t();
 
@@ -85,6 +91,9 @@ public:
 
     const node_t *getNeighbour(const char position) const;
 
+    node_t *getChild(const char position) const;
+    node_array_t *getChilds() const;
+
     inline bool isLeaf() const
     { return !m_childs; }
 
@@ -92,12 +101,18 @@ public:
 
     void debranch();
 
-    bool remesh();
+    bool remesh_analyse();
+    bool remesh_clean();
 
-    real interpolation();
+    real interpolation() const;
+
+    inline real residual() const;
 
     const point_t *getPoint() const
     { return m_point; }
+
+    inline u_char getLevel() const
+    { return m_level; }
 
     point_t *getPoint()
     { return m_point; }

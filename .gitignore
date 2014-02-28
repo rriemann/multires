@@ -1,6 +1,7 @@
 guiRunner
 rawRunner
 compaRunner
+doc/
 
 *callgrind.*
 

@@ -44,7 +44,8 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
         point.m_phiBackup = point.m_phi;
     }
 
-    m_root_node->remesh();
+    m_root_node->remesh_analyse();
+    m_root_node->remesh_clean();
 }
 
 real multires_grid_t::timeStep()
