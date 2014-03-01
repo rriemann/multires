@@ -28,7 +28,7 @@ INCLUDEPATH += qcustomplot
 
 FORMS    += mainwindow.ui
 
-BACKEND_LIB = ../node/libnode.a ../regular/libregular.a
+BACKEND_LIB = ../multires/libmultires.a ../monores/libmonores.a
 
 PRE_TARGETDEPS = $${BACKEND_LIB}
 LIBS          += $${BACKEND_LIB}

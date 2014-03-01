@@ -17,6 +17,8 @@
 #ifndef POINT_HPP
 #define POINT_HPP
 
+#include <strings.h> // ffs
+
 #include "settings.h"
 
 class point_t
@@ -26,7 +28,7 @@ public:
     point_t() {}
     */
 
-    point_t(index_t index, u_char level_max) :
+    point_t(index_t index, const u_char level_max) :
         m_index(index)
     {
         for (u_char i = 0; i < g_dimension; ++i) {
@@ -54,6 +56,20 @@ public:
 
     void setIndex(index_t index)
     { m_index = index; }
+
+    int getLevel(const u_char level_max) const
+    {
+        int min = (1 << level_max);
+        for (const size_t &ind: m_index) {
+            int i = ffs(ind);
+            if(i < min) min = i;
+        }
+        if (min == 0) {
+            return 0;
+        } else {
+            return level_max +1 - min;
+        }
+    }
 
     /*! the index with respect to level_max */
     index_t m_index;

@@ -40,6 +40,12 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     // create level_start-depth new children
     m_root_node->branch(m_level_start);
 
+    /*
+    for(point_t &point: *this) {
+        std::cerr << "ind " << point.m_index[0] << " lvl " << point.getLevel(m_level_start) << std::endl;
+    }
+    */
+
     // initialize data points and optimize mesh
     size_t size_new = size();
     size_t size_old;
@@ -49,12 +55,17 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
             point.m_phi = g_f_eval(point.m_x);
             point.m_phiBackup = point.m_phi;
         }
-        m_root_node->remesh_analyse();
-        m_root_node->remesh_savety();
-        m_root_node->remesh_clean();
+        remesh();
         size_new = size();
         std::cerr << "initalizing: " << size_old << " -> " << size_new << std::endl;
     } while (size_old != size_new);
+}
+
+void multires_grid_t::remesh()
+{
+    m_root_node->remesh_analyse();
+    m_root_node->remesh_savety();
+    m_root_node->remesh_clean();
 }
 
 real multires_grid_t::timeStep()
@@ -65,6 +76,8 @@ real multires_grid_t::timeStep()
     }
 
     m_root_node->timeStep();
+
+    remesh();
 
     m_time += dt;
     return dt;

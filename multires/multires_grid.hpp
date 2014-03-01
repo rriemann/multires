@@ -43,11 +43,6 @@ class multires_grid_t : public grid_t
             >
     {
     public:
-        /*
-        iterator()
-            : m_point(nullptr)
-        {}
-        */
 
         explicit iterator(point_t* p = nullptr)
             : m_point(p)
@@ -79,6 +74,9 @@ public:
 
     void unfold(u_char level_max);
 
+    const node_t *getRootNode() const
+    { return m_root_node; }
+
     virtual ~multires_grid_t();
 
 private:
@@ -90,6 +88,8 @@ private:
     real dt;
     node_t *m_root_node;
     point_t *m_root_point;
+
+    void remesh();
 
 
     friend class node_t;

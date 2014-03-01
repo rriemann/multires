@@ -25,11 +25,15 @@
 #include <QGraphicsScene>
 #include <QGraphicsRectItem>
 
+#include "multires/multires_grid.hpp"
+#include "multires/node.hpp"
+#include "monores/monores_grid.hpp"
+#include "theory.hpp"
+
 MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow),
-    scene(new QGraphicsScene),
-    m_f_eval(f_eval_gauss)
+    QMainWindow(parent)
+  , ui(new Ui::MainWindow)
+  , scene(new QGraphicsScene)
 {
     ui->setupUi(this);
     ui->splitter->setSizes(QList<int>() << 100 << 100);
@@ -48,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
     connect(timer, SIGNAL(timeout()), this, SLOT(actionRun()));
-    connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeRoot()));
+    connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeGrids()));
     connect(ui->actionRescale, SIGNAL(triggered()), this, SLOT(rescale()));
 
     customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
@@ -62,7 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :
     customPlot->xAxis->setLabel("x");
     customPlot->yAxis->setLabel("y");
     // set axes ranges, so we see all data:
-    customPlot->xAxis->setRange(x0, x1);
+    customPlot->xAxis->setRange(g_x0[dimX], g_x1[dimX]);
     customPlot->yAxis->setRange(-0.2, 1.2);
 
     customPlot->graph(0)->setPen(QPen(Qt::black));
@@ -70,10 +74,8 @@ MainWindow::MainWindow(QWidget *parent) :
     customPlot->addGraph();
     customPlot->graph(1)->setPen(QPen(Qt::green));
 
-#ifdef REGULAR
     customPlot->addGraph();
     customPlot->graph(2)->setPen(QPen(Qt::magenta));
-#endif
 
     for(size_t i = 0; i < bars.size() ; ++i) {
         bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
@@ -83,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
     bars[0]->setName("Active Elements");
     bars[0]->setBrush(QBrush(Qt::blue));
-
+    /*
     bars[1]->setName("Virtual Elements");
     bars[1]->setBrush(QBrush(Qt::red));
 
@@ -92,15 +94,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bars[3]->setName("Static Elements");
     bars[3]->setBrush(QBrush(Qt::black));
+    */
 
-    m_root_theory = new theory_base(m_f_eval, g_level);
-    initializeRoot();
+    m_theory = new theory_t(g_level);
+    initializeGrids();
     rescale();
 }
 
 MainWindow::~MainWindow()
 {
-    delete m_root_theory;
+    deleteGrids();
+    delete m_theory;
     delete ui;
 }
 
@@ -110,19 +114,14 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
 }
 
-void MainWindow::initializeRoot()
+void MainWindow::initializeGrids()
 {
-    std::vector<real> boundaries {x0, x1};
-    m_root = node_t::createRoot(boundaries, m_f_eval, node_t::level_t(g_level), bcPeriodic, false);
+    deleteGrids();
 
-    // it is not clear if this gives the right result
-    count_nodes = (2 << g_level)+1;
+    m_grid_mono  = new monores_grid_t(g_level);
+    m_grid_multi = new multires_grid_t(g_level);
 
-    m_root->optimizeTree();
-
-#ifdef REGULAR
-    m_root_regular = regular_t::createRoot(m_f_eval, g_level, bcPeriodic);
-#endif
+    count_nodes = (1 << g_level);
 
     replot();
 }
@@ -131,130 +130,84 @@ void MainWindow::actionRun()
 {
     int stepAtOnce = spinBox->value();
     real timeInterval = g_timestep*stepAtOnce;
-    if(m_root) {
+    if(m_grid_multi) {
         real runTime = 0;
         size_t counter = 0;
         do {
-            runTime += m_root->timeStep();
+            runTime += m_grid_multi->timeStep();
             counter++;
         } while(runTime < timeInterval);
         qDebug() << "counter:" << counter++;
     }
 
-#ifdef REGULAR
-    if(m_root_regular) {
+    if(m_grid_mono) {
         size_t counter = 0;
         do {
-            m_root_regular->timeStep();
+            m_grid_mono->timeStep();
             counter++;
-        } while(m_root_regular->getTime() < m_root->getTime());
+        } while(m_grid_mono->getTime() < m_grid_multi->getTime());
         qDebug() << "counter_regular:" << counter++;
     }
-#endif
 
     replot();
 }
 
 void MainWindow::replot()
 {
-    count_nodes_packed = 0;
 
-    QVector<real> xvalues, yvalues, yvaluestheory;
-    QVector<real> lvlvalues, lvlvirtualvalues, lvlsavetyvalues, lvlstaticvalues;
-    std::for_each(node_iterator(m_root->boundary(node_t::posLeft)), node_iterator(), [&](node_base &node) {
-        xvalues.push_back(node.center(dimX));
-        yvalues.push_back(node.property());
-#ifndef BURGER
-        // yvaluestheory.push_back(node.propertyTheory());
-        yvaluestheory.push_back(m_root_theory->at(node.center(), m_root->getTime()));
-
-#endif
-        if(node.level() > node_t::lvlRoot) {
-            real bar = pow(2,-node.level());
-            if(node.is(node_t::typeActive)) {
-                lvlvalues       .push_back(bar);
-                lvlsavetyvalues .push_back(0);
-                lvlvirtualvalues.push_back(0);
-            } else if(node.is(node_t::typeSavetyZone)) {
-                lvlvalues       .push_back(0);
-                lvlsavetyvalues .push_back(bar);
-                lvlvirtualvalues.push_back(0);
-            } else if(node.is(node_t::typeVirtual)) {
-                lvlvalues       .push_back(0);
-                lvlsavetyvalues .push_back(0);
-                lvlvirtualvalues.push_back(bar);
-            }
-
-            lvlstaticvalues.push_back(0);
-        } else {
-            lvlvalues       .push_back(0);
-            lvlsavetyvalues .push_back(0);
-            lvlvirtualvalues.push_back(0);
-            lvlstaticvalues .push_back(1);
-        }
-        ++count_nodes_packed;
-    });
-
-    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(m_root->getTime());
+    QVector<real> xvalues, yvalues, yvaluestheory, lvlvalues;
+    for(const point_t &point: *m_grid_multi) {
+        xvalues << point.m_x[dimX];
+        yvalues << point.m_phi;
+        yvaluestheory << m_theory->at(point.m_index, m_grid_multi->getTime());
+        lvlvalues << pow(2,-point.getLevel(g_level));
+    }
+    count_nodes_packed = m_grid_multi->size();
+    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(m_grid_multi->getTime());
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
 
     customPlot->graph(0)->setData(xvalues, yvalues); // black
-#ifndef BURGER
     customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
-#endif
     bars[0]->setData(xvalues, lvlvalues); // blue
-    bars[1]->setData(xvalues, lvlvirtualvalues); // red
-    bars[2]->setData(xvalues, lvlsavetyvalues); // yellow
-    bars[3]->setData(xvalues, lvlstaticvalues); // black
 
-#ifdef REGULAR
-    QVector<real> yvalues_regular;
-    for(const real& val: m_root_regular->getData()) {
-        yvalues_regular << val;
-    }
-    QVector<real> xvalues_regular;
-    for(const real& val: m_root_regular->getCenter()) {
-        xvalues_regular << val;
+
+    QVector<real> xvalues_regular, yvalues_regular;
+    for(const point_t &point: *m_grid_mono) {
+        xvalues_regular << point.m_x[dimX];
+        yvalues_regular << point.m_phi;
     }
     customPlot->graph(2)->setData(xvalues_regular, yvalues_regular); // magenta
-#endif
 
     customPlot->replot();
 
     scene->clear();
-    blockBuilder(m_root);
+    blockBuilder(m_grid_multi->getRootNode());
     ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 
-void MainWindow::blockBuilder(node_base::node_p node)
+void MainWindow::blockBuilder(const node_t *node)
 {
+    const point_t *point = node->getPoint();
+    const int level = point->getLevel(g_level);
     const static qreal height = 20;
     const qreal stretchX = 300;
-    qreal width = stretchX/(1 << node->level());
-    qreal center = node->center(dimX)*stretchX/2;
-    qreal bottom = node->level()*height;
+    qreal width = stretchX/(1 << level);
+    qreal center = point->m_x[dimX]*stretchX/2;
+    qreal bottom = level*height;
     qreal x = center-0.5*width;
 
     static QBrush brush(Qt::SolidPattern);
-    if(node->isActive()) {
-        brush.setColor(Qt::blue);
-    } else if(node->isSavetyZone()) {
-        brush.setColor(Qt::yellow);
-    } else if(node->isVirtual()) {
-        brush.setColor(Qt::red);
-    } else {
-        abort();
-    }
+    brush.setColor(Qt::blue);
     const QPen pen(Qt::transparent);
     scene->addRect(x, -bottom, width, height, pen, brush);
     scene->addLine(x, -bottom+height, x + width, -bottom+height, QPen(Qt::black));
     scene->addLine(center, -bottom+height, center+0.25*width, -bottom, QPen(Qt::black));
     scene->addLine(center, -bottom+height, center-0.25*width, -bottom, QPen(Qt::black));
 
-    for(node_t::node_u const &child : node->childs()) {
-        if(child) {
-           blockBuilder(child.get());
+    if (node->getChilds()) {
+        for(node_t const &child : *node->getChilds()) {
+            blockBuilder(&child);
         }
     }
 }
@@ -271,5 +224,17 @@ void MainWindow::autoPlayToggled(bool checked)
         timer->start();
     } else {
         timer->stop();
+    }
+}
+
+void MainWindow::deleteGrids()
+{
+    if (m_grid_mono) {
+        delete m_grid_mono;
+        m_grid_mono = nullptr;
+    }
+    if (m_grid_multi) {
+        delete m_grid_multi;
+        m_grid_multi = nullptr;
     }
 }

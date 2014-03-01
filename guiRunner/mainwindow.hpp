@@ -19,12 +19,6 @@
 
 #include <QMainWindow>
 
-#include "node/node_iterator.hpp"
-
-#include "regular/regular_base.hpp"
-
-#include "theory_base.hpp"
-
 class QCustomPlot;
 class QCPBars;
 class QSpinBox;
@@ -32,6 +26,11 @@ class QTimer;
 
 
 QT_FORWARD_DECLARE_CLASS(QGraphicsScene)
+
+class multires_grid_t;
+class monores_grid_t;
+class theory_t;
+class node_t;
 
 namespace Ui {
 class MainWindow;
@@ -48,20 +47,18 @@ public:
 private:
     Ui::MainWindow *ui;
 
-    node_t::node_p m_root = nullptr;
-    regular_t::regular_p m_root_regular = nullptr;
-    theory_t::theory_p m_root_theory = nullptr;
+    multires_grid_t *m_grid_multi = nullptr;
+    monores_grid_t  *m_grid_mono  = nullptr;
+    theory_t *m_theory = nullptr;
 
     QCustomPlot *customPlot;
-    std::array<QCPBars*,4> bars;
+    std::array<QCPBars*,1> bars;
     size_t count_nodes;
     size_t count_nodes_packed;
     QSpinBox *spinBox;
     QTimer *timer;
 
     QGraphicsScene *scene;
-
-    propertyGenerator_t m_f_eval;
 
 protected:
     void resizeEvent(QResizeEvent * event );
@@ -73,9 +70,10 @@ private slots:
     void rescale();
     void autoPlayToggled(bool checked);
 
-    void initializeRoot();
+    void deleteGrids();
+    void initializeGrids();
 
-    void blockBuilder(node_t::node_p node);
+    void blockBuilder(const node_t *node);
 };
 
 #endif // MAINWINDOW_HPP
