@@ -37,8 +37,12 @@ public:
 
     real at(const location_t center, const real time) const {
         location_t tmp = center;
-        tmp[0] = inDomain(center[0]-std::fmod(time*g_velocity, g_span[dimX]));
-        assert(tmp[0] >= g_x0[dimX] && tmp[0] <= g_x1[dimX]);
+        for (u_char dim = 0; dim < g_dimension; ++dim) {
+            real x = fmod(tmp[0] - time*g_velocity, g_span[dim]);
+            tmp[dim] = fmod(fabs(x - g_x0[dim] + g_span[dim]), g_span[dim]) + g_x0[dim];
+            assert(tmp[dim] >= g_x0[dim] && tmp[dim] <= g_x1[dim]);
+        }
+
         return g_f_eval(tmp);
     }
 

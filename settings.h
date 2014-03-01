@@ -36,11 +36,6 @@ enum dimension_t {
 
 typedef std::function<real(location_t)> field_generator_t;
 
-inline real inDomain(const real x)
-{
-    return std::fmod(std::fabs(x - g_x0[dimX] + g_span[dimX]), g_span[dimX]) + g_x0[dimX];
-}
-
 /**
  * @brief regular_base::timeStepHelper
  * @param ee element to calculate new value for
