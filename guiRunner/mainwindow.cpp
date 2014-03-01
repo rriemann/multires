@@ -189,21 +189,21 @@ void MainWindow::replot()
 void MainWindow::blockBuilder(const node_t *node)
 {
     const point_t *point = node->getPoint();
-    const int level = point->getLevel(g_level);
+    // const int level = point->getLevel(g_level);
+    const u_char level = node->getLevel();
     const static qreal height = 20;
     const qreal stretchX = 300;
     qreal width = stretchX/(1 << level);
-    qreal center = point->m_x[dimX]*stretchX/2;
+    qreal x = point->m_x[dimX]*stretchX;
     qreal bottom = level*height;
-    qreal x = center-0.5*width;
 
     static QBrush brush(Qt::SolidPattern);
     brush.setColor(Qt::blue);
     const QPen pen(Qt::transparent);
     scene->addRect(x, -bottom, width, height, pen, brush);
     scene->addLine(x, -bottom+height, x + width, -bottom+height, QPen(Qt::black));
-    scene->addLine(center, -bottom+height, center+0.25*width, -bottom, QPen(Qt::black));
-    scene->addLine(center, -bottom+height, center-0.25*width, -bottom, QPen(Qt::black));
+    scene->addLine(x+0.5*width, -bottom+height, x+0.75*width, -bottom, QPen(Qt::black));
+    scene->addLine(x+0.5*width, -bottom+height, x+0.25*width, -bottom, QPen(Qt::black));
 
     if (node->getChilds()) {
         for(node_t const &child : *node->getChilds()) {
