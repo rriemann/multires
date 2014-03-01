@@ -237,8 +237,8 @@ void node_t::remesh_savety()
         if (cum_flags & flActive) {
             for (node_t &node: *m_childs) {
                 node.branch();
-                for (node_t &node: *node.getChilds()) {
-                    node.set(flSavetyZone);
+                for (node_t &node_child: *node.getChilds()) {
+                    node_child.set(flSavetyZone);
                 }
             }
         }
