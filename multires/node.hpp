@@ -90,6 +90,8 @@ public:
     typedef std::array<node_t, c_childs> node_array_t;
 
     const node_t *getNeighbour(const char position) const;
+    const node_t *getParent() const
+    { return m_parent; }
 
     node_t *getChild(const char position) const;
     node_array_t *getChilds() const;
@@ -118,6 +120,9 @@ public:
 
     inline u_char getFlags() const
     { return m_flags; }
+
+    inline char getPosition() const
+    { return m_position; }
 
     inline void setFlags(u_char flags)
     { m_flags = flags; }

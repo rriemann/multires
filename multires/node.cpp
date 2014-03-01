@@ -262,16 +262,17 @@ bool node_t::remesh_clean()
             debranch();
         }
     }
-    m_flags = m_flags & (~(flActive | flCached));
-    return (!veto && (m_flags < flSavetyZone));
+    bool ret = (!veto && (m_flags < flSavetyZone));
+    m_flags = flUnset;
+    return ret;
 }
 
 real node_t::interpolation() const
 {
+    assert(m_position != 0);
     real phi = 0;
     for (char pos = 0; pos < c_childs; ++pos) {
-        const node_t *neighbour = getNeighbour(pos);
-        phi += neighbour->getPoint()->m_phi;
+        phi += getNeighbour(pos)->getPoint()->m_phi;
     }
     return phi/c_childs;
 }

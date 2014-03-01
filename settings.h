@@ -16,13 +16,13 @@ typedef std::vector<real> real_vector;
 
 typedef std::array<size_t, g_dimension> index_t;
 
-const real g_epsilon  = 1e-3;
+const real g_epsilon  = 5e-4;
 const size_t g_level  = 10;
 const real g_velocity = 0.5;
 const real g_eps = std::numeric_limits<real>::epsilon();
 
 const real g_cfl  = 0.1;
-const real g_timestep = 0.002;
+const real g_timestep = 0.0001;
 
 const location_t g_x0 = {{0}};
 const location_t g_x1 = {{1}};
