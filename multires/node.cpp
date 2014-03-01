@@ -41,12 +41,10 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
         index_p[0] += pow(2, c_grid->m_level_max - m_level);
 
         real phi = 0;
-        /*
         for (char pos = 0; pos < c_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
             phi += neighbour->getPoint()->m_phi;
         }
-        */
         m_point = new point_t(index_p, c_grid->m_level_max, phi/c_childs);
     }
     /*
