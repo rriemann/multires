@@ -44,10 +44,10 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
 
 real monores_grid_t::timeStep()
 {
-    // directional split Lax-Wendroff
+    // directional spl it Lax-Wendroff
     // speed = g_velocity/sqrt(2)*(1,1)
     // dt -> dt/sqrt(2)
-    const real dt2 = dt/sqrt(2);
+    static const real dt2 = dt/sqrt(2);
     // const real &dt2 = dt;
 
     // x-direction
@@ -109,8 +109,8 @@ real monores_grid_t::timeStep()
         // edge y = 0
         pointvector[i].m_phi = timeStepHelper(
                     pointvector[i    ].m_phiBackup,
-                    pointvector[i +N-1].m_phiBackup,
                     pointvector[i+N2-N].m_phiBackup,
+                    pointvector[i+N].m_phiBackup,
                     dx[dimX], dt2);
         // edge y = N-1
         pointvector[N2-N+i].m_phi = timeStepHelper(
