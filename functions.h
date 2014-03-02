@@ -20,12 +20,14 @@
 #include "settings.h"
 
 #include <cmath>
+#include <algorithm>
 
 
 inline real f_eval_gauss(location_t x) {
-    const real x_shift = x[dimX]-0.5;
+    const real x_shift = pow(x[dimX]-0.5,2) +
+                         pow(x[dimY]-0.5,2);
 
-    return exp(-30*x_shift*x_shift);
+    return exp(-200*x_shift*x_shift);
 }
 
 const field_generator_t g_f_eval = f_eval_gauss;

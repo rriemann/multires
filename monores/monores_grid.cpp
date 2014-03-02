@@ -22,43 +22,68 @@
 monores_grid_t::monores_grid_t(const u_char level_max) :
     grid_t()
   , N(1 << level_max)
-  , dx(g_span[dimX]/N)
-  , dt(g_cfl*dx/g_velocity)
+  , N2(N*N)
+  , dx({{g_span[dimX]/N, g_span[dimY]/N}})
 {
-    pointvector.reserve(N);
+    // find smallest dt
+    real dt_x = g_cfl*dx[dimX]/g_velocity;
+    real dt_y = g_cfl*dx[dimY]/g_velocity;
+    dt = (dt_x < dt_y) ? dt_x : dt_y;
 
-    for(size_t i = 0; i < N; ++i) {
-        assert(g_dimension == 1);
-        index_t index({{i}});
-        const point_t point(index, level_max, g_f_eval);
-        pointvector.push_back(point);
+    pointvector.reserve(N2);
+
+    for (size_t j = 0; j < N; ++j) { // y-direction
+        for (size_t i = 0; i < N; ++i) { // x-direction
+            assert(g_dimension == 2);
+            index_t index({{i, j}});
+            const point_t point(index, level_max, g_f_eval);
+            pointvector.push_back(point);
+        }
     }
 }
 
 real monores_grid_t::timeStep()
 {
+    // directional split Lax-Wendroff
+    // speed = g_velocity/sqrt(2)*(1,1)
+    // dt -> dt/sqrt(2)
+    // const real dt2 = dt/sqrt(2);
+    const real &dt2 = dt;
+
+    // x-direction
+
     // update temporary data;
-    for(point_t &point: pointvector) {
+    for (point_t &point: pointvector) {
         point.m_phiBackup = point.m_phi;
     }
 
     // update inner cell values
-    for(size_t i = 1; i < pointvector.size()-1; ++i){
-        pointvector[i].m_phi = timeStepHelper(pointvector[i].m_phiBackup,
-                                              pointvector[i-1].m_phiBackup,
-                                              pointvector[i+1].m_phiBackup,
-                                              dx, dt);
+    for (size_t j = 0; j < N; ++j) { // y-direction (full range)
+        for (size_t i = 1; i < N-1; ++i) { // x-direction (range w/o edges)
+            const size_t o = j*N; // offset
+            pointvector[o+i].m_phi = timeStepHelper(
+                        pointvector[o+i].m_phiBackup,
+                        pointvector[o+i-1].m_phiBackup,
+                        pointvector[o+i+1].m_phiBackup,
+                        dx[dimX], dt2);
+        }
     }
 
-    // deal with boundaries
-    pointvector[0].m_phi   = timeStepHelper(pointvector[0  ].m_phiBackup,
-                                            pointvector[N-1].m_phiBackup,
-                                            pointvector[1].m_phiBackup,
-                                            dx, dt);
-    pointvector[N-1].m_phi = timeStepHelper(pointvector[N-1].m_phiBackup,
-                                            pointvector[N-2].m_phiBackup,
-                                            pointvector[0].m_phiBackup,
-                                            dx, dt);
+    // deal with edges
+    for (size_t i = 0; i < N; ++i) { // y-direction
+        // edge x = 0
+        pointvector[i*N].m_phi = timeStepHelper(
+                    pointvector[i*N    ].m_phiBackup,
+                    pointvector[i*N+N-1].m_phiBackup,
+                    pointvector[i*N+1  ].m_phiBackup,
+                    dx[dimX], dt2);
+        // edge x = N-1
+        pointvector[i*N+N-1].m_phi = timeStepHelper(
+                    pointvector[i*N+N-1].m_phiBackup,
+                    pointvector[i*N+N-2].m_phiBackup,
+                    pointvector[i*N    ].m_phiBackup,
+                    dx[dimX], dt2);
+    }
 
     m_time += dt;
     return dt;

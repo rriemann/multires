@@ -30,7 +30,7 @@ public:
     virtual real timeStep();
 
     virtual size_t size() const
-    { return N; }
+    { return N2; }
 
     // getters for ranged for, see:
     // http://stackoverflow.com/questions/8164567/how-to-make-my-custom-type-to-work-with-range-based-for-loops
@@ -45,8 +45,9 @@ private:
 
 
     const size_t N;
-    const real dx;
-    const real dt;
+    const size_t N2;
+    const location_t dx;
+    real dt;
 
     std::vector<point_t> pointvector;
 };

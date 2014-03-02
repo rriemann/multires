@@ -32,7 +32,7 @@ public:
         m_index(index)
     {
         for (u_char i = 0; i < g_dimension; ++i) {
-            m_x[i] = g_x0[i] + g_span[0]/(1 << level_max)*m_index[0];
+            m_x[i] = g_x0[i] + g_span[i]/(1 << level_max)*m_index[i];
         }
     }
 
