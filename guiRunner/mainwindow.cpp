@@ -60,41 +60,24 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug();
     qDebug() << QString("max level: %1").arg(g_level);
 
-    customPlot->addGraph();
-    customPlot->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssDisc, 3));
-    // give the axes some labels:
-    customPlot->xAxis->setLabel("x");
-    customPlot->yAxis->setLabel("y");
-    // set axes ranges, so we see all data:
-    customPlot->xAxis->setRange(g_x0[dimX], g_x1[dimX]);
-    customPlot->yAxis->setRange(-0.2, 1.2);
+    N = (1 << g_level);
+    N2 = N*N;
 
-    customPlot->graph(0)->setPen(QPen(Qt::black));
+    colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
+    customPlot->addPlottable(colorMap);
 
-    customPlot->addGraph();
-    customPlot->graph(1)->setPen(QPen(Qt::green));
+    colorMap->data()->setSize(N, N);
 
-    customPlot->addGraph();
-    customPlot->graph(2)->setPen(QPen(Qt::magenta));
-
-    for(size_t i = 0; i < bars.size() ; ++i) {
-        bars[i] = new QCPBars(customPlot->xAxis, customPlot->yAxis);
-        customPlot->addPlottable(bars[i]);
-        bars[i]->setPen(QPen(Qt::transparent));
-        bars[i]->setWidth(0.005);
-    }
-    bars[0]->setName("Active Elements");
-    bars[0]->setBrush(QBrush(Qt::blue));
+    colorMap->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
+                               QCPRange(g_x0[dimY], g_x1[dimY]));
+    colorMap->setDataRange(QCPRange(0, 1));
     /*
-    bars[1]->setName("Virtual Elements");
-    bars[1]->setBrush(QBrush(Qt::red));
-
-    bars[2]->setName("Savety Zone");
-    bars[2]->setBrush(QBrush(Qt::yellow));
-
-    bars[3]->setName("Static Elements");
-    bars[3]->setBrush(QBrush(Qt::black));
+    QCPColorScale *colorScale = new QCPColorScale(customPlot);
+    customPlot->plotLayout()->addElement(0, 1, colorScale);
+    colorMap->setColorScale(colorScale);
     */
+    colorMap->setGradient(QCPColorGradient::gpThermal);
+
 
     m_theory = new theory_t(g_level);
     initializeGrids();
@@ -119,9 +102,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level);
-
-    count_nodes = (1 << g_level);
+    // m_grid_multi = new multires_grid_t(g_level);
 
     replot();
 }
@@ -130,16 +111,17 @@ void MainWindow::actionRun()
 {
     int stepAtOnce = spinBox->value();
     real timeInterval = g_timestep*stepAtOnce;
-    if(m_grid_multi) {
+    if(m_grid_mono) {
         real runTime = 0;
         size_t counter = 0;
         do {
-            runTime += m_grid_multi->timeStep();
+            runTime += m_grid_mono->timeStep();
             counter++;
         } while(runTime < timeInterval);
         qDebug() << "counter:" << counter++;
     }
 
+    /*
     if(m_grid_mono) {
         size_t counter = 0;
         do {
@@ -148,44 +130,33 @@ void MainWindow::actionRun()
         } while(m_grid_mono->getTime() < m_grid_multi->getTime());
         qDebug() << "counter_regular:" << counter++;
     }
+    */
 
     replot();
 }
 
 void MainWindow::replot()
 {
-
-    QVector<real> xvalues, yvalues, yvaluestheory, lvlvalues;
-    for(const point_t &point: *m_grid_multi) {
-        xvalues << point.m_x[dimX];
-        yvalues << point.m_phi;
-        yvaluestheory << m_theory->at(point.m_index, m_grid_multi->getTime());
-        lvlvalues << pow(2,-point.getLevel(g_level));
+    for (const point_t &point: *m_grid_mono) {
+        colorMap->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
-    count_nodes_packed = m_grid_multi->size();
-    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(count_nodes).arg(real(count_nodes_packed)/count_nodes).arg(m_grid_multi->getTime());
-    qDebug() << pack_rate_time;
-    statusBar()->showMessage(pack_rate_time);
-
-    customPlot->graph(0)->setData(xvalues, yvalues); // black
-    customPlot->graph(1)->setData(xvalues, yvaluestheory); // green
-    bars[0]->setData(xvalues, lvlvalues); // blue
-
-
-    QVector<real> xvalues_regular, yvalues_regular;
-    for(const point_t &point: *m_grid_mono) {
-        xvalues_regular << point.m_x[dimX];
-        yvalues_regular << point.m_phi;
-    }
-    customPlot->graph(2)->setData(xvalues_regular, yvalues_regular); // magenta
-
+    // colorMap->rescaleDataRange(true);
+    // customPlot->rescaleAxes();
     customPlot->replot();
 
-    scene->clear();
-    blockBuilder(m_grid_multi->getRootNode());
-    ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
-}
+    // statistics
+    /*
+    count_nodes_packed = m_grid_multi->size();
+    QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(N2).arg(real(count_nodes_packed)/N2).arg(m_grid_multi->getTime());
+    qDebug() << pack_rate_time;
+    statusBar()->showMessage(pack_rate_time);
+    */
 
+    // scene->clear();
+    // blockBuilder(m_grid_multi->getRootNode());
+    // ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
+}
+/*
 void MainWindow::blockBuilder(const node_t *node)
 {
     const point_t *point = node->getPoint();
@@ -211,6 +182,7 @@ void MainWindow::blockBuilder(const node_t *node)
         }
     }
 }
+*/
 
 void MainWindow::rescale()
 {
@@ -233,6 +205,7 @@ void MainWindow::deleteGrids()
         delete m_grid_mono;
         m_grid_mono = nullptr;
     }
+
     if (m_grid_multi) {
         delete m_grid_multi;
         m_grid_multi = nullptr;

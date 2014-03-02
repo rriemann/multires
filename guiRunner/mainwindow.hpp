@@ -20,6 +20,7 @@
 #include <QMainWindow>
 
 class QCustomPlot;
+class QCPColorMap;
 class QCPBars;
 class QSpinBox;
 class QTimer;
@@ -52,11 +53,15 @@ private:
     theory_t *m_theory = nullptr;
 
     QCustomPlot *customPlot;
+    QCPColorMap *colorMap;
+
     std::array<QCPBars*,1> bars;
-    size_t count_nodes;
     size_t count_nodes_packed;
     QSpinBox *spinBox;
     QTimer *timer;
+
+    size_t N;
+    size_t N2;
 
     QGraphicsScene *scene;
 
@@ -73,7 +78,7 @@ private slots:
     void deleteGrids();
     void initializeGrids();
 
-    void blockBuilder(const node_t *node);
+    // void blockBuilder(const node_t *node);
 };
 
 #endif // MAINWINDOW_HPP
