@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
   , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    // ui->splitter->setSizes(QList<int>() << 100 << 100);
+    ui->splitter->setSizes(QList<int>() << 100 << 100);
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent) :
     timer->setInterval(100);
 
     customPlot = ui->customPlot;
+    customPlotTheory = ui->customPlotTheory;
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
@@ -78,6 +79,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     m_theory = new theory_t(g_level);
+
+    colorMapTheory = new QCPColorMap(customPlotTheory->xAxis, customPlotTheory->yAxis);
+    customPlotTheory->addPlottable(colorMapTheory);
+    colorMapTheory->data()->setSize(N, N);
+
+    colorMapTheory->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
+                                     QCPRange(g_x0[dimY], g_x1[dimY]));
+    customPlotTheory->rescaleAxes();
+    colorMapTheory->setDataRange(QCPRange(0, 1));
+    colorMapTheory->setGradient(QCPColorGradient::gpThermal);
+
     initializeGrids();
     rescale();
 }
@@ -143,6 +155,15 @@ void MainWindow::replot()
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
     */
+
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < N; ++j) {
+            index_t index({{i, j}});
+            real val = m_theory->at(index, m_grid_mono->getTime()/qSqrt(2));
+            colorMapTheory->data()->setCell(i, j, val);
+        }
+    }
+    customPlotTheory->replot();
 }
 
 void MainWindow::rescale()

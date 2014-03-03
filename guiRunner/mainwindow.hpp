@@ -52,6 +52,9 @@ private:
     QCustomPlot *customPlot;
     QCPColorMap *colorMap;
 
+    QCustomPlot *customPlotTheory;
+    QCPColorMap *colorMapTheory;
+
     std::array<QCPBars*,1> bars;
     size_t count_nodes_packed;
     QSpinBox *spinBox;

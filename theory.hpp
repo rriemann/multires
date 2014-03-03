@@ -26,19 +26,19 @@ class theory_t
 
 private:
     const size_t N;
-    const real dx;
+    const location_t dx;
 
 public:
     theory_t(const size_t level = g_level) :
         N(1 << level)
-      , dx(g_span[dimX]/N)
+      , dx({{g_span[dimX]/N, g_span[dimY]/N}})
     {
     }
 
     real at(const location_t center, const real time) const {
         location_t tmp = center;
         for (u_char dim = 0; dim < g_dimension; ++dim) {
-            real x = fmod(tmp[0] - time*g_velocity, g_span[dim]);
+            real x = fmod(tmp[dim] - time*g_velocity, g_span[dim]);
             tmp[dim] = fmod(fabs(x - g_x0[dim] + g_span[dim]), g_span[dim]) + g_x0[dim];
             assert(tmp[dim] >= g_x0[dim] && tmp[dim] <= g_x1[dim]);
         }
@@ -48,13 +48,12 @@ public:
         return value;
     }
 
-    real at(const real center, const real time) const {
-        location_t tmp = {{center}};
-        return at(tmp, time);
-    }
-
-    real at(const index_t index, const real time) const {
-        return at(g_x0[dimX]+dx*index[dimX], time);
+    real at(const index_t &index, const real time) const {
+        location_t center;
+        for (u_char dim = 0; dim < g_dimension; ++dim) {
+            center[dim] = g_x0[dim]+dx[dim]*index[dim];
+        }
+        return at(center, time);
     }
 
 };
