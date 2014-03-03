@@ -103,7 +103,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    // m_grid_multi = new multires_grid_t(g_level);
+    m_grid_multi = new multires_grid_t(g_level);
 
     replot();
 }
@@ -112,17 +112,16 @@ void MainWindow::actionRun()
 {
     int stepAtOnce = spinBox->value();
     real timeInterval = g_timestep*stepAtOnce;
-    if(m_grid_mono) {
+    if(m_grid_multi) {
         real runTime = 0;
         size_t counter = 0;
         do {
-            runTime += m_grid_mono->timeStep();
+            runTime += m_grid_multi->timeStep();
             counter++;
         } while(runTime < timeInterval);
         qDebug() << "counter:" << counter++;
     }
 
-    /*
     if(m_grid_mono) {
         size_t counter = 0;
         do {
@@ -131,7 +130,6 @@ void MainWindow::actionRun()
         } while(m_grid_mono->getTime() < m_grid_multi->getTime());
         qDebug() << "counter_regular:" << counter++;
     }
-    */
 
     replot();
 }
