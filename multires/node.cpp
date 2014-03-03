@@ -339,40 +339,26 @@ void node_t::timeStep()
         }
 
         assert(g_dimension == 1);
-        if (m_position == 0) {
-            short level_diff = neighbours[1]->getLevel() - neighbours[0]->getLevel();
-            if (level_diff > 0) {
-                // left node is coarser, we take a coarser neighbour for right as well
-                neighbours[1] = m_parent->getNeighbour(1);
-            } else if (level_diff < 0) {
-                // right node is coarser, we take a coaser neighbour for left as well
-                //neighbours[0] = m_parent->getNeighbour(1);
-                // automatically fullfiled
-            }
-        }
 
-        real dxl = m_point->m_x[dimX] - neighbours[posLeft]->getPoint()->m_x[dimX];
-        if (m_index[dimX] == 0 ) {
-            dxl += g_span[dimX];
-        }
-
-#ifndef NDEBUG
-        assert(dxl > 0);
-
-        // check if the neighbours have equal distance
-        real dxr = neighbours[posRight]->getPoint()->m_x[dimX] - m_point->m_x[dimX];
-        if (dxr < 0) {
-            dxr += g_span[dimX];
-        }
-
-        assert(fabs(dxr-dxl) <= g_eps);
-        // check if the neighbours are not too far away
-        // std::cerr << "dxr - est. " << dxr << " " << g_span[dimX]/(1 << (m_level-1))+g_eps << std::endl;
-        assert(dxl <= g_span[dimX]/(1 << (m_level-1))+g_eps);
-#endif
-        const real &phi_left  = neighbours[posLeft ]->getPoint()->m_phiBackup;
+        const real dx = g_span[dimX]/(1 << m_level);
+        real phi_left  = neighbours[posLeft ]->getPoint()->m_phiBackup;
         const real &phi_right = neighbours[posRight]->getPoint()->m_phiBackup;
-        m_point->m_phi = timeStepHelper(m_point->m_phiBackup, phi_left, phi_right, dxl, c_grid->dt);
+
+        if (m_position == 0) {
+            if (neighbours[0]->getLevel() < m_level) {
+                // if the left neighour cell in coarser, we have to interpolate
+                // its value to be comparable with the other values
+                phi_left = (phi_left+m_point->m_phiBackup)/2;
+            }
+            // it is unclear why this part can be omitted (symmetry?) TODO
+            /*else if (neighbours[0]->getChilds()) {
+                // the left neighbour is finer!
+                phi_left = neighbours[0]->getChild(1)->getPoint()->m_phiBackup;
+                phi_left = 2*phi_left-m_point->m_phiBackup;
+            }*/
+        }
+
+        m_point->m_phi = timeStepHelper(m_point->m_phiBackup, phi_left, phi_right, dx, c_grid->dt);
     } else {
         for (node_t &node: *m_childs) {
             node.timeStep();
