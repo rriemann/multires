@@ -62,17 +62,30 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
    \brief node_t::getNeighbour
    \param position to look for the neighbour
    \return the neighbour at position with the same or smaller (coarser) one
+
+   The implementation follows:
+   https://github.com/dkolom/GALA2D/blob/master/QuadNode.cpp#L187
 */
 const node_t *node_t::getNeighbour(const char position) const
 {
+
+    static const std::array<char, 16> mm = {{/*west  0*/ 1, 0, 3, 2,
+                                             /*east  1*/ 0, 1, 2, 3,
+                                             /*north 2*/ 0, 2, 1, 3,
+                                             /*south 3*/ 2, 0, 3, 1 }};
+
     // Check the parent cell's children
     if (m_position == posRoot) {
         return this;
     }
 
-    // m_position can only be right or left
-    if (m_position != position) {
-        return m_parent->getChild(position);
+    const char off = position*4; // offset
+
+    if (m_position == mm[off+0]) {
+        return m_parent->getChild(mm[off+1]);
+    }
+    if (m_position == mm[off+2]) {
+        return m_parent->getChild(mm[off+3]);
     }
 
     const node_t* cnode = m_parent->getNeighbour(position);
@@ -80,8 +93,11 @@ const node_t *node_t::getNeighbour(const char position) const
     if (cnode->isLeaf()) {
         return cnode;
     } else {
-        assert(this == m_parent->getChild(m_position));
-        return cnode->getChild((position+1)%2);
+        if (m_position == mm[off+1]) {
+            return cnode->getChild(mm[off+0]);
+        } else {
+            return cnode->getChild(mm[off+2]);
+        }
     }
 }
 /*!

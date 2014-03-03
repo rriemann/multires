@@ -36,11 +36,19 @@ public:
         , posRight            = 1
         , posTopRightFront    = 0
         , posTopRightBack     = 1
+        , posWest             = 0
+        , posEast             = 1
+
         // 2D extension
         /*
         , posTopLeftBack      = 2
         , posTopLeftFront     = 3
         */
+        , posTop              = 2
+        , posBottom           = 3
+        , posNorth            = 2
+        , posSouth            = 3
+
         // 3D extension
         /*
         , posBottomRightFront = 4
