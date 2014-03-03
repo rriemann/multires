@@ -127,10 +127,13 @@ void node_t::branch(size_t level)
 
             for (size_t pos = 0; pos < c_childs; ++pos) {
                 // construct node-index
-                index_t index = getIndex();
+                index_t index = m_index;
                 for (auto &ind: index) {
-                    assert(g_dimension == 1);
-                    ind = 2*ind+pos;
+                    ind = 2*ind;
+                }
+                if (pos > 0) {
+                    if (pos % 2 == 1) ++index[dimX];
+                    if (pos % 2 == 0) ++index[dimY];
                 }
 
                 getChild(pos)->initialize(this, m_level+1, position_t(pos), index);
@@ -139,9 +142,12 @@ void node_t::branch(size_t level)
             }
 
             // put new child nodes into the next-chain of the points
-            assert(g_dimension == 1);
-            getChild(1)->getPoint()->m_next = m_point->m_next;
-            m_point->m_next = getChild(1)->getPoint();
+            point_t *point = m_point->m_next;
+            for (short pos = c_childs-1; pos > 0; --pos) {
+                getChild(pos)->getPoint()->m_next = point;
+                point = getChild(pos)->getPoint();
+            }
+            this->getPoint()->m_next = point;
         }
         for (node_t &node: *m_childs) {
             node.branch(level-1);
@@ -182,7 +188,7 @@ bool node_t::remesh_analyse()
         }
 
         // check if the residual of this node
-        if (!has(flActive) && (m_position > 0) && (residual() > c_epsilon)) {
+        if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
             set(flActive);
         }
 
