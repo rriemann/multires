@@ -36,16 +36,17 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
     if (position > 0) {
         // create new point for position > 0
         // construct point-index
-        assert(g_dimension == 1);
-        index_t index_p = m_parent->getPoint()->m_index;
-        index_p[0] += pow(2, c_grid->m_level_max - m_level);
+        index_t index_point = m_parent->getPoint()->m_index;
+        const size_t stepsize = pow(2, c_grid->m_level_max - m_level);
+        if (position % 2 == 1) index_point[dimX] += stepsize;
+        if (position % 2 == 0) index_point[dimY] += stepsize;
 
         real phi = 0;
         for (char pos = 0; pos < c_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
             phi += neighbour->getPoint()->m_phi;
         }
-        m_point = new point_t(index_p, c_grid->m_level_max, phi/c_childs);
+        m_point = new point_t(index_point, c_grid->m_level_max, phi/c_childs);
     }
     /*
     std::cerr << "this pos " << int(position)
