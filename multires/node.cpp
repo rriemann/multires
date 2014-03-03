@@ -101,6 +101,26 @@ const node_t *node_t::getNeighbour(const char position) const
         }
     }
 }
+
+const point_t *node_t::getPoint(const index_t &index)
+{
+    const index_t &index_origin = m_point->m_index;
+    if (!m_childs || (index == index_origin)) {
+        return m_point;
+    }
+
+    // const index_t &index_center = getChild(g_childs-1)->m_point->m_index;
+
+    // index offset to get in the center of the cell in finest level
+    const size_t offset = pow(2, c_grid->m_level_max - m_level);
+
+    char position = 0;
+    if (index[dimX] >= index_origin[dimX] + offset) position += 1;
+    if (g_dimension > 1 && (index[dimY] >= index_origin[dimY] + offset)) position += 2;
+
+    return getChild(position)->getPoint(index);
+}
+
 /*!
    \brief node_t::getChild
    \param position of the child relative to its parent

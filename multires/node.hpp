@@ -98,6 +98,9 @@ public:
     const node_t *getNeighbour(const char position) const;
     const node_t *getParent() const
     { return m_parent; }
+    const point_t *getPoint() const
+    { return m_point; }
+    const point_t *getPoint(const index_t &index);
 
     node_t *getChild(const char position) const;
     node_array_t *getChilds() const;
@@ -117,9 +120,6 @@ public:
     inline real residual() const;
 
     void timeStep();
-
-    const point_t *getPoint() const
-    { return m_point; }
 
     inline u_char getLevel() const
     { return m_level; }
