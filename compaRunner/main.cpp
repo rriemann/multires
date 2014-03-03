@@ -42,7 +42,7 @@ int main()
     ///////////// CONFIG //////////////////////
 #define NORM_L_INF // uncomment to use L_1 norm
 
-    real simulationTime = g_span[dimX]/g_velocity*20; // 1 period
+    real simulationTime = g_span[dimX]/g_velocity; // 1 period
 
     std::array<real,6> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
