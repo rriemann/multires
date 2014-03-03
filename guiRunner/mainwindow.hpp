@@ -25,9 +25,6 @@ class QCPBars;
 class QSpinBox;
 class QTimer;
 
-
-QT_FORWARD_DECLARE_CLASS(QGraphicsScene)
-
 class multires_grid_t;
 class monores_grid_t;
 class theory_t;
@@ -63,11 +60,6 @@ private:
     size_t N;
     size_t N2;
 
-    QGraphicsScene *scene;
-
-protected:
-    void resizeEvent(QResizeEvent * event );
-
 private slots:
 
     void actionRun();
@@ -77,8 +69,6 @@ private slots:
 
     void deleteGrids();
     void initializeGrids();
-
-    // void blockBuilder(const node_t *node);
 };
 
 #endif // MAINWINDOW_HPP

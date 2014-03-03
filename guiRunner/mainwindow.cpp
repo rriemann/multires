@@ -33,11 +33,9 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
   , ui(new Ui::MainWindow)
-  , scene(new QGraphicsScene)
 {
     ui->setupUi(this);
-    ui->splitter->setSizes(QList<int>() << 100 << 100);
-    ui->graphicsView->setScene(scene);
+    // ui->splitter->setSizes(QList<int>() << 100 << 100);
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
@@ -89,12 +87,6 @@ MainWindow::~MainWindow()
     deleteGrids();
     delete m_theory;
     delete ui;
-}
-
-void MainWindow::resizeEvent(QResizeEvent *event)
-{
-    ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
-    QMainWindow::resizeEvent(event);
 }
 
 void MainWindow::initializeGrids()
@@ -151,38 +143,7 @@ void MainWindow::replot()
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
     */
-
-    // scene->clear();
-    // blockBuilder(m_grid_multi->getRootNode());
-    // ui->graphicsView->fitInView(scene->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
-/*
-void MainWindow::blockBuilder(const node_t *node)
-{
-    const point_t *point = node->getPoint();
-    // const int level = point->getLevel(g_level);
-    const u_char level = node->getLevel();
-    const static qreal height = 20;
-    const qreal stretchX = 300;
-    qreal width = stretchX/(1 << level);
-    qreal x = point->m_x[dimX]*stretchX;
-    qreal bottom = level*height;
-
-    static QBrush brush(Qt::SolidPattern);
-    brush.setColor(Qt::blue);
-    const QPen pen(Qt::transparent);
-    scene->addRect(x, -bottom, width, height, pen, brush);
-    scene->addLine(x, -bottom+height, x + width, -bottom+height, QPen(Qt::black));
-    scene->addLine(x+0.5*width, -bottom+height, x+0.75*width, -bottom, QPen(Qt::black));
-    scene->addLine(x+0.5*width, -bottom+height, x+0.25*width, -bottom, QPen(Qt::black));
-
-    if (node->getChilds()) {
-        for(node_t const &child : *node->getChilds()) {
-            blockBuilder(&child);
-        }
-    }
-}
-*/
 
 void MainWindow::rescale()
 {
