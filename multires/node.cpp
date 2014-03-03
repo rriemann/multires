@@ -42,11 +42,11 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
         if (position % 2 == 0) index_point[dimY] += stepsize;
 
         real phi = 0;
-        for (char pos = 0; pos < c_childs; ++pos) {
+        for (char pos = 0; pos < g_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
             phi += neighbour->getPoint()->m_phi;
         }
-        m_point = new point_t(index_point, c_grid->m_level_max, phi/c_childs);
+        m_point = new point_t(index_point, c_grid->m_level_max, phi/g_childs);
     }
     /*
     std::cerr << "this pos " << int(position)
@@ -142,7 +142,7 @@ void node_t::branch(size_t level)
             // copy point for first child from parent (this)
             getChild(0)->setPoint(m_point);
 
-            for (size_t pos = 0; pos < c_childs; ++pos) {
+            for (size_t pos = 0; pos < g_childs; ++pos) {
                 // construct node-index
                 index_t index = m_index;
                 for (auto &ind: index) {
@@ -160,7 +160,7 @@ void node_t::branch(size_t level)
 
             // put new child nodes into the next-chain of the points
             point_t *point = m_point->m_next;
-            for (short pos = c_childs-1; pos > 0; --pos) {
+            for (short pos = g_childs-1; pos > 0; --pos) {
                 getChild(pos)->getPoint()->m_next = point;
                 point = getChild(pos)->getPoint();
             }
@@ -178,7 +178,7 @@ void node_t::branch(size_t level)
  */
 void node_t::debranch()
 {
-    point_t *point = (*m_childs)[c_childs-1].getPoint()->m_next;
+    point_t *point = (*m_childs)[g_childs-1].getPoint()->m_next;
 
     delete m_childs;
     m_childs = nullptr;
@@ -215,7 +215,7 @@ bool node_t::remesh_analyse()
                this node has to stay active.
             */
 
-            for (u_char pos = 0; pos < c_childs; ++pos) {
+            for (u_char pos = 0; pos < g_childs; ++pos) {
                 const node_t *neighbour = getNeighbour(pos);
 
                 // check if the tree is balanced
@@ -292,12 +292,12 @@ bool node_t::remesh_clean()
 
 real node_t::interpolation() const
 {
-    assert(m_position != 0);
+    assert(m_position == g_childs-1);
     real phi = 0;
-    for (char pos = 0; pos < c_childs; ++pos) {
+    for (char pos = 0; pos < g_childs; ++pos) {
         phi += getNeighbour(pos)->getPoint()->m_phi;
     }
-    return phi/c_childs;
+    return phi/g_childs;
 }
 
 real node_t::residual() const
@@ -308,13 +308,13 @@ real node_t::residual() const
 void node_t::timeStep()
 {
     if(isLeaf()) {
-        std::array<const node_t *,  c_childs> neighbours;
+        std::array<const node_t *,  g_childs> neighbours;
         // u_char level_diff_max = 0;
-        for (char pos = 0; pos < c_childs; ++pos) {
+        for (char pos = 0; pos < g_childs; ++pos) {
             neighbours[pos] = getNeighbour(pos);
             /* as we work with graded trees, we can expect that the level of our
-           neighbours is either the same or one level smaller (coarser).
-        */
+               neighbours is either the same or one level smaller (coarser).
+            */
             assert(abs(neighbours[pos]->getLevel() - m_level) < 2);
         }
 

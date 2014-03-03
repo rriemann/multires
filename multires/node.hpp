@@ -93,9 +93,7 @@ public:
 
     void initialize(node_t *parent, u_char level, char position, const index_t &index);
 
-
-    static const short c_childs = (1 << g_dimension);
-    typedef std::array<node_t, c_childs> node_array_t;
+    typedef std::array<node_t, g_childs> node_array_t;
 
     const node_t *getNeighbour(const char position) const;
     const node_t *getParent() const
