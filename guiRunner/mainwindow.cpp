@@ -33,9 +33,11 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
   , ui(new Ui::MainWindow)
+  , N(1 << g_level)
+  , N2(N*N)
 {
     ui->setupUi(this);
-    ui->splitter->setSizes(QList<int>() << 100 << 100);
+    // ui->splitter->setSizes(QList<int>() << 100 << 100);
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
@@ -45,8 +47,32 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     timer->setInterval(100);
 
-    customPlot = ui->customPlot;
-    customPlotTheory = ui->customPlotTheory;
+    sets[plTheory].plot = ui->customPlotTheory;
+    sets[plMono].plot   = ui->customPlotMono;
+    sets[plMulti].plot  = ui->customPlotMulti;
+
+    for (CPlotSet &set: sets) {
+        set.plot->plotLayout()->insertRow(0);
+
+        static int i = 0;
+        static QStringList captions = QStringList() << "theory" << "monores" << "multires";
+        set.plot->plotLayout()->addElement(0, 0, new QCPPlotTitle(set.plot, captions.at(i++)));
+        set.map = new QCPColorMap(set.plot->xAxis, set.plot->yAxis);
+        set.plot->addPlottable(set.map);
+        // set.plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+
+        set.map->data()->setSize(N, N);
+        set.map->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
+                                  QCPRange(g_x0[dimY], g_x1[dimY]));
+        set.map->setDataRange(QCPRange(0, 1));
+        set.plot->rescaleAxes();
+        set.map->setGradient(QCPColorGradient::gpThermal);
+        /*
+        QCPColorScale *colorScale = new QCPColorScale(customPlot);
+        customPlot->plotLayout()->addElement(0, 1, colorScale);
+        colorMap->setColorScale(colorScale);
+        */
+    }
 
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
@@ -54,41 +80,12 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionInitializeRoot, SIGNAL(triggered()), this, SLOT(initializeGrids()));
     connect(ui->actionRescale, SIGNAL(triggered()), this, SLOT(rescale()));
 
-    customPlot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
-
     qDebug();
     qDebug() << QString("max level: %1").arg(g_level);
 
-    N = (1 << g_level);
-    N2 = N*N;
 
-    colorMap = new QCPColorMap(customPlot->xAxis, customPlot->yAxis);
-    customPlot->addPlottable(colorMap);
-
-    colorMap->data()->setSize(N, N);
-
-    colorMap->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
-                               QCPRange(g_x0[dimY], g_x1[dimY]));
-    colorMap->setDataRange(QCPRange(0, 1));
-    /*
-    QCPColorScale *colorScale = new QCPColorScale(customPlot);
-    customPlot->plotLayout()->addElement(0, 1, colorScale);
-    colorMap->setColorScale(colorScale);
-    */
-    colorMap->setGradient(QCPColorGradient::gpThermal);
-
-
+    // initialize theory handler
     m_theory = new theory_t(g_level);
-
-    colorMapTheory = new QCPColorMap(customPlotTheory->xAxis, customPlotTheory->yAxis);
-    customPlotTheory->addPlottable(colorMapTheory);
-    colorMapTheory->data()->setSize(N, N);
-
-    colorMapTheory->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
-                                     QCPRange(g_x0[dimY], g_x1[dimY]));
-    customPlotTheory->rescaleAxes();
-    colorMapTheory->setDataRange(QCPRange(0, 1));
-    colorMapTheory->setGradient(QCPColorGradient::gpThermal);
 
     initializeGrids();
     rescale();
@@ -141,12 +138,23 @@ void MainWindow::actionRun()
 
 void MainWindow::replot()
 {
+    // update data mono
     for (const point_t &point: *m_grid_mono) {
-        colorMap->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+        sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
-    // colorMap->rescaleDataRange(true);
-    // customPlot->rescaleAxes();
-    customPlot->replot();
+
+    // update data theory
+    for (size_t i = 0; i < N; ++i) {
+        for (size_t j = 0; j < N; ++j) {
+            index_t index({{i, j}});
+            real val = m_theory->at(index, m_grid_mono->getTime()/qSqrt(2));
+            sets[plTheory].map->data()->setCell(i, j, val);
+        }
+    }
+
+    for (CPlotSet &set: sets) {
+        set.plot->replot();
+    }
 
     // statistics
     /*
@@ -156,19 +164,13 @@ void MainWindow::replot()
     statusBar()->showMessage(pack_rate_time);
     */
 
-    for (size_t i = 0; i < N; ++i) {
-        for (size_t j = 0; j < N; ++j) {
-            index_t index({{i, j}});
-            real val = m_theory->at(index, m_grid_mono->getTime()/qSqrt(2));
-            colorMapTheory->data()->setCell(i, j, val);
-        }
-    }
-    customPlotTheory->replot();
 }
 
 void MainWindow::rescale()
 {
-    customPlot->rescaleAxes();
+    for (CPlotSet &set: sets) {
+        set.plot->rescaleAxes();
+    }
     replot();
 }
 

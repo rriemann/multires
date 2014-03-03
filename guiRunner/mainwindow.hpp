@@ -17,6 +17,8 @@
 #ifndef MAINWINDOW_HPP
 #define MAINWINDOW_HPP
 
+#include "settings.h"
+
 #include <QMainWindow>
 
 class QCustomPlot;
@@ -49,13 +51,19 @@ private:
     monores_grid_t  *m_grid_mono  = nullptr;
     theory_t *m_theory = nullptr;
 
-    QCustomPlot *customPlot;
-    QCPColorMap *colorMap;
+    struct CPlotSet {
+        QCustomPlot* plot;
+        QCPColorMap* map;
+    };
 
-    QCustomPlot *customPlotTheory;
-    QCPColorMap *colorMapTheory;
+    std::array<CPlotSet, 3> sets;
 
-    std::array<QCPBars*,1> bars;
+    enum plot_t {
+        plTheory = 0,
+        plMono,
+        plMulti
+    };
+
     size_t count_nodes_packed;
     QSpinBox *spinBox;
     QTimer *timer;

@@ -1,6 +1,6 @@
 TEMPLATE = subdirs
 SUBDIRS  = \
-           # multires \
+           multires \
            monores \
            rawRunner \
            guiRunner \
