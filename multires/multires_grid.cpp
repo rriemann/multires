@@ -69,22 +69,25 @@ void multires_grid_t::remesh()
 
 real multires_grid_t::timeStep()
 {
+
+    const real dt_orig = dt;
+    dt = dt_orig/sqrt(2);
+
+    // x direction
+
     // update temporary data;
     for(point_t &point: *this) {
         point.m_phiBackup = point.m_phi;
     }
-
-    real dt_orig = dt;
-    dt = dt_orig/sqrt(2);
     m_root_node->timeStep(node_t::posLeft);
 
+    // y direction
 
     // update temporary data;
     for(point_t &point: *this) {
         point.m_phiBackup = point.m_phi;
     }
-
-    dt = dt_orig/sqrt(2);
+    dt = -dt; // FIXME TODO : change definition of direction enum position_t
     m_root_node->timeStep(node_t::posTop);
 
     dt = dt_orig;

@@ -49,9 +49,11 @@ int main()
 
     auto start = std::chrono::steady_clock::now();
 
+    /*
     do {
         grid.timeStep();
     } while(grid.getTime() < simulationTime);
+    */
 
     auto done = std::chrono::steady_clock::now();
 
@@ -65,16 +67,29 @@ int main()
 
 
     // output file
+#ifndef REGULAR
+    // grid.unfold(g_level);
+    grid.unfold(4);
+#endif
+    std::cerr << "after unfold: size = " << grid.size() << std::endl;
     std::ofstream file("/tmp/output.txt");
     file << "# x y phi" << std::endl;
     for(const point_t point: grid) {
         // std::cerr << point.m_x[dimX] << " : " << point.m_phi << std::endl;
+        /*
+        */
         file << boost::format("%e %e %e\n")
                 % point.m_x[dimX]
                 % point.m_x[dimY]
                 // % point.m_index[dimX]
                 // % point.m_index[dimY]
                 % point.m_phi;
+        /*
+        file << boost::format("%e ") % point.m_phi;
+        static size_t count = 0;
+        const size_t N = (1 << g_level);
+        if (++count % N == 0 ) file << std::endl;
+        */
     }
     file.close();
     std::cerr << "try: gnuplot -p -e \"plot '/tmp/output.txt' using 1:2\"" << std::endl;

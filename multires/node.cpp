@@ -181,6 +181,9 @@ void node_t::branch(size_t level)
                 getChild(pos)->initialize(this, m_level+1, position_t(pos), index_child, point);
             }
 
+            // overwriting phi value for center cell
+            getChild(g_childs-1)->getPoint()->m_phi = interpolation();
+
             // put new child nodes into the next-chain of the points
             point_t *point = m_point->m_next;
             for (short pos = g_childs-1; pos > 0; --pos) {
@@ -381,7 +384,7 @@ void node_t::timeStep(const char direction)
         m_point->m_phi = timeStepHelper(phi_this, phi_neighbour[direction], phi_neighbour[direction+1], dx, c_grid->dt);
     } else {
         for (node_t &node: *m_childs) {
-            node.timeStep();
+            node.timeStep(direction);
         }
     }
 }

@@ -142,7 +142,6 @@ void MainWindow::replot()
     }
 
     // update data multi
-    // sets[plMulti].map->data()->clear();
     for (const point_t &point: *m_grid_multi) {
         sets[plMulti].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
