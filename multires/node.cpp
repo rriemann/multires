@@ -325,30 +325,25 @@ real node_t::residual() const
     return fabs(m_point->m_phi - interpolation());
 }
 
-void node_t::timeStep()
+void node_t::timeStep(const char direction)
 {
     if(isLeaf()) {
-        std::array<const node_t *,  g_childs> neighbours;
+        const real phi_this = m_point->m_phiBackup;
+
+        std::array<real,  g_childs> phi_neighbour;
         // u_char level_diff_max = 0;
         for (char pos = 0; pos < g_childs; ++pos) {
-            neighbours[pos] = getNeighbour(pos);
+            const node_t *neighbour = getNeighbour(pos);
             /* as we work with graded trees, we can expect that the level of our
                neighbours is either the same or one level smaller (coarser).
             */
-            assert(abs(neighbours[pos]->getLevel() - m_level) < 2);
-        }
-
-        assert(g_dimension == 1);
-
-        const real dx = g_span[dimX]/(1 << m_level);
-        real phi_left  = neighbours[posLeft ]->getPoint()->m_phiBackup;
-        const real &phi_right = neighbours[posRight]->getPoint()->m_phiBackup;
-
-        if (m_position == 0) {
-            if (neighbours[0]->getLevel() < m_level) {
+            assert(abs(neighbour->getLevel() - m_level) < 2);
+            real phi = neighbour->getPoint()->m_phiBackup;
+            if (m_position == 0 && neighbour->getLevel() < m_level) {
                 // if the left neighour cell in coarser, we have to interpolate
                 // its value to be comparable with the other values
-                phi_left = (phi_left+m_point->m_phiBackup)/2;
+                phi = (phi+phi_this)/2;
+
             }
             // it is unclear why this part can be omitted (symmetry?) TODO
             /*else if (neighbours[0]->getChilds()) {
@@ -356,9 +351,12 @@ void node_t::timeStep()
                 phi_left = neighbours[0]->getChild(1)->getPoint()->m_phiBackup;
                 phi_left = 2*phi_left-m_point->m_phiBackup;
             }*/
+            phi_neighbour[pos] = phi;
         }
 
-        m_point->m_phi = timeStepHelper(m_point->m_phiBackup, phi_left, phi_right, dx, c_grid->dt);
+        const real dx = g_span[dimX]/(1 << m_level);
+
+        m_point->m_phi = timeStepHelper(phi_this, phi_neighbour[direction], phi_neighbour[direction+1], dx, c_grid->dt);
     } else {
         for (node_t &node: *m_childs) {
             node.timeStep();

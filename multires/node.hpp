@@ -119,7 +119,7 @@ public:
     real interpolation() const;
     inline real residual() const;
 
-    void timeStep();
+    void timeStep(const char direction = posLeft);
 
     inline u_char getLevel() const
     { return m_level; }
