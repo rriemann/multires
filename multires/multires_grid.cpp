@@ -87,8 +87,7 @@ real multires_grid_t::timeStep()
     for(point_t &point: *this) {
         point.m_phiBackup = point.m_phi;
     }
-    dt = -dt; // FIXME TODO : change definition of direction enum position_t
-    m_root_node->timeStep(node_t::posTop);
+    m_root_node->timeStep(node_t::posBottom);
 
     dt = dt_orig;
 

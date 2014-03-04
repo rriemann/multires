@@ -55,10 +55,12 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
 const node_t *node_t::getNeighbour(const char position) const
 {
 
-    static const std::array<char, 16> mm = {{/*west  0*/ 1, 0, 3, 2,
+    static const std::array<char, 16> mm = {{
+                                             /*west  0*/ 1, 0, 3, 2,
                                              /*east  1*/ 0, 1, 2, 3,
-                                             /*north 2*/ 0, 2, 1, 3,
-                                             /*south 3*/ 2, 0, 3, 1 }};
+                                             /*south 2*/ 2, 0, 3, 1,
+                                             /*north 3*/ 0, 2, 1, 3,
+                                            }};
 
     // Check the parent cell's children
     if (m_position == posRoot) {

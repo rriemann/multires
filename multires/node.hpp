@@ -44,10 +44,10 @@ public:
         , posTopLeftBack      = 2
         , posTopLeftFront     = 3
         */
-        , posTop              = 2
-        , posBottom           = 3
-        , posNorth            = 2
-        , posSouth            = 3
+        , posTop              = 3
+        , posBottom           = 2
+        , posNorth            = 3
+        , posSouth            = 2
 
         // 3D extension
         /*
