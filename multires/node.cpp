@@ -315,17 +315,36 @@ bool node_t::remesh_clean()
 
 real node_t::interpolation() const
 {
-    assert(m_position == g_childs-1);
+    /*
     real phi = 0;
     for (char pos = 0; pos < g_childs; ++pos) {
         phi += getNeighbour(pos)->getPoint()->m_phi;
     }
     return phi/g_childs;
+    */
+
+    // return (m_parent->getPoint()->m_phi + getNeighbour(1)->getNeighbour(2)->getPoint()->m_phi)/2;
+
+    real phi = m_point->m_phi;
+    for (size_t pos = 1; pos < g_childs; ++pos) {
+        const node_t *node_inter = this;
+        if (pos % 2 == 1) {
+            node_inter = node_inter->getNeighbour(posRight);
+        }
+        if (pos > 1) {
+            node_inter = node_inter->getNeighbour(posTop);
+        }
+        // phi-value interpolation
+        phi += node_inter->getPoint()->m_phi;
+    }
+
+    return phi/g_childs;
 }
 
 real node_t::residual() const
 {
-    return fabs(m_point->m_phi - interpolation());
+    assert(m_position == g_childs-1);
+    return fabs(m_point->m_phi - m_parent->interpolation());
 }
 
 void node_t::timeStep(const char direction)
