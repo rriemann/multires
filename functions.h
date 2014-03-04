@@ -24,12 +24,22 @@
 
 
 inline real f_eval_gauss(location_t x) {
-    const real x_shift = pow(x[dimX]-0.5,2) +
-                         pow(x[dimY]-0.5,2);
+    const real x_shift =
+                         pow(x[dimX]-0.5,2);
+                         //+ pow(x[dimY]-0.5,2);
 
     return exp(-200*x_shift*x_shift);
 }
 
-const field_generator_t g_f_eval = f_eval_gauss;
+inline real f_eval_linear(location_t x) {
+    return (x[dimX]+x[dimY])/2;
+}
+
+inline real f_eval_square(location_t x) {
+    return (1-4*pow(x[dimX]-0.5,2))*(1-4*pow(x[dimY]-0.5,2));
+}
+
+// const field_generator_t g_f_eval = f_eval_gauss;
+const field_generator_t g_f_eval = f_eval_square;
 
 #endif // FUNCTIONS_H
