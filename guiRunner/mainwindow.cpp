@@ -74,6 +74,17 @@ MainWindow::MainWindow(QWidget *parent) :
         */
     }
 
+    marker = ui->customPlotMultiMarker;
+    marker->plotLayout()->insertRow(0);
+    marker->plotLayout()->addElement(0, 0, new QCPPlotTitle(marker, "multires grid"));
+    marker->addGraph();
+    marker->xAxis->setLabel("x");
+    marker->yAxis->setLabel("y");
+    marker->xAxis->setRange(g_x0[dimX], g_x1[dimX]);
+    marker->yAxis->setRange(g_x0[dimY], g_x1[dimY]);
+    marker->graph(0)->setLineStyle(QCPGraph::lsNone);
+    marker->graph(0)->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ssPlus, 1));
+
     connect(ui->actionRun, SIGNAL(triggered()), this, SLOT(actionRun()));
     connect(ui->actionAutoPlay, SIGNAL(toggled(bool)), this, SLOT(autoPlayToggled(bool)));
     connect(timer, SIGNAL(timeout()), this, SLOT(actionRun()));
@@ -141,10 +152,15 @@ void MainWindow::replot()
         sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
 
-    // update data multi
+
+    // update data multi and marker
+    QVector<real> xvalues, yvalues;
     for (const point_t &point: *m_grid_multi) {
         sets[plMulti].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+        xvalues << point.m_x[dimX];
+        yvalues << point.m_x[dimY];
     }
+    marker->graph(0)->setData(xvalues, yvalues);
 
     // update data theory
     for (size_t i = 0; i < N; ++i) {
@@ -158,14 +174,13 @@ void MainWindow::replot()
     for (CPlotSet &set: sets) {
         set.plot->replot();
     }
+    marker->replot();
 
     // statistics
-    /*
-    count_nodes_packed = m_grid_multi->size();
+    size_t count_nodes_packed = m_grid_multi->size();
     QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(N2).arg(real(count_nodes_packed)/N2).arg(m_grid_multi->getTime());
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
-    */
 
 }
 

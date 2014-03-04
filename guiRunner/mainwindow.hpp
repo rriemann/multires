@@ -52,11 +52,12 @@ private:
     theory_t *m_theory = nullptr;
 
     struct CPlotSet {
-        QCustomPlot* plot;
-        QCPColorMap* map;
+        QCustomPlot *plot;
+        QCPColorMap *map;
     };
 
     std::array<CPlotSet, 3> sets;
+    QCustomPlot *marker;
 
     enum plot_t {
         plTheory = 0,
