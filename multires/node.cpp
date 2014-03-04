@@ -147,7 +147,8 @@ void node_t::branch(size_t level)
             // prepare phi-value interpolation
             std::array<real, g_dimension> dphi = {{}}; // spacial phi derivatives
             for (u_char dim = 0; dim < g_dimension; ++dim) {
-                dphi[dim] = (getNeighbour(2*dim+1)->getPoint()->m_phi - m_point->m_phi)/2;
+                assert(g_dimension < 3);
+                dphi[dim] = (getNeighbour(dim+1)->getPoint()->m_phi - m_point->m_phi)/2;
             }
 
             for (size_t pos = 0; pos < g_childs; ++pos) {
