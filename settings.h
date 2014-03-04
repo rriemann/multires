@@ -8,7 +8,7 @@
 #include <functional>
 #include <limits>
 
-constexpr size_t g_dimension = 1;
+constexpr u_char g_dimension = 1;
 constexpr short  g_childs = (1 << g_dimension);
 
 typedef double real;

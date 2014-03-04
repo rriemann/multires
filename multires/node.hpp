@@ -91,7 +91,7 @@ public:
     static void setEpsilon(real epsilon)
     { c_epsilon = epsilon; }
 
-    void initialize(node_t *parent, u_char level, char position, const index_t &index);
+    void initialize(node_t *parent, u_char level, char position, const index_t &index, point_t *point);
 
     typedef std::array<node_t, g_childs> node_array_t;
 

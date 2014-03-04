@@ -24,7 +24,7 @@ node_t::node_t()
 {
 }
 
-void node_t::initialize(node_t *parent, u_char level, char position, const index_t &index)
+void node_t::initialize(node_t *parent, u_char level, char position, const index_t &index, point_t *point)
 {
     m_parent = parent;
     m_level = level;
@@ -32,22 +32,7 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
     m_index = index;
     m_flags = flUnset;
     m_childs = nullptr;
-
-    if (position > 0) {
-        // create new point for position > 0
-        // construct point-index
-        index_t index_point = m_parent->getPoint()->m_index;
-        const size_t stepsize = pow(2, c_grid->m_level_max - m_level);
-        if (position % 2 == 1) index_point[dimX] += stepsize;
-        if (position % 2 == 0) index_point[dimY] += stepsize;
-
-        real phi = 0;
-        for (char pos = 0; pos < g_childs; ++pos) {
-            const node_t *neighbour = getNeighbour(pos);
-            phi += neighbour->getPoint()->m_phi;
-        }
-        m_point = new point_t(index_point, c_grid->m_level_max, phi/g_childs);
-    }
+    m_point = point;
     /*
     std::cerr << "this pos " << int(position)
               << " this index " << m_point->m_index[0]
@@ -159,23 +144,47 @@ void node_t::branch(size_t level)
             // allocate memory for all child nodes
             m_childs = new node_array_t;
 
-            // copy point for first child from parent (this)
-            getChild(0)->setPoint(m_point);
+            // prepare phi-value interpolation
+            std::array<real, g_dimension> dphi = {{}}; // spacial phi derivatives
+            for (u_char dim = 0; dim < g_dimension; ++dim) {
+                dphi[dim] = (getNeighbour(2*dim+1)->getPoint()->m_phi - m_point->m_phi)/2;
+            }
 
             for (size_t pos = 0; pos < g_childs; ++pos) {
-                // construct node-index
+                // construct node index
                 index_t index = m_index;
                 for (auto &ind: index) {
                     ind = 2*ind;
                 }
+
+                point_t *point;
                 if (pos > 0) {
+                    // alternate node index
                     if (pos % 2 == 1) ++index[dimX];
                     if (pos % 2 == 0) ++index[dimY];
+
+                    // create new point for position > 0
+                    // construct point index
+                    index_t index_point = m_point->m_index;
+                    const size_t stepsize = pow(2, c_grid->m_level_max - (m_level+1));
+                    real phi = m_point->m_phi;
+                    if (pos % 2 == 1) {
+                        index_point[dimX] += stepsize;
+                        phi += dphi[dimX];
+                    }
+                    if (pos % 2 == 0) {
+                        index_point[dimY] += stepsize;
+                        phi += dphi[dimY];
+                    }
+
+                    point = new point_t(index_point, c_grid->m_level_max, phi);
+                    getChild(pos)->setPoint(point);
+                } else {
+                    // copy point for first child from parent (this)
+                    point = m_point;
                 }
 
-                getChild(pos)->initialize(this, m_level+1, position_t(pos), index);
-                // std::cerr << "now index: " << getChild(pos)->getPoint()->m_index[dimX] << std::endl;
-
+                getChild(pos)->initialize(this, m_level+1, position_t(pos), index, point);
             }
 
             // put new child nodes into the next-chain of the points
