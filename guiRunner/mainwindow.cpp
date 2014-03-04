@@ -141,6 +141,12 @@ void MainWindow::replot()
         sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
 
+    // update data multi
+    // sets[plMulti].map->data()->clear();
+    for (const point_t &point: *m_grid_multi) {
+        sets[plMulti].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+    }
+
     // update data theory
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
