@@ -144,13 +144,6 @@ void node_t::branch(size_t level)
             // allocate memory for all child nodes
             m_childs = new node_array_t;
 
-            // prepare phi-value interpolation
-            std::array<real, g_dimension> dphi = {{}}; // spacial phi derivatives
-            for (u_char dim = 0; dim < g_dimension; ++dim) {
-                assert(g_dimension < 3);
-                dphi[dim] = (getNeighbour(dim+1)->getPoint()->m_phi - m_point->m_phi)/2;
-            }
-
             for (size_t pos = 0; pos < g_childs; ++pos) {
                 // construct node index
                 index_t index_child = m_index;
@@ -163,17 +156,19 @@ void node_t::branch(size_t level)
                     // create new point for position > 0
                     index_t index_point = m_point->m_index;
                     const size_t stepsize = pow(2, c_grid->m_level_max - (m_level+1));
-                    real phi = m_point->m_phi;
+                    const node_t *node_inter = this;
                     if (pos % 2 == 1) {
                         ++index_child[dimX];
                         index_point[dimX] += stepsize;
-                        phi += dphi[dimX];
+                        node_inter = node_inter->getNeighbour(posRight);
                     }
                     if (pos > 1) {
                         ++index_child[dimY];
                         index_point[dimY] += stepsize;
-                        phi += dphi[dimY];
+                        node_inter = node_inter->getNeighbour(posTop);
                     }
+                    // phi-value interpolation
+                    real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
 
                     point = new point_t(index_point, c_grid->m_level_max, phi);
                     getChild(pos)->setPoint(point);
