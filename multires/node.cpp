@@ -91,6 +91,7 @@ const point_t *node_t::getPoint(const index_t &index)
 {
     const index_t &index_origin = m_point->m_index;
     if (!m_childs || (index == index_origin)) {
+        assert(m_point);
         return m_point;
     }
 
