@@ -331,19 +331,12 @@ real node_t::residual() const
 void node_t::timeStep(const char direction)
 {
     if(isLeaf()) {
-<<<<<<< HEAD
         const real phi_this = m_point->m_phiBackup;
 
         std::array<real,  g_childs> phi_neighbour;
         // u_char level_diff_max = 0;
         for (char pos = 0; pos < g_childs; ++pos) {
             const node_t *neighbour = getNeighbour(pos);
-=======
-        std::array<const node_t *,  g_childs> neighbours;
-        // u_char level_diff_max = 0;
-        for (char pos = 0; pos < g_childs; ++pos) {
-            neighbours[pos] = getNeighbour(pos);
->>>>>>> wip
             /* as we work with graded trees, we can expect that the level of our
                neighbours is either the same or one level smaller (coarser).
             */
