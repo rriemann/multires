@@ -152,27 +152,24 @@ void node_t::branch(size_t level)
 
             for (size_t pos = 0; pos < g_childs; ++pos) {
                 // construct node index
-                index_t index = m_index;
-                for (auto &ind: index) {
+                index_t index_child = m_index;
+                for (auto &ind: index_child) {
                     ind = 2*ind;
                 }
 
                 point_t *point;
                 if (pos > 0) {
-                    // alternate node index
-                    if (pos % 2 == 1) ++index[dimX];
-                    if (pos % 2 == 0) ++index[dimY];
-
                     // create new point for position > 0
-                    // construct point index
                     index_t index_point = m_point->m_index;
                     const size_t stepsize = pow(2, c_grid->m_level_max - (m_level+1));
                     real phi = m_point->m_phi;
                     if (pos % 2 == 1) {
+                        ++index_child[dimX];
                         index_point[dimX] += stepsize;
                         phi += dphi[dimX];
                     }
-                    if (pos % 2 == 0) {
+                    if (pos > 1) {
+                        ++index_child[dimY];
                         index_point[dimY] += stepsize;
                         phi += dphi[dimY];
                     }
@@ -184,7 +181,7 @@ void node_t::branch(size_t level)
                     point = m_point;
                 }
 
-                getChild(pos)->initialize(this, m_level+1, position_t(pos), index, point);
+                getChild(pos)->initialize(this, m_level+1, position_t(pos), index_child, point);
             }
 
             // put new child nodes into the next-chain of the points
