@@ -43,7 +43,9 @@ public:
             assert(tmp[dim] >= g_x0[dim] && tmp[dim] <= g_x1[dim]);
         }
 
-        return g_f_eval(tmp);
+        const real value = g_f_eval(tmp);
+        assert(value > -2 && value < 2);
+        return value;
     }
 
     real at(const real center, const real time) const {

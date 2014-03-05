@@ -7,6 +7,7 @@
 #include <vector>
 #include <functional>
 #include <limits>
+#include <cassert>
 
 constexpr u_char g_dimension = 1;
 constexpr short  g_childs = (1 << g_dimension);
@@ -49,6 +50,8 @@ inline real timeStepHelper(const real &ee, const real &el, const real &er,
 {
     const real alpha = g_velocity*dt/dx;
     const real property = ee - alpha/2*(er-el-alpha*(er-2*ee+el));
+
+    assert(property > -2 && property < 2);
 
     return property;
 }
