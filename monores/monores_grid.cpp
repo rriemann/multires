@@ -37,28 +37,32 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
 
 real monores_grid_t::timeStep()
 {
-    // update temporary data;
-    for(point_t &point: pointvector) {
-        point.m_phiBackup = point.m_phi;
-    }
-
     // update inner cell values
     for(size_t i = 1; i < pointvector.size()-1; ++i){
-        pointvector[i].m_phi = timeStepHelper(pointvector[i].m_phiBackup,
-                                              pointvector[i-1].m_phiBackup,
-                                              pointvector[i+1].m_phiBackup,
+        pointvector[i].m_flow = flowHelper(pointvector[i].m_phi,
+                                              pointvector[i-1].m_phi,
+                                              pointvector[i+1].m_phi,
                                               dx, dt);
     }
 
     // deal with boundaries
-    pointvector[0].m_phi   = timeStepHelper(pointvector[0  ].m_phiBackup,
-                                            pointvector[N-1].m_phiBackup,
-                                            pointvector[1].m_phiBackup,
+    pointvector[0].m_flow   = flowHelper(pointvector[0  ].m_phi,
+                                            pointvector[N-1].m_phi,
+                                            pointvector[1].m_phi,
                                             dx, dt);
-    pointvector[N-1].m_phi = timeStepHelper(pointvector[N-1].m_phiBackup,
-                                            pointvector[N-2].m_phiBackup,
-                                            pointvector[0].m_phiBackup,
+    pointvector[N-1].m_flow = flowHelper(pointvector[N-1].m_phi,
+                                            pointvector[N-2].m_phi,
+                                            pointvector[0].m_phi,
                                             dx, dt);
+
+    // time step
+    for(size_t i = 1; i < pointvector.size()-1; ++i){
+        pointvector[i].m_phi = pointvector[i].m_phi - (dt/dx)*g_velocity*(pointvector[i].m_flow - pointvector[i-1].m_flow);
+    }
+
+    // deal with boundaries
+    pointvector[0].m_phi = pointvector[0].m_phi - (dt/dx)*g_velocity*(pointvector[0].m_flow - pointvector[N-1].m_flow);
+    pointvector[N-1].m_phi = pointvector[N-1].m_phi - (dt/dx)*g_velocity*(pointvector[N-1].m_flow - pointvector[N-2].m_flow);
 
     m_time += dt;
     return dt;

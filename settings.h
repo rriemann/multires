@@ -56,4 +56,29 @@ inline real timeStepHelper(const real &ee, const real &el, const real &er,
     return property;
 }
 
+inline real minmod(const real a, const real b)
+{
+    if (a*b > 0) {
+        if (fabs(a) < fabs(b)){
+            return a;
+        } else {
+            return b;
+        }
+    } else {
+        return 0;
+    }
+}
+
+inline real flowHelper(const real &ee, const real &el, const real &er,
+                            const real &dx, const real &dt)
+{
+#ifdef LIMITER
+   const real derivative = minmod(ee - el, er - ee);
+#else
+   const real derivative = (er-el)/2;
+#endif
+   real a_L = ee + 0.5*(1-dt/dx*g_velocity)*derivative;
+   return a_L;
+}
+
 #endif // SETTINGS_H

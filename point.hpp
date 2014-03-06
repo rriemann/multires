@@ -74,6 +74,7 @@ public:
     /*! the index with respect to level_max */
     index_t m_index;
     location_t m_x;
+    real m_flow;
     real m_phi;
     real m_phiBackup;
     point_t *m_next;
