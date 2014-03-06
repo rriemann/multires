@@ -27,6 +27,30 @@ class point_t;
 class node_t
 {
 public:
+
+    /*!
+       \brief The position_t enum
+
+       Positions in the cell are ordered like this:
+
+           NW(2) | NE(3)
+           -------------
+           SW(0) | SE(1)
+
+       Orientations with respect to one cell are ordered like this:
+
+               N(3)
+                |
+           W(0) - E(1)
+                |
+               S(2)
+
+       There is a difference between positions and orientations. Position is
+       what gives you the place in one cell. Orientation is the perspective
+       if you want to query for neighbouring cells.
+
+
+     */
     enum position_t {
         // according to numbering of quadrants, starting with 0
         // http://en.wikipedia.org/wiki/Octant_%28solid_geometry%29
@@ -34,28 +58,13 @@ public:
         // 1D
         , posLeft             = 0
         , posRight            = 1
-        , posTopRightFront    = 0
-        , posTopRightBack     = 1
-        , posWest             = 0
-        , posEast             = 1
-
+        , posW                = 0
+        , posE                = 1
         // 2D extension
-        /*
-        , posTopLeftBack      = 2
-        , posTopLeftFront     = 3
-        */
         , posTop              = 3
         , posBottom           = 2
         , posNorth            = 3
         , posSouth            = 2
-
-        // 3D extension
-        /*
-        , posBottomRightFront = 4
-        , posBottomRightBack
-        , posBottomLeftBack
-        , posBottomLeftFront
-        */
         , posSW = 0
         , posSE = 1
         , posNW = 2
