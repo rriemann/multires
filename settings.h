@@ -56,6 +56,10 @@ inline real timeStepHelper(const real &ee, const real &el, const real &er,
     return property;
 }
 
+inline real timeStepHelperFlow(const real &flow, const real &flow_left, const real &dx, const real &dt) {
+    return - (dt/dx)*g_velocity*(flow - flow_left);
+}
+
 inline real minmod(const real a, const real b)
 {
     if (a*b > 0) {

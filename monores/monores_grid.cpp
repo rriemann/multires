@@ -46,7 +46,7 @@ real monores_grid_t::timeStep()
     }
 
     // deal with boundaries
-    pointvector[0].m_flow   = flowHelper(pointvector[0  ].m_phi,
+    pointvector[0].m_flow   = flowHelper(pointvector[0].m_phi,
                                             pointvector[N-1].m_phi,
                                             pointvector[1].m_phi,
                                             dx, dt);
@@ -57,12 +57,12 @@ real monores_grid_t::timeStep()
 
     // time step
     for(size_t i = 1; i < pointvector.size()-1; ++i){
-        pointvector[i].m_phi = pointvector[i].m_phi - (dt/dx)*g_velocity*(pointvector[i].m_flow - pointvector[i-1].m_flow);
+        pointvector[i].m_phi += timeStepHelperFlow(pointvector[i].m_flow, pointvector[i-1].m_flow, dx, dt);
     }
 
     // deal with boundaries
-    pointvector[0].m_phi = pointvector[0].m_phi - (dt/dx)*g_velocity*(pointvector[0].m_flow - pointvector[N-1].m_flow);
-    pointvector[N-1].m_phi = pointvector[N-1].m_phi - (dt/dx)*g_velocity*(pointvector[N-1].m_flow - pointvector[N-2].m_flow);
+    pointvector[0].m_phi += timeStepHelperFlow(pointvector[0].m_flow, pointvector[N-1].m_flow, dx, dt);
+    pointvector[N-1].m_phi += timeStepHelperFlow(pointvector[N-1].m_flow, pointvector[N-2].m_flow, dx, dt);
 
     m_time += dt;
     return dt;

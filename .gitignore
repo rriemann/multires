@@ -4,6 +4,7 @@ compaRunner
 doc/
 
 *callgrind.*
+*.log
 
 # Object files
 *.o
