@@ -328,10 +328,10 @@ real node_t::residual() const
     return fabs(m_point->m_phi - interpolation());
 }
 
-void node_t::timeStep(const char direction)
+void node_t::updateFlow(const char direction)
 {
     if(isLeaf()) {
-        const real phi_this = m_point->m_phiBackup;
+        const real phi_this = m_point->m_phi;
 
         std::array<real,  g_childs> phi_neighbour;
         // u_char level_diff_max = 0;
@@ -341,28 +341,64 @@ void node_t::timeStep(const char direction)
                neighbours is either the same or one level smaller (coarser).
             */
             assert(abs(neighbour->getLevel() - m_level) < 2);
-            real phi = neighbour->getPoint()->m_phiBackup;
-            if (m_position == 0 && neighbour->getLevel() < m_level) {
+            real phi = neighbour->getPoint()->m_phi;
+            if (neighbour->getLevel() < m_level) {
                 // if the left neighour cell in coarser, we have to interpolate
                 // its value to be comparable with the other values
                 phi = (phi+phi_this)/2;
 
-            }
-            // it is unclear why this part can be omitted (symmetry?) TODO
-            /*else if (neighbours[0]->getChilds()) {
+            } else if (neighbour->getChilds()) {
                 // the left neighbour is finer!
-                phi_left = neighbours[0]->getChild(1)->getPoint()->m_phiBackup;
-                phi_left = 2*phi_left-m_point->m_phiBackup;
-            }*/
+                assert(g_dimension < 2);
+                phi = neighbour->getChild((pos+1) % 2)->getPoint()->m_phi;
+                phi = 2*phi-phi_this; // extrapolating
+            }
             phi_neighbour[pos] = phi;
         }
 
         const real dx = g_span[dimX]/(1 << m_level);
 
-        m_point->m_phi = timeStepHelper(phi_this, phi_neighbour[direction], phi_neighbour[direction+1], dx, c_grid->dt);
+        m_point->m_flow = flowHelper(phi_this, phi_neighbour[direction-1], phi_neighbour[direction], dx, c_grid->dt);
     } else {
         for (node_t &node: *m_childs) {
-            node.timeStep();
+            node.updateFlow(direction);
+        }
+    }
+}
+
+void node_t::timeStep(const char direction)
+{
+    if(isLeaf()) {
+        const real flow_this = m_point->m_flow;
+
+        real flow_income = 0;
+        // u_char level_diff_max = 0;
+        const node_t *neighbour = getNeighbour(direction-1);
+        /* as we work with graded trees, we can expect that the level of our
+           neighbours is either the same or one level smaller (coarser).
+        */
+        assert(abs(neighbour->getLevel() - m_level) < 2);
+        if (neighbour->getLevel() == m_level){
+            flow_income = neighbour->getPoint()->m_flow;
+        } else if (neighbour->getLevel() < m_level) {
+            assert(m_position == 0);
+            // if the left neighour cell in coarser, we have to interpolate
+            // its value to be comparable with the other values
+            flow_income = neighbour->getPoint()->m_flow*2;
+        }  else {
+            // gather flow from children
+            for (u_char pos = 0; pos < g_dimension; ++pos) {
+                flow_income += neighbour->getChild(direction+pos*2)->getPoint()->m_flow/2;
+            }
+        }
+
+        flow_income = neighbour->getPoint()->m_flow;
+        const real dx = g_span[dimX]/(1 << m_level);
+
+        m_point->m_phi += timeStepHelperFlow(flow_this, flow_income, dx, c_grid->dt);
+    } else {
+        for (node_t &node: *m_childs) {
+            node.timeStep(direction);
         }
     }
 }

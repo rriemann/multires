@@ -28,6 +28,15 @@ inline real f_eval_gauss(location_t x) {
     return exp(-30*x_shift*x_shift);
 }
 
+inline real f_eval_hat(location_t x) {
+    const real xx = x[dimX];
+    if (std::fabs(xx-0.5) < 0.25) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 const field_generator_t g_f_eval = f_eval_gauss;
 
 #endif // FUNCTIONS_H

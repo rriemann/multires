@@ -69,12 +69,8 @@ void multires_grid_t::remesh()
 
 real multires_grid_t::timeStep()
 {
-    // update temporary data;
-    for(point_t &point: *this) {
-        point.m_phiBackup = point.m_phi;
-    }
-
-    m_root_node->timeStep();
+    m_root_node->updateFlow(node_t::posRight);
+    m_root_node->timeStep(node_t::posRight);
 
     remesh();
 
