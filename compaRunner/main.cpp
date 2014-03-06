@@ -30,13 +30,6 @@
 #include "functions.h"
 
 
-#include <limits>
-static const real eps = std::numeric_limits<real>::epsilon();
-
-location_t center(real x) {
-    return location_t {{x}};
-}
-
 int main()
 {
     ///////////// CONFIG //////////////////////
@@ -44,9 +37,9 @@ int main()
 
     real simulationTime = g_span[dimX]/g_velocity; // 1 period
 
-    std::array<real,6> steps_level;
+    std::array<real,9> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
-         steps_level[i] = 4+i;
+         steps_level[i] = 3+i;
     }
 
     std::array<real,8> steps_epsilon;
@@ -68,7 +61,6 @@ int main()
     std::ofstream file("/tmp/output.dat");
     ///////////// CONFIG END //////////////////////
 
-
     enum {
           yTheory = 0
         , yGridRegular
@@ -87,9 +79,9 @@ int main()
 
     for(size_t i_level = 0; i_level < steps_level.size(); ++i_level) {
         const size_t level = steps_level[i_level];
-        const size_t N     = (1 << level);
+        const size_t N     = pow(1 << level,g_dimension);
 
-        y_values_diff_norm[i_level][yTheory] = eps;
+        y_values_diff_norm[i_level][yTheory] = g_eps;
         const theory_t theory(level);
 
         // output row for theory
@@ -98,18 +90,23 @@ int main()
                 % level
                 % N
                 % steps_epsilon[0]
-                % eps;
+                % g_eps;
 
         // regular grid computation
         {
 
             monores_grid_t grid(level);
+            /*
             do {
                 grid.timeStep();
             } while(grid.getTime() < simulationTime);
+            */
+            for (size_t loops = 0; loops < 3; ++loops) {
+                grid.timeStep();
+            }
 
 #ifdef NORM_L_INF
-            y_values_diff_norm[i_level][yGridRegular] = eps;
+            y_values_diff_norm[i_level][yGridRegular] = g_eps;
 #else
             y_values_diff_norm[i_level][yGridRegular] = 0;
 #endif
@@ -118,6 +115,7 @@ int main()
 #ifdef NORM_L_INF
                 if(y_values_diff_norm[i_level][yGridRegular] < diff) {
                     y_values_diff_norm[i_level][yGridRegular] = diff;
+                    // std::cerr << boost::format("x:%03d y:%03d phi: %e\n") % point.m_index[dimX] % point.m_index[dimY] % point.m_phi;
                 }
 #else
                 y_values_diff_norm[i_level][yGridRegular] += diff/N;
@@ -132,12 +130,14 @@ int main()
                     % N
                     % steps_epsilon[0]
                     % y_values_diff_norm[i_level][yGridRegular];
+
+            // std::cerr << "\n\n\n";
         }
 
+        /*
         // multiresolution grid computation (epsilon variable)
         for(size_t i_epsilon = 0; i_epsilon < steps_epsilon.size(); ++i_epsilon) {
             const real epsilon = steps_epsilon[i_epsilon];
-
 
             multires_grid_t grid(level, 0, epsilon);
             do {
@@ -149,7 +149,7 @@ int main()
             grid.unfold(level);
 
 #ifdef NORM_L_INF
-            y_values_diff_norm[i_level][yGridMulti+i_epsilon] = eps;
+            y_values_diff_norm[i_level][yGridMulti+i_epsilon] = g_eps;
 #else
             y_values_diff_norm[i_level][yGridMulti+i_epsilon] = 0;
 #endif
@@ -176,6 +176,7 @@ int main()
         }
 
         file << std::endl << std::endl << std::endl; // empty line to use gnuplot index
+    */
     }
 
     file.close();
