@@ -384,11 +384,11 @@ void node_t::timeStep(const char direction)
             assert(m_position == 0);
             // if the left neighour cell in coarser, we have to interpolate
             // its value to be comparable with the other values
-            flow_income = neighbour->getPoint()->m_flow*2;
+            flow_income = neighbour->getPoint()->m_flow; // *2
         }  else {
             // gather flow from children
             for (u_char pos = 0; pos < g_dimension; ++pos) {
-                flow_income += neighbour->getChild(direction+pos*2)->getPoint()->m_flow/2;
+                flow_income += neighbour->getChild(direction+pos*2)->getPoint()->m_flow; // /2
             }
         }
 
