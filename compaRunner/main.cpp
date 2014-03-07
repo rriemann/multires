@@ -35,17 +35,17 @@ int main()
     ///////////// CONFIG //////////////////////
 #define NORM_L_INF // uncomment to use L_1 norm
 #define MONORES_TEST
-// #define MULTIRES_TEST
+#define MULTIRES_TEST
 
-    // real simulationTime = g_span[dimX]/g_velocity*5; // 1 period
-    size_t loops_max = 20;
+    real simulationTime = g_span[dimX]/g_velocity; // 1 period
+    // size_t loops_max = 100;
 
-    std::array<real,10> steps_level;
+    std::array<real,6> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
          steps_level[i] = 3+i;
     }
 
-    std::array<real,8> steps_epsilon;
+    std::array<real,10> steps_epsilon;
     for(size_t i = 0; i < steps_epsilon.size(); ++i) {
          steps_epsilon[i] = 0.00001*pow(2,0.5*i);
     }
@@ -100,14 +100,14 @@ int main()
         {
 
             monores_grid_t grid(level);
-            /*
             do {
                 grid.timeStep();
             } while(grid.getTime() < simulationTime);
-            */
+            /*
             for (size_t loops = 0; loops < loops_max; ++loops) {
                 grid.timeStep();
             }
+            */
 
 #ifdef NORM_L_INF
             y_values_diff_norm[i_level][yGridRegular] = g_eps;
@@ -145,14 +145,14 @@ int main()
             const real epsilon = steps_epsilon[i_epsilon];
 
             multires_grid_t grid(level, 0, epsilon);
-            /*
             do {
                 grid.timeStep();
             } while(grid.getTime() < simulationTime);
-            */
+            /*
             for (size_t loops = 0; loops < loops_max; ++loops) {
                 grid.timeStep();
             }
+            */
 
             size_t size = grid.size();
 

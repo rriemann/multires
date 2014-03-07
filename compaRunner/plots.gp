@@ -34,7 +34,7 @@ set xlabel "N" # offset -3,-2
 set ylabel "epsilon" # offset 3,-2
 set zlabel "norm" # offset -5
 
-set dgrid3d 6,6 splines
+set dgrid3d 20,6 splines
 set style data lines
 
 # splot '/tmp/output.dat' using (log($2)):(log($3)):(log($4))
