@@ -34,11 +34,13 @@ int main()
 {
     ///////////// CONFIG //////////////////////
 #define NORM_L_INF // uncomment to use L_1 norm
+#define MONORES_TEST
+// #define MULTIRES_TEST
 
     // real simulationTime = g_span[dimX]/g_velocity*5; // 1 period
     size_t loops_max = 20;
 
-    std::array<real,7> steps_level;
+    std::array<real,10> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
          steps_level[i] = 3+i;
     }
@@ -93,6 +95,7 @@ int main()
                 % steps_epsilon[0]
                 % g_eps;
 
+#ifdef MONORES_TEST
         // regular grid computation
         {
 
@@ -133,8 +136,10 @@ int main()
                     % y_values_diff_norm[i_level][yGridRegular];
 
             // std::cerr << "\n\n\n";
-        }
+        }       
+#endif
 
+#ifdef MULTIRES_TEST
         // multiresolution grid computation (epsilon variable)
         for(size_t i_epsilon = 0; i_epsilon < steps_epsilon.size(); ++i_epsilon) {
             const real epsilon = steps_epsilon[i_epsilon];
@@ -181,6 +186,8 @@ int main()
         }
 
         file << std::endl << std::endl << std::endl; // empty line to use gnuplot index
+
+#endif
     }
 
     file.close();
