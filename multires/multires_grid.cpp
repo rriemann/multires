@@ -69,10 +69,6 @@ void multires_grid_t::remesh()
 
 real multires_grid_t::timeStep()
 {
-    // const real dt_orig = dt;
-    // dt = dt_orig/sqrt(2);
-    // dt = dt_orig;
-
     static u_short counter = 0;
     if (counter % 2 == 0) {
         m_root_node->updateFlow(node_t::posRight);
