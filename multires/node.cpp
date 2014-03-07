@@ -250,12 +250,15 @@ bool node_t::remesh_analyse()
                 assert(abs(neighbour->getLevel() - m_level) < 2);
 
                 if ((neighbour->getLevel() == m_level) && neighbour->getChilds()) {
-                    for (node_t &node: *neighbour->getChilds()) {
-                        if (node.remesh_analyse()) {
-                            set(flActive);
-                            break;
+                    u_char flags = m_flags; // members are not supported by openmp
+                    #pragma omp parallel for reduction(| : flags) if (m_level < g_level_fork)
+                    for (auto node = neighbour->getChilds()->begin(); node < neighbour->getChilds()->end(); ++node) {
+                        if (node->remesh_analyse()) {
+                            flags = flags | flActive;
+                            // break; (not compatible with openmp)
                         }
                     }
+                    setFlags(flags);
                 }
             }
         }
@@ -281,9 +284,10 @@ void node_t::remesh_savety()
     if (m_childs && (m_level+1 < c_grid->m_level_max)) {
         // cumulative  flags of children
         u_char cum_flags = flUnset;
-        for (node_t &node: *m_childs) {
-            node.remesh_savety();
-            cum_flags = cum_flags | node.getFlags();
+        #pragma omp parallel for reduction(| : cum_flags) if (m_level < g_level_fork)
+        for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
+            node->remesh_savety();
+            cum_flags = cum_flags | node->getFlags();
         }
         if (cum_flags & flActive) {
             for (node_t &node: *m_childs) {
@@ -304,9 +308,10 @@ bool node_t::remesh_clean()
 {
     bool veto = false; // veto for removal of this node
     if (m_childs) {
-        for (node_t &node: *m_childs) {
-            if (!node.remesh_clean()) {
-                veto = true;
+        #pragma omp parallel for reduction(|| : veto) if (m_level < g_level_fork)
+        for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
+            if (!node->remesh_clean()) {
+                veto = veto || true;
             }
         }
         if (!veto) {
@@ -387,8 +392,9 @@ void node_t::updateFlow(const char direction)
 
         m_point->m_flow = flowHelper(phi_this, phi_neighbour[direction-1], phi_neighbour[direction], dx, c_grid->dt);
     } else {
-        for (node_t &node: *m_childs) {
-            node.updateFlow(direction);
+        #pragma omp parallel for if (m_level < g_level_fork)
+        for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
+            node->updateFlow(direction);
         }
     }
 }
@@ -425,8 +431,9 @@ void node_t::timeStep(const char direction)
 
         m_point->m_phi += timeStepHelperFlow(flow_this, flow_income, dx, c_grid->dt);
     } else {
-        for (node_t &node: *m_childs) {
-            node.timeStep(direction);
+        #pragma omp parallel for if (m_level < g_level_fork)
+        for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
+            node->timeStep(direction);
         }
     }
 }

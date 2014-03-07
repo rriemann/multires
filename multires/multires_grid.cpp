@@ -50,6 +50,13 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     size_t size_old;
     do {
         size_old = size_new;
+        /* FIXME: doesn't work because of wrong implementation of iterator :/
+        #pragma omp parallel for
+        for(auto point = begin(); point < end(); ++point) {
+            point->m_phi = g_f_eval(point->m_x);
+            point->m_phiBackup = point->m_phi;
+        }
+        */
         for(point_t &point: *this) {
             point.m_phi = g_f_eval(point.m_x);
         }

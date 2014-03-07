@@ -8,9 +8,15 @@
 #include <functional>
 #include <limits>
 #include <cassert>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 constexpr u_char g_dimension = 2;
 constexpr short  g_childs = (1 << g_dimension);
+#ifdef _OPENMP
+const u_char g_level_fork = log(omp_get_num_procs())/log(g_childs);
+#endif
 
 typedef double real;
 typedef std::array<real, g_dimension> location_t;
