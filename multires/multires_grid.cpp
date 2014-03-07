@@ -70,28 +70,20 @@ void multires_grid_t::remesh()
 real multires_grid_t::timeStep()
 {
 
-    const real dt_orig = dt;
-    dt = dt_orig/sqrt(2);
-
-    // x direction
-
-    // update temporary data;
-    for(point_t &point: *this) {
-        point.m_phiBackup = point.m_phi;
+    static u_short counter = 0;
+    if (counter % 2 == 0) {
+        m_root_node->timeStep(node_t::posLeft);
+        remesh();
+        m_root_node->timeStep(node_t::posSouth);
+        remesh();
+    } else {
+        m_root_node->timeStep(node_t::posSouth);
+        remesh();
+        m_root_node->timeStep(node_t::posLeft);
+        remesh();
     }
-    m_root_node->timeStep(node_t::posLeft);
+    ++counter;
 
-    // y direction
-
-    // update temporary data;
-    for(point_t &point: *this) {
-        point.m_phiBackup = point.m_phi;
-    }
-    m_root_node->timeStep(node_t::posBottom);
-
-    dt = dt_orig;
-
-    remesh();
 
     m_time += dt;
     return dt;

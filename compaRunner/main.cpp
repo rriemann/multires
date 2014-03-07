@@ -35,9 +35,10 @@ int main()
     ///////////// CONFIG //////////////////////
 #define NORM_L_INF // uncomment to use L_1 norm
 
-    real simulationTime = g_span[dimX]/g_velocity; // 1 period
+    // real simulationTime = g_span[dimX]/g_velocity*5; // 1 period
+    size_t loops_max = 20;
 
-    std::array<real,9> steps_level;
+    std::array<real,7> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
          steps_level[i] = 3+i;
     }
@@ -101,7 +102,7 @@ int main()
                 grid.timeStep();
             } while(grid.getTime() < simulationTime);
             */
-            for (size_t loops = 0; loops < 3; ++loops) {
+            for (size_t loops = 0; loops < loops_max; ++loops) {
                 grid.timeStep();
             }
 
@@ -134,15 +135,19 @@ int main()
             // std::cerr << "\n\n\n";
         }
 
-        /*
         // multiresolution grid computation (epsilon variable)
         for(size_t i_epsilon = 0; i_epsilon < steps_epsilon.size(); ++i_epsilon) {
             const real epsilon = steps_epsilon[i_epsilon];
 
             multires_grid_t grid(level, 0, epsilon);
+            /*
             do {
                 grid.timeStep();
             } while(grid.getTime() < simulationTime);
+            */
+            for (size_t loops = 0; loops < loops_max; ++loops) {
+                grid.timeStep();
+            }
 
             size_t size = grid.size();
 
@@ -176,7 +181,6 @@ int main()
         }
 
         file << std::endl << std::endl << std::endl; // empty line to use gnuplot index
-    */
     }
 
     file.close();

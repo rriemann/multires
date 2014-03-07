@@ -42,7 +42,7 @@ public:
 private:
     monores_grid_t(const monores_grid_t&) = delete; // remove copy constructor
 
-
+    void timeStepDirection(bool directionX, real dt2);
 
     const size_t N;
     const size_t N2;
