@@ -171,7 +171,7 @@ void MainWindow::replot()
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
             index_t index({{i, j}});
-            real val = m_theory->at(index, m_grid_mono->getTime()/qSqrt(2));
+            real val = m_theory->at(index, m_grid_mono->getTime());
             sets[plTheory].map->data()->setCell(i, j, val);
         }
     }
