@@ -24,13 +24,12 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
   , N(1 << level_max)
   , N2(N*N)
   , dx({{g_span[dimX]/N, g_span[dimY]/N}})
+  , pointvector(std::vector<point_t>(N2))
 {
     // find smallest dt
     real dt_x = g_cfl*dx[dimX]/g_velocity;
     real dt_y = g_cfl*dx[dimY]/g_velocity;
     dt = (dt_x < dt_y) ? dt_x : dt_y;
-
-    pointvector.reserve(N2);
 
     #pragma omp parallel for collapse(2)
     for (size_t j = 0; j < N; ++j) { // y-direction
@@ -38,7 +37,7 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
             assert(g_dimension == 2);
             index_t index({{i, j}});
             const point_t point(index, level_max, g_f_eval);
-            pointvector.push_back(point);
+            pointvector[N*j+i] = point;
         }
     }
 }

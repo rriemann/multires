@@ -24,9 +24,7 @@
 class point_t
 {
 public:
-    /*
     point_t() {}
-    */
 
     point_t(index_t index, const u_char level_max) :
         m_index(index)
