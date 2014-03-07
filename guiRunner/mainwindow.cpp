@@ -121,6 +121,7 @@ void MainWindow::initializeGrids()
 
 void MainWindow::actionRun()
 {
+    /*
     int stepAtOnce = spinBox->value();
     real timeInterval = g_timestep*stepAtOnce;
     if(m_grid_multi) {
@@ -141,6 +142,10 @@ void MainWindow::actionRun()
         } while(m_grid_mono->getTime() < m_grid_multi->getTime());
         qDebug() << "counter_regular:" << counter++;
     }
+    */
+
+    m_grid_multi->timeStep();
+    m_grid_mono->timeStep();
 
     replot();
 }

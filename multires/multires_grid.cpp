@@ -69,27 +69,25 @@ void multires_grid_t::remesh()
 
 real multires_grid_t::timeStep()
 {
+    // const real dt_orig = dt;
+    // dt = dt_orig/sqrt(2);
+    // dt = dt_orig;
 
-    const real dt_orig = dt;
-    dt = dt_orig/sqrt(2);
+    static u_short counter = 0;
+    if (counter % 2 == 0) {
+        m_root_node->updateFlow(node_t::posRight);
+        m_root_node->timeStep(node_t::posRight);
 
-    // x direction
+        m_root_node->updateFlow(node_t::posNorth);
+        m_root_node->timeStep(node_t::posNorth);
+    } else {
+        m_root_node->updateFlow(node_t::posNorth);
+        m_root_node->timeStep(node_t::posNorth);
 
-    // update temporary data;
-    for(point_t &point: *this) {
-        point.m_phiBackup = point.m_phi;
+        m_root_node->updateFlow(node_t::posRight);
+        m_root_node->timeStep(node_t::posRight);
     }
-    m_root_node->timeStep(node_t::posLeft);
-
-    // y direction
-
-    // update temporary data;
-    for(point_t &point: *this) {
-        point.m_phiBackup = point.m_phi;
-    }
-    m_root_node->timeStep(node_t::posBottom);
-
-    dt = dt_orig;
+    ++counter;
 
     remesh();
 

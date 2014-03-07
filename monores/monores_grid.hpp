@@ -48,6 +48,7 @@ private:
     const size_t N2;
     const location_t dx;
     real dt;
+    void timeStepDirection(bool directionX, real dt2);
 
     std::vector<point_t> pointvector;
 };
