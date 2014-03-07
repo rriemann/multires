@@ -9,6 +9,10 @@ QMAKE_CXXFLAGS_DEBUG   += -O0
 contains( QMAKE_CC, gcc ) {
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=55805
     QMAKE_CXXFLAGS += -Wno-missing-field-initializers
+
+    # enable openmp
+    LIBS += -lgomp
+    QMAKE_CXXFLAGS += -fopenmp
 }
 
 INCLUDEPATH += $$PWD
