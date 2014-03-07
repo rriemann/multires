@@ -74,7 +74,6 @@ public:
     location_t m_x;
     real m_flow;
     real m_phi;
-    real m_phiBackup;
     point_t *m_next;
 };
 #endif // POINT_HPP

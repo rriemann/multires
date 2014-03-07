@@ -52,7 +52,6 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
         size_old = size_new;
         for(point_t &point: *this) {
             point.m_phi = g_f_eval(point.m_x);
-            point.m_phiBackup = point.m_phi;
         }
         remesh();
         size_new = size();
