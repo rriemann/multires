@@ -25,9 +25,16 @@
 class monores_grid_t : public grid_t
 {
 public:
+    /*!
+       \brief constructs a mono resolution grid
+       \param level_max determines the number of nodes in the computation area
+
+       The accurancy can be tuned by chosing level_max that is used to compute
+       the number of grid points `N = (1 << level_max)` per dimension.
+     */
     monores_grid_t(const u_char level_max);
 
-    virtual real timeStep();
+    virtual real timeStep(); // see docu in grid_t
 
     virtual size_t size() const
     { return N2; }
@@ -44,13 +51,18 @@ private:
 
 
 
-    const size_t N;
-    const size_t N2;
-    const location_t dx;
-    real dt;
+    const size_t N; //!< number of points per dimension
+    const size_t N2; //!< number of total points assuming \ref g_dimension = 2
+    const location_t dx; //!< grid size in all dimensions of every nodes of this grid
+    real dt; //!< time step with respect to \ref g_cfl
+
+    /*!
+       \brief implements direction splitting method
+       \param directionX direction to walk to
+     */
     void timeStepDirection(bool directionX);
 
-    std::vector<point_t> pointvector;
+    std::vector<point_t> pointvector; //!< actual grid data in a 1D array
 };
 
 #endif // MONORES_GRID_HPP
