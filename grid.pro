@@ -16,3 +16,6 @@ contains(DEFINES, REGULAR) {
 } else {
     rawRunner.depends = multires
 }
+
+
+OTHER_FILES += README.md
