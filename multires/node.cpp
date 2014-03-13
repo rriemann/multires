@@ -52,7 +52,7 @@ void node_t::initialize(node_t *parent, u_char level, char position, const index
    The implementation follows:
    https://github.com/dkolom/GALA2D/blob/master/QuadNode.cpp#L187
 */
-const node_t *node_t::getNeighbour(const char position) const
+const node_t *node_t::getNeighbour(const char direction) const
 {
 
     static const std::array<char, 16> mm = {{
@@ -67,7 +67,7 @@ const node_t *node_t::getNeighbour(const char position) const
         return this;
     }
 
-    const char off = position*4; // offset
+    const char off = direction*4; // offset
 
     if (m_position == mm[off+0]) {
         return m_parent->getChild(mm[off+1]);
@@ -76,7 +76,7 @@ const node_t *node_t::getNeighbour(const char position) const
         return m_parent->getChild(mm[off+3]);
     }
 
-    const node_t* cnode = m_parent->getNeighbour(position);
+    const node_t* cnode = m_parent->getNeighbour(direction);
 
     if (cnode->isLeaf()) {
         return cnode;
