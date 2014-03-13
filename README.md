@@ -3,10 +3,10 @@ Multi Resolution Grid {#mainpage}
 
 This software project consists of numerical modules meant to compiled into libs:
 
-- **monores** to provide a regular grid
-- **multires** to provide a multi resolution grid to perform multi resolution analysis
-- a theory helper theory.hpp to setup initial conditions and allow error analysis
+- monores_grid_t (folder monores) to provide a regular grid
+- multires_grid_t (folder multires) to provide a multi resolution grid to perform multi resolution analysis
 - an abstract class grid_t to define a common interface for both resolution modules
+- a theory helper theory_t to setup initial conditions and allow error analysis
 
 Furthermore there are some modules which are meant to actually run the code:
 

@@ -1,5 +1,5 @@
 /***************************************************************************************
- * Copyright (c) 2013 Robert Riemann <robert@riemann.cc>                                *
+ * Copyright (c) 2014 Robert Riemann <robert@riemann.cc>                                *
  *                                                                                      *
  * This program is free software; you can redistribute it and/or modify it under        *
  * the terms of the GNU General Public License as published by the Free Software        *
@@ -17,7 +17,6 @@
 #ifndef MULTIRES_GRID_HPP
 #define MULTIRES_GRID_HPP
 
-
 #include <iostream>
 #include <memory>
 #include <cassert>
@@ -30,10 +29,15 @@
 #include "point.hpp"
 
 class node_t;
-// class point_t;
 
+/*!
+   \brief The multires_grid_t class implements a grid based on multi resolution analysis (MRA)
+ */
 class multires_grid_t : public grid_t
 {
+    /*!
+       \brief The iterator class is a helper class to iterate over all points part of a multi resolution grid
+     */
     class iterator
             : public boost::iterator_facade<
             iterator
@@ -64,15 +68,21 @@ class multires_grid_t : public grid_t
     };
 
 public:
+    /*!
+       \brief multires_grid_t takes care for setting up a mult resolution grid based on objects node_t
+       \param level_max finest level of this grid
+       \param level_min coarsest level of this grid
+       \param epsilon threshold value to dismiss nodes
+     */
     multires_grid_t(const u_char level_max, const u_char level_min = 0, real epsilon = g_epsilon);
 
-    virtual real timeStep();
-    virtual size_t size() const;
+    virtual real timeStep(); // documented in grid_t
+    virtual size_t size() const; //documented in grid_t
 
-    const iterator begin() const;
-    const iterator end() const;
+    const iterator begin() const; //!< helper class for iteration
+    const iterator end() const; //!< helper class for iteration
 
-    void unfold(u_char level_max);
+    void unfold(u_char level_max); //!< creates nodes up to the finest grid to get a regular grid with finest resolution according to m_level_max
 
     const node_t *getRootNode() const
     { return m_root_node; }
@@ -82,14 +92,14 @@ public:
 private:
     multires_grid_t(const multires_grid_t&) = delete; // remove copy constructor
 
-    u_char m_level_max;
-    u_char m_level_min;
-    u_char m_level_start;
-    real dt;
-    node_t *m_root_node;
-    point_t *m_root_point;
+    u_char m_level_max; //!< maximum level, finest grid
+    u_char m_level_min; //!< minimum level, coarsest grid
+    u_char m_level_start; //!< level to start with at initialization
+    real dt; //!< global time step
+    node_t *m_root_node; //!< pointer to the root node of the underlying tree
+    point_t *m_root_point; //!< pointer to the point_t in the lower left edge (root point)
 
-    void remesh();
+    void remesh(); //!< update the mesh
 
 
     friend class node_t;

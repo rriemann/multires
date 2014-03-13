@@ -21,20 +21,40 @@
 #include "functions.h"
 #include <iostream>
 
+/*!
+   \brief The theory_t class is a helper class to calculate the theoretical solution at given points in time
+
+   This class is initialized with a maximum level to determine the smallest node size.
+   Afterwards the theoretical result of the advection equation at given time points
+   can be calculated using the at() functions.
+
+   This class is used to initialize the field at time `t = 0` and furthermore to
+   facilitate the error analysis.
+ */
 class theory_t
 {
 
 private:
-    const size_t N;
-    const location_t dx;
+    const size_t N; //!< number of grid points per dimension
+    const location_t dx; //!< node size in one dimension
 
 public:
+    /*!
+       \brief theory_t constructs a helper object to calculate theoretical field values
+       \param level is the finest level of the corresponding grid
+     */
     theory_t(const size_t level = g_level) :
         N(1 << level)
       , dx({{g_span[dimX]/N, g_span[dimY]/N}})
     {
     }
 
+    /*!
+       \brief at gives the field value at the point in space center at a given time
+       \param center position in space at which the solution is calculated
+       \param time at which the solution is calculated
+       \return field value
+     */
     real at(const location_t center, const real time) const {
         location_t tmp = center;
         for (u_char dim = 0; dim < g_dimension; ++dim) {
@@ -48,6 +68,12 @@ public:
         return value;
     }
 
+    /*!
+       \brief at gives the field value at the index descirbing a point in space at a given time
+       \param index describing a position in space at which the solution is calculated
+       \param time at which the solution is calculated
+       \return field value
+     */
     real at(const index_t &index, const real time) const {
         location_t center;
         for (u_char dim = 0; dim < g_dimension; ++dim) {

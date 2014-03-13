@@ -19,8 +19,6 @@
 
     \brief globals settings
 
-    \license GNU General Public License
-
     This header files defines the global settings that are used throughout
     the project.
  */
