@@ -47,3 +47,9 @@ and as well by providing some defines to the C precompiler.
 - define `REGULAR` to make rawRunner build against the regular grid instead of the multi resolution grid
 - define `_OMP` is set automatically by openmp if compilation is done with GCC compiler
 - define `LIMITER` can be set to enable the limiter for derivatives in the flow calculation
+
+## Generation of Documentation
+
+The documentation is generated from the source using [Doxygen](http://www.stack.nl/~dimitri/doxygen/).
+Navigate to the repository root directory and run: `doxygen doc/Doxyfile`
+
