@@ -44,6 +44,7 @@ const u_char g_level_fork = log(omp_get_num_procs())/log(g_childs); //!< tree le
 
 typedef double real; //!< determines the accurancy of the computations, e.g. double or float precision
 typedef std::array<real, g_dimension> location_t; //!< type to save a point in space
+typedef std::array<real, g_dimension> field_t;
 typedef std::vector<real> real_vector;
 typedef std::array<real, g_childs> environment_t; //!< type to keep all children of a node
 typedef std::array<size_t, g_dimension> index_t; //!< type to save a point in space by its indices
@@ -63,13 +64,15 @@ const real g_epsilon  = 4e-3;
    The number of grid points is calculated by `N = (1 << g_level)` which gives you
    just the power go 2 to \ref g_level.
  */
-const size_t g_level  = 7;
+const size_t g_level  = 5;
 
 /*!
    \brief maschine accurancy for the chosen accurancy
    \sa typedef real
  */
 const real g_eps = std::numeric_limits<real>::epsilon();
+
+const real pi = 4*atan(1);
 
 const real g_cfl  = 0.1; //!< constant in CFL (Courant, Friedrichs, Lewy) condition
 
@@ -90,70 +93,31 @@ enum dimension_t {
 /*!
    \brief defines the interface of a field initializer function to map a \ref location_t type to a \ref real value
  */
-typedef std::function<real(location_t)> field_generator_t;
-
-const real g_velocity = 0.5; //!< velocity used in the advection equation solver
+typedef std::function<void(const index_t &index, const real &time, field_t &value, real &rho)> field_generator_t;
 
 /*!
-   \brief calculates the flow difference
-   \param flow next neighbour
-   \param flow_left previous neighbougr
-   \param dx grid size
-   \param dt time step
-   \return a flow difference to the actual value
-
-   The flow difference to the actual value is calculated using the flow values
-   perviously set by flowHelper().
-
-   \sa flowHelper()
+   Variables needed for Latice-Boltzmann-Solver
  */
-inline real timeStepHelperFlow(const real &flow, const real &flow_left, const real &dx, const real &dt) {
-    return - (dt/dx)*g_velocity*(flow - flow_left);
+namespace g_lb {
+    const u_short Nx = (1 << g_level);
+    const u_short Ny = Nx;
+    const u_char  Nl = 9;
+    const u_short Length = Nx-1; //!< Length of the square computational domain in lattice units.
+    const real Re = 10.0; //!< Reynolds number.
+    const real tau = 0.65; //!< Relaxation time.
+    const real omega = 1.0/tau; //!< Relaxation frequency.
+    const real vlat = (tau-0.5)/3; //!< Lattice kinematic viscosity.
+    const real CsSquare = 1.0/3; //!< Square of the speed of sound in lattice units.
+    const real Ulat = Re*vlat/Length; //!< Lattice characteristic velocity.
+    const real Kx = 2*pi/Length; //!< Wavenumber in the x- and y-direction.
+    // const real i2s = 1; //!< index*i2s = space position (index to space)
+    const real Ro = 1.0; //!< Initial fluid density in lattice and physical units.
+
+
+    const real weight[9] = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/36, 1.0/36, 1.0/36, 1.0/36}; //!< Weighting factors.
+    const char ex[9] = {0, 1, -1, 0, 0, 1, -1, -1, 1}; //!< X-component of the particle velocity.
+    const char ey[9] = {0, 0, 0, 1, -1, 1, 1, -1, -1}; //!< Y-component of the particle velocity.
 }
 
-/*!
-   \brief helper function to implement the minmod limiter
- */
-inline real minmod(const real a, const real b)
-{
-    if (a*b > 0) {
-        if (fabs(a) < fabs(b)){
-            return a;
-        } else {
-            return b;
-        }
-    } else {
-        return 0;
-    }
-}
-
-/*!
-   \brief calculates the flow through the interfaces of the nodes
-   \param ee flow of this node
-   \param el flow of its previous neighbour
-   \param er flow of its next neighbour
-   \param dx node size
-   \param dt time step
-   \return flow
-
-   With this function the flux at the interfaces is calculated. It is later
-   on used to do the actual time step using timeStepHelperFlow()
-
-    LIMITER can be defined to enable the limiting of the derivates and get smoothed
-    behavior close to shocks.
-
-   \sa timeStepHelperFlow()
- */
-inline real flowHelper(const real &ee, const real &el, const real &er,
-                            const real &dx, const real &dt)
-{
-#ifdef LIMITER
-   const real derivative = minmod(ee - el, er - ee);
-#else
-   const real derivative = (er-el)/2;
-#endif
-   real a_L = ee + 0.5*(1-dt/dx*g_velocity)*derivative;
-   return a_L;
-}
 
 #endif // SETTINGS_H

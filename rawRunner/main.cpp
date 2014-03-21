@@ -39,7 +39,7 @@ int main()
     // generation of childrens, e.g.: only root = 0, grand-children = 2
     // total number of nodes, including (childsbyDimension) boundary elements
 
-    real simulationTime = g_span[dimX]/g_velocity*5; // 5 periods
+    real simulationTime = 20;
 
 #ifdef REGULAR
     monores_grid_t grid(g_level);
@@ -49,9 +49,9 @@ int main()
 
     auto start = std::chrono::steady_clock::now();
 
-    do {
+    while (grid.getTime() < simulationTime) {
         grid.timeStep();
-    } while(grid.getTime() < simulationTime);
+    };
 
     auto done = std::chrono::steady_clock::now();
 
@@ -70,17 +70,18 @@ int main()
 #endif
     std::cerr << "after unfold: size = " << grid.size() << std::endl;
     std::ofstream file("/tmp/output.txt");
-    file << "# x y phi" << std::endl;
+    file << "# x y Ux Uy" << std::endl;
     for(const point_t point: grid) {
         // std::cerr << point.m_x[dimX] << " : " << point.m_phi << std::endl;
         /*
         */
-        file << boost::format("%e %e %e\n")
+        file << boost::format("%e %e %e %e\n")
                 % point.m_x[dimX]
                 % point.m_x[dimY]
                 // % point.m_index[dimX]
                 // % point.m_index[dimY]
-                % point.m_phi;
+                % point.m_U[dimX]
+                % point.m_U[dimY];
         /*
         file << boost::format("%e ") % point.m_phi;
         static size_t count = 0;
@@ -89,6 +90,10 @@ int main()
         */
     }
     file.close();
+
+    std::cerr << "error: " << (boost::format(" %1.20e") % grid.absL2Error()) << std::endl;
+    // assert(fabs(0.00087126772875501965962-AbsL2error) <= eps); // Tsim = 20, Nx = 21
+    // assert(fabs(0.000557275730831370335813-AbsL2error) <= eps); // Tsim = 1, Nx = 21
 
     return 0;
 }

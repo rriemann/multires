@@ -27,45 +27,18 @@
 #include "settings.h"
 
 #include <cmath>
-#include <algorithm>
 
-
-/*!
-   \brief f_eval_gauss implements a gaussion curve in 2D
-   \param x location in space
-   \return field value
- */
-inline real f_eval_gauss(location_t x) {
-    const real x_shift = pow(x[dimX]-0.5,2)
-                       + pow(x[dimY]-0.5,2);
-
-    return exp(-200*x_shift*x_shift);
+inline void getTheory(const index_t &index, const real &time, field_t &value, real &rho) {
+    using namespace g_lb;
+    const size_t &i = index[dimX];
+    const size_t &j = index[dimY];
+    value[dimX] = -g_lb::Ulat*cos(Kx*i)*sin(Kx*j)*exp(-2*Kx*Kx*vlat*time);
+    value[dimY] = +g_lb::Ulat*sin(Kx*i)*cos(Kx*j)*exp(-2*Kx*Kx*vlat*time);
+    real P = Ro*CsSquare-0.25*Ulat*Ulat*(cos(2*Kx*index[dimX])+cos(2*Kx*index[dimY])); //!< Pressure defined in the computational space.
+    rho = P/CsSquare;
 }
 
-/*!
-   \brief f_eval_square implements a square function
-   \param x location in space
-   \return field value
- */
-inline real f_eval_square(location_t x) {
-    return (1-4*pow(x[dimX]-0.5,2))*(1-4*pow(x[dimY]-0.5,2));
-}
-
-/*!
-   \brief f_eval_hat implements a 1D hat function including to discontiunities
-   \param x location in space
-   \return field value
- */
-inline real f_eval_hat(location_t x) {
-    const real xx = x[dimX];
-    if (std::fabs(xx-0.5) < 0.25) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-const field_generator_t g_f_eval = f_eval_gauss; //!< default initializer
+const field_generator_t g_f_eval = getTheory; //!< default initializer
 // const field_generator_t g_f_eval = f_eval_square;
 
 #endif // FUNCTIONS_H

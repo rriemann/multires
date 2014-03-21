@@ -44,6 +44,8 @@ public:
     virtual iterator begin();
     virtual iterator end();
 
+    real absL2Error();
+
     virtual ~monores_grid_t() {}
 
 private:
@@ -54,13 +56,7 @@ private:
     const size_t N; //!< number of points per dimension
     const size_t N2; //!< number of total points assuming \ref g_dimension = 2
     const location_t dx; //!< grid size in all dimensions of every nodes of this grid
-    real dt; //!< time step with respect to \ref g_cfl
-
-    /*!
-       \brief implements direction splitting method
-       \param directionX direction to walk to
-     */
-    void timeStepDirection(bool directionX);
+    const real dt; //!< time step with respect to \ref g_cfl
 
     std::vector<point_t> pointvector; //!< actual grid data in a 1D array
 };
