@@ -93,7 +93,7 @@ enum dimension_t {
 /*!
    \brief defines the interface of a field initializer function to map a \ref location_t type to a \ref real value
  */
-typedef std::function<void(const index_t &index, const real &time, field_t &value, real &rho)> field_generator_t;
+typedef std::function<void(const index_t &index, const real &time, field_t &value, real *rho)> field_generator_t;
 
 /*!
    Variables needed for Latice-Boltzmann-Solver

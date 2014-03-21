@@ -28,14 +28,16 @@
 
 #include <cmath>
 
-inline void getTheory(const index_t &index, const real &time, field_t &value, real &rho) {
+inline void getTheory(const index_t &index, const real &time, field_t &value, real *rho) {
     using namespace g_lb;
     const size_t &i = index[dimX];
     const size_t &j = index[dimY];
     value[dimX] = -g_lb::Ulat*cos(Kx*i)*sin(Kx*j)*exp(-2*Kx*Kx*vlat*time);
     value[dimY] = +g_lb::Ulat*sin(Kx*i)*cos(Kx*j)*exp(-2*Kx*Kx*vlat*time);
-    real P = Ro*CsSquare-0.25*Ulat*Ulat*(cos(2*Kx*index[dimX])+cos(2*Kx*index[dimY])); //!< Pressure defined in the computational space.
-    rho = P/CsSquare;
+    if (rho) {
+        real P = Ro*CsSquare-0.25*Ulat*Ulat*(cos(2*Kx*index[dimX])+cos(2*Kx*index[dimY])); //!< Pressure defined in the computational space.
+        *rho = P/CsSquare;
+    }
 }
 
 const field_generator_t g_f_eval = getTheory; //!< default initializer

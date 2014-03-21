@@ -107,9 +107,7 @@ real monores_grid_t::absL2Error()
         for (u_short j = 0; j < N; ++j) {
             point_t &p = pointvector[i+N*j];
             field_t U;
-            const index_t index({{i, j}});
-            real rho; // dummy
-            g_f_eval(index, getTime(), U, rho);
+            g_f_eval(p.m_index, getTime(), U, 0);
             esum += pow(p.m_U[dimX]-U[dimX],2)+pow(p.m_U[dimY]-U[dimY],2);
         }
     }

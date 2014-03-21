@@ -56,7 +56,7 @@ public:
     point_t(index_t index, u_char level_max, field_generator_t f_eval) :
         point_t(index, level_max)
     {
-        f_eval(m_index, 0, m_U, m_rho);
+        f_eval(m_index, 0, m_U, &m_rho);
         equilibriumHelper();
         std::copy(std::begin(m_feq), std::end(m_feq), std::begin(m_f));
         // memcpy(m_f, m_feq, sizeof(m_feq)); // pure C
