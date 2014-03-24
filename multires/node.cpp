@@ -232,6 +232,11 @@ bool node_t::remesh_analyse()
             }
         }
 
+        // respect minimum level
+        if (m_level <= c_grid->m_level_min) {
+            set(flActive);
+        }
+
         // check if the residual of this node
         if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
             set(flActive);
