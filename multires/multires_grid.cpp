@@ -97,21 +97,6 @@ real multires_grid_t::timeStep()
     return dt;
 }
 
-size_t multires_grid_t::size() const
-{
-    return std::distance(begin(), end());
-}
-
-const multires_grid_t::iterator multires_grid_t::begin() const
-{
-    return iterator(m_root_point);
-}
-
-const multires_grid_t::iterator multires_grid_t::end() const
-{
-    return iterator();
-}
-
 void multires_grid_t::unfold(u_char level_max)
 {
     m_root_node->branch(level_max);
@@ -121,4 +106,14 @@ multires_grid_t::~multires_grid_t()
 {
     delete m_root_node;
     delete m_root_point;
+}
+
+grid_t::iterator multires_grid_t::begin()
+{
+    return iterator(m_root_point);
+}
+
+grid_t::iterator multires_grid_t::end()
+{
+    return iterator();
 }

@@ -18,10 +18,44 @@
 #define GRID_HPP
 
 #include "settings.h"
+#include "point.hpp"
 
 class grid_t
 {
 public:
+    /*!
+       \brief The iterator class is a helper class to iterate over all points part of a multi resolution grid
+     */
+    class iterator
+            : public boost::iterator_facade<
+            iterator
+            , point_t
+            , boost::forward_traversal_tag
+            //, boost::bidirectional_traversal_tag
+            >
+    {
+    public:
+
+        explicit iterator(point_t* p = nullptr)
+            : m_point(p)
+        {}
+
+    private:
+        friend class boost::iterator_core_access;
+
+        void increment()
+        { m_point = m_point->m_next; }
+
+        bool equal(iterator const &other) const
+        { return this->m_point == other.m_point; }
+
+        point_t& dereference() const
+        { return *m_point; }
+
+        point_t *m_point;
+    };
+
+
     grid_t();
 
     /*!
@@ -47,7 +81,10 @@ public:
        \brief size gives back the number of points of type point_t in this grid
        \return the number of points in this grid
      */
-    virtual size_t size() const = 0;
+    virtual size_t size();
+
+    virtual iterator begin() = 0;
+    virtual iterator end() = 0;
 
 protected:
     real m_time = 0; ///< global time

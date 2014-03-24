@@ -154,6 +154,7 @@ void MainWindow::replot()
 {
     // update data mono
     for (const point_t &point: *m_grid_mono) {
+
         sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
     }
 

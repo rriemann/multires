@@ -36,13 +36,13 @@ public:
 
     virtual real timeStep(); // see docu in grid_t
 
-    virtual size_t size() const
+    virtual size_t size()
     { return N2; }
 
     // getters for ranged for, see:
     // http://stackoverflow.com/questions/8164567/how-to-make-my-custom-type-to-work-with-range-based-for-loops
-    std::vector<point_t>::iterator begin();
-    std::vector<point_t>::iterator end();
+    virtual iterator begin();
+    virtual iterator end();
 
     virtual ~monores_grid_t() {}
 

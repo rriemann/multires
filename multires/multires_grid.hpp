@@ -22,11 +22,9 @@
 #include <cassert>
 #include <functional>
 #include <boost/format.hpp>
-#include <boost/iterator/iterator_facade.hpp>
 
 #include "settings.h"
 #include "grid.hpp"
-#include "point.hpp"
 
 class node_t;
 
@@ -35,38 +33,6 @@ class node_t;
  */
 class multires_grid_t : public grid_t
 {
-    /*!
-       \brief The iterator class is a helper class to iterate over all points part of a multi resolution grid
-     */
-    class iterator
-            : public boost::iterator_facade<
-            iterator
-            , point_t
-            , boost::forward_traversal_tag
-            //, boost::bidirectional_traversal_tag
-            >
-    {
-    public:
-
-        explicit iterator(point_t* p = nullptr)
-            : m_point(p)
-        {}
-
-    private:
-        friend class boost::iterator_core_access;
-
-        void increment()
-        { m_point = m_point->m_next; }
-
-        bool equal(iterator const &other) const
-        { return this->m_point == other.m_point; }
-
-        point_t& dereference() const
-        { return *m_point; }
-
-        point_t *m_point;
-    };
-
 public:
     /*!
        \brief multires_grid_t takes care for setting up a mult resolution grid based on objects node_t
@@ -77,10 +43,6 @@ public:
     multires_grid_t(const u_char level_max, const u_char level_min = 0, real epsilon = g_epsilon);
 
     virtual real timeStep(); // documented in grid_t
-    virtual size_t size() const; //documented in grid_t
-
-    const iterator begin() const; //!< helper class for iteration
-    const iterator end() const; //!< helper class for iteration
 
     void unfold(u_char level_max); //!< creates nodes up to the finest grid to get a regular grid with finest resolution according to m_level_max
 
@@ -88,6 +50,9 @@ public:
     { return m_root_node; }
 
     virtual ~multires_grid_t();
+
+    virtual iterator begin();
+    virtual iterator end();
 
 private:
     multires_grid_t(const multires_grid_t&) = delete; // remove copy constructor

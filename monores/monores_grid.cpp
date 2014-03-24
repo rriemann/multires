@@ -40,6 +40,13 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
             pointvector[N*j+i] = point;
         }
     }
+
+    point_t *last = 0;
+    for (size_t i = 0; i < N2; ++i) {
+        point_t *p = &pointvector[i];
+        p->m_next = last;
+        last = p;
+    }
 }
 
 void monores_grid_t::timeStepDirection(bool directionX)
@@ -167,12 +174,12 @@ real monores_grid_t::timeStep()
     return dt;
 }
 
-std::vector<point_t>::iterator monores_grid_t::begin()
+grid_t::iterator monores_grid_t::begin()
 {
-    return pointvector.begin();
+    return iterator(&pointvector[N2-1]);
 }
 
-std::vector<point_t>::iterator monores_grid_t::end()
+grid_t::iterator monores_grid_t::end()
 {
-    return pointvector.end();
+    return iterator();
 }

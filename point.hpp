@@ -18,6 +18,7 @@
 #define POINT_HPP
 
 #include <strings.h> // provides the function ffs()
+#include <boost/iterator/iterator_facade.hpp>
 
 #include "settings.h"
 

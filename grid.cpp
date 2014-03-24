@@ -19,3 +19,8 @@
 grid_t::grid_t()
 {
 }
+
+size_t grid_t::size()
+{
+    return std::distance(begin(), end());
+}
