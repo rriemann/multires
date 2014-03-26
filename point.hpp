@@ -41,7 +41,8 @@ public:
         m_index(index)
     {
         for (u_char i = 0; i < g_dimension; ++i) {
-            m_x[i] = g_x0[i] + g_span[i]/(1 << level_max)*m_index[i];
+            // m_x[i] = g_x0[i] + g_span[i]/(1 << level_max)*m_index[i];
+            m_x[i] = g_x0[i] + g_lb::Cl*m_index[i];
         }
     }
 
@@ -56,7 +57,7 @@ public:
     point_t(index_t index, u_char level_max, field_generator_t f_eval) :
         point_t(index, level_max)
     {
-        f_eval(m_index, 0, m_U, &m_rho);
+        f_eval(m_x, 0, m_U, &m_rho);
         equilibriumHelper();
         std::copy(std::begin(m_feq), std::end(m_feq), std::begin(m_f));
         // memcpy(m_f, m_feq, sizeof(m_feq)); // pure C

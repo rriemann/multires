@@ -39,7 +39,7 @@ int main()
     // generation of childrens, e.g.: only root = 0, grand-children = 2
     // total number of nodes, including (childsbyDimension) boundary elements
 
-    real simulationTime = 20;
+    real simulationTime = 10000;
 
 #ifdef REGULAR
     monores_grid_t grid(g_level);

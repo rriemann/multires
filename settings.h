@@ -64,7 +64,7 @@ const real g_epsilon  = 4e-3;
    The number of grid points is calculated by `N = (1 << g_level)` which gives you
    just the power go 2 to \ref g_level.
  */
-const size_t g_level  = 5;
+const size_t g_level  = 7;
 
 /*!
    \brief maschine accurancy for the chosen accurancy
@@ -93,7 +93,7 @@ enum dimension_t {
 /*!
    \brief defines the interface of a field initializer function to map a \ref location_t type to a \ref real value
  */
-typedef std::function<void(const index_t &index, const real &time, field_t &value, real *rho)> field_generator_t;
+typedef std::function<void(const location_t &pos, const real &time, field_t &value, real *rho)> field_generator_t;
 
 /*!
    Variables needed for Latice-Boltzmann-Solver
@@ -109,7 +109,13 @@ namespace g_lb {
     const real vlat = (tau-0.5)/3; //!< Lattice kinematic viscosity.
     const real CsSquare = 1.0/3; //!< Square of the speed of sound in lattice units.
     const real Ulat = Re*vlat/Length; //!< Lattice characteristic velocity.
-    const real Kx = 2*pi/Length; //!< Wavenumber in the x- and y-direction.
+    const real Cu = 1.0/Ulat; //!< conversion factor from velocity in Latice units to physical units
+    const real g_span = 1.0;
+    const real Cl = g_span/Nx; //!< conversion factor from latice units to physical units in space
+    const real Cl2 = Cl*Cl;
+    const real Cv = Cu*Cl; //!< conversion factor from latice viscosity to physical viscosity
+    const real Ct = Cl/Cu; //!< conversion from latice time to physical time
+    const real Kx = 2*pi/g_span; //!< Wavenumber in the x- and y-direction in physical units
     // const real i2s = 1; //!< index*i2s = space position (index to space)
     const real Ro = 1.0; //!< Initial fluid density in lattice and physical units.
 

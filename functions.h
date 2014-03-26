@@ -28,14 +28,14 @@
 
 #include <cmath>
 
-inline void getTheory(const index_t &index, const real &time, field_t &value, real *rho) {
+inline void getTheory(const location_t &pos, const real &time, field_t &value, real *rho) {
     using namespace g_lb;
-    const size_t &i = index[dimX];
-    const size_t &j = index[dimY];
-    value[dimX] = -g_lb::Ulat*cos(Kx*i)*sin(Kx*j)*exp(-2*Kx*Kx*vlat*time);
-    value[dimY] = +g_lb::Ulat*sin(Kx*i)*cos(Kx*j)*exp(-2*Kx*Kx*vlat*time);
+    const real &x = pos[dimX];
+    const real &y = pos[dimY];
+    value[dimX] = -g_lb::Ulat*cos(Kx*x)*sin(Kx*y)*exp(-2*Kx*Kx*vlat*time*Cl2);
+    value[dimY] = +g_lb::Ulat*sin(Kx*x)*cos(Kx*y)*exp(-2*Kx*Kx*vlat*time*Cl2);
     if (rho) {
-        real P = Ro*CsSquare-0.25*Ulat*Ulat*(cos(2*Kx*index[dimX])+cos(2*Kx*index[dimY])); //!< Pressure defined in the computational space.
+        real P = Ro*CsSquare-0.25*Ulat*Ulat*(cos(2*Kx*x)+cos(2*Kx*y)); //!< Pressure defined in the computational space.
         *rho = P/CsSquare;
     }
 }

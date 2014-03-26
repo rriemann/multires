@@ -44,8 +44,6 @@ public:
     virtual iterator begin();
     virtual iterator end();
 
-    real absL2Error();
-
     virtual ~monores_grid_t() {}
 
 private:

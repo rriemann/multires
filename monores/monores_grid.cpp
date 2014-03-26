@@ -96,23 +96,3 @@ grid_t::iterator monores_grid_t::end()
 {
     return iterator();
 }
-
-real monores_grid_t::absL2Error()
-{
-
-    //------- ABSOLUTE NUMERICAL ERROR (L2)-------
-    real esum = 0; //!<  Counter for the error calculation.
-    #pragma omp parallel for collapse(2) reduction(+:esum) private(Uexact,Vexact)
-    for (u_short i = 0; i < N; ++i) {
-        for (u_short j = 0; j < N; ++j) {
-            point_t &p = pointvector[i+N*j];
-            field_t U;
-            g_f_eval(p.m_index, getTime(), U, 0);
-            esum += pow(p.m_U[dimX]-U[dimX],2)+pow(p.m_U[dimY]-U[dimY],2);
-        }
-    }
-
-    //-------OUTPUT----------
-    // calculate absolute error in L^2 norm and output
-    return sqrt(esum/N2);
-}

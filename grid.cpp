@@ -15,6 +15,7 @@
  ****************************************************************************************/
 
 #include "grid.hpp"
+#include "functions.h"
 
 grid_t::grid_t()
 {
@@ -23,4 +24,22 @@ grid_t::grid_t()
 size_t grid_t::size()
 {
     return std::distance(begin(), end());
+}
+
+real grid_t::absL2Error()
+{
+    //------- ABSOLUTE NUMERICAL ERROR (L2)-------
+    real esum = 0; //!<  Counter for the error calculation.
+    // #pragma omp parallel for reduction(+:esum) // TODO
+    for (point_t &p: *this) {
+    // for (iterator it = begin(); it != end(); ++it) {
+        // point_t &p = *it;
+        field_t U;
+        g_f_eval(p.m_x, getTime(), U, 0);
+        esum += pow(p.m_U[dimX]-U[dimX],2)+pow(p.m_U[dimY]-U[dimY],2);
+    }
+
+    //-------OUTPUT----------
+    // calculate absolute error in L^2 norm and output
+    return sqrt(esum/size());
 }

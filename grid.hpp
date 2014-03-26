@@ -86,6 +86,8 @@ public:
     virtual iterator begin() = 0;
     virtual iterator end() = 0;
 
+    real absL2Error();
+
 protected:
     real m_time = 0; ///< global time
 };
