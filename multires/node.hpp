@@ -68,6 +68,8 @@ public:
         , posBottom           = 2
         , posNorth            = 3
         , posSouth            = 2
+        , posN                = 3
+        , posS                = 2
         , posSW = 0
         , posSE = 1
         , posNW = 2
@@ -227,30 +229,18 @@ public:
        \brief interpolation
        \return field value for the center position of this node
      */
-    real interpolation() const;
+    // real interpolation() const;
     /*!
        \brief residual
        \return difference between the interpolated center of its parent and the current value of this node
 
        \note This function is meant to be called only by nodes in the center position
      */
-    inline real residual() const;
+    // inline real residual() const;
 
-    /*!
-       \brief updateFlow works recursively to update the flux in one direction of all child nodes
-       \param direction
-
-       \sa flowHelper()
-     */
-    void updateFlow(const char direction = posRight);
-
-    /*!
-       \brief timeStep performs the actual time step using the flux values which have been computed before
-       \param direction
-
-       \sa updateFlow(), timeStepHelperFlow()
-     */
-    void timeStep(const char direction = posRight);
+    void collision(const u_char k);
+    void streaming(const u_char k);
+    void derivation();
 
     inline u_char getLevel() const
     { return m_level; }

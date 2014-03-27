@@ -41,7 +41,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
-    spinBox->setValue(1);
+    spinBox->setValue(100);
+    spinBox->setMaximum(1000);
     ui->mainToolBar->addWidget(spinBox);
 
     timer = new QTimer(this);
@@ -64,8 +65,8 @@ MainWindow::MainWindow(QWidget *parent) :
         set.map->data()->setSize(N, N);
         set.map->data()->setRange(QCPRange(g_x0[dimX], g_x1[dimX]),
                                   QCPRange(g_x0[dimY], g_x1[dimY]));
-        set.map->setDataRange(QCPRange(0, 1));
-        set.plot->rescaleAxes();
+        // set.map->setDataRange(QCPRange(0, 0.025));
+        // set.plot->rescaleAxes();
         set.map->setGradient(QCPColorGradient::gpThermal);
         /*
         QCPColorScale *colorScale = new QCPColorScale(customPlot);
@@ -114,9 +115,15 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level);
+    m_grid_multi = new multires_grid_t(g_level, g_level);
+
 
     replot();
+
+    for (CPlotSet &set: sets) {
+        set.map->rescaleDataRange();
+        set.plot->replot();
+    }
 }
 
 void MainWindow::actionRun()
@@ -154,15 +161,14 @@ void MainWindow::replot()
 {
     // update data mono
     for (const point_t &point: *m_grid_mono) {
-
-        sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+        sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.getUmag());
     }
 
 
     // update data multi and marker
     QVector<real> xvalues, yvalues;
     for (const point_t &point: *m_grid_multi) {
-        sets[plMulti].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+        sets[plMulti].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.getUmag());
         xvalues << point.m_x[dimX];
         yvalues << point.m_x[dimY];
     }
@@ -183,10 +189,15 @@ void MainWindow::replot()
     marker->replot();
 
     // statistics
+    /*
     size_t count_nodes_packed = m_grid_multi->size();
     QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(N2).arg(real(count_nodes_packed)/N2).arg(m_grid_multi->getTime());
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
+    */
+
+    qDebug() << "moneres  L2 error:" << m_grid_mono->absL2Error();
+    qDebug() << "multires L2 error:" << m_grid_multi->absL2Error();
 
 }
 

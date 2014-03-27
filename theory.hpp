@@ -56,16 +56,9 @@ public:
        \return field value
      */
     real at(const location_t center, const real time) const {
-        location_t tmp = center;
-        for (u_char dim = 0; dim < g_dimension; ++dim) {
-            real x = fmod(tmp[dim] - time*g_velocity, g_span[dim]);
-            tmp[dim] = fmod(fabs(x - g_x0[dim] + g_span[dim]), g_span[dim]) + g_x0[dim];
-            assert(tmp[dim] >= g_x0[dim] && tmp[dim] <= g_x1[dim]);
-        }
-
-        const real value = g_f_eval(tmp);
-        assert(value > -2 && value < 2);
-        return value;
+        field_t U;
+        g_f_eval(center, time, U, 0);
+        return sqrt(pow(U[dimX],2)+pow(U[dimY],2));
     }
 
     /*!

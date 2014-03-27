@@ -24,7 +24,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
     : m_level_max(level_max)
     , m_level_min(level_min)
     , m_level_start((level_max+level_min)/2)
-    , dt(g_cfl*g_span[dimX]/((1 << level_max)*g_velocity))
+    , dt(1.0)
 {
 
     m_root_point = new point_t({{}}, m_level_max);
@@ -58,7 +58,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
         }
         */
         for(point_t &point: *this) {
-            point.m_phi = g_f_eval(point.m_x);
+            point.updateValue(g_f_eval);
         }
         remesh();
         size_new = size();
@@ -75,23 +75,17 @@ void multires_grid_t::remesh()
 
 real multires_grid_t::timeStep()
 {
-    static u_short counter = 0;
-    if (counter % 2 == 0) {
-        m_root_node->updateFlow(node_t::posRight);
-        m_root_node->timeStep(node_t::posRight);
+    using namespace g_lb;
 
-        m_root_node->updateFlow(node_t::posNorth);
-        m_root_node->timeStep(node_t::posNorth);
-    } else {
-        m_root_node->updateFlow(node_t::posNorth);
-        m_root_node->timeStep(node_t::posNorth);
-
-        m_root_node->updateFlow(node_t::posRight);
-        m_root_node->timeStep(node_t::posRight);
+    for (u_char k = 0; k < Nl; ++k) {
+        //-------COLLISION-------
+        m_root_node->collision(k);
+        //-------STREAMING-------
+        m_root_node->streaming(k);
     }
-    ++counter;
 
-    remesh();
+    //-------CALCULATION OF THE MACROSCOPIC VARIABLES ––– CALCULATION OF THE EQUILIBRIUM DISTRIBUTION FUNCTION-------
+    m_root_node->derivation();
 
     m_time += dt;
     return dt;

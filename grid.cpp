@@ -30,10 +30,7 @@ real grid_t::absL2Error()
 {
     //------- ABSOLUTE NUMERICAL ERROR (L2)-------
     real esum = 0; //!<  Counter for the error calculation.
-    // #pragma omp parallel for reduction(+:esum) // TODO
     for (point_t &p: *this) {
-    // for (iterator it = begin(); it != end(); ++it) {
-        // point_t &p = *it;
         field_t U;
         g_f_eval(p.m_x, getTime(), U, 0);
         esum += pow(p.m_U[dimX]-U[dimX],2)+pow(p.m_U[dimY]-U[dimY],2);

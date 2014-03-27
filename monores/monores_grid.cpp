@@ -38,6 +38,7 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
         }
     }
 
+    // TODO integrate in loop above
     point_t *last = 0;
     for (size_t i = 0; i < N2; ++i) {
         point_t *p = &pointvector[i];
@@ -71,15 +72,10 @@ real monores_grid_t::timeStep()
         }
     }
 
-    //-------CALCULATION OF THE MACROSCOPIC VARIABLES-------
+    //-------CALCULATION OF THE MACROSCOPIC VARIABLES –– CALCULATION OF THE EQUILIBRIUM DISTRIBUTION FUNCTION-------
     #pragma omp parallel for
     for (size_t i = 0; i < N2; ++i) {
         pointvector[i].derivateMacroVariables();
-    }
-
-    //-------CALCULATION OF THE EQUILIBRIUM DISTRIBUTION FUNCTION-------
-    #pragma omp parallel for
-    for (size_t i = 0; i < N2; ++i) {
         pointvector[i].equilibriumHelper();
     }
 

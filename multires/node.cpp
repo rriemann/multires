@@ -170,10 +170,10 @@ void node_t::branch(size_t level)
                         index_point[dimY] += stepsize;
                         node_inter = node_inter->getNeighbour(posTop);
                     }
-                    // phi-value interpolation
-                    real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
+                    // U-value interpolation
+                    // real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
 
-                    point = new point_t(index_point, c_grid->m_level_max, phi);
+                    point = new point_t(index_point, c_grid->m_level_max /*, U */);
                     getChild(pos)->setPoint(point);
                 } else {
                     // copy point for first child from parent (this)
@@ -184,7 +184,7 @@ void node_t::branch(size_t level)
             }
 
             // overwriting phi value for center cell
-            getChild(g_childs-1)->getPoint()->m_phi = interpolation();
+            // getChild(g_childs-1)->getPoint()->m_phi = interpolation(); TODO LATICE-BOLTZMAN
 
             // put new child nodes into the next-chain of the points
             point_t *point = m_point->m_next;
@@ -237,10 +237,12 @@ bool node_t::remesh_analyse()
             set(flActive);
         }
 
+        /*
         // check if the residual of this node
         if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
             set(flActive);
         }
+        */
 
         // check neighbours to keep the tree graded
         if (!has(flActive)) {
@@ -328,18 +330,9 @@ bool node_t::remesh_clean()
     return ret;
 }
 
+/*
 real node_t::interpolation() const
 {
-    /*
-    real phi = 0;
-    for (char pos = 0; pos < g_childs; ++pos) {
-        phi += getNeighbour(pos)->getPoint()->m_phi;
-    }
-    return phi/g_childs;
-    */
-
-    // return (m_parent->getPoint()->m_phi + getNeighbour(1)->getNeighbour(2)->getPoint()->m_phi)/2;
-
     real phi = m_point->m_phi;
     for (size_t pos = 1; pos < g_childs; ++pos) {
         const node_t *node_inter = this;
@@ -361,84 +354,61 @@ real node_t::residual() const
     assert(m_position == g_childs-1);
     return fabs(m_point->m_phi - m_parent->interpolation());
 }
+*/
 
-void node_t::updateFlow(const char direction)
+void node_t::collision(const u_char k)
 {
     if(isLeaf()) {
-        const real phi_this = m_point->m_phi;
-
-        std::array<real,  g_childs> phi_neighbour;
-        // u_char level_diff_max = 0;
-        for (char pos = 0; pos < g_childs; ++pos) {
-            const node_t *neighbour = getNeighbour(pos);
-            /* as we work with graded trees, we can expect that the level of our
-               neighbours is either the same or one level smaller (coarser).
-            */
-            assert(abs(neighbour->getLevel() - m_level) < 2);
-            real phi = neighbour->getPoint()->m_phi;
-            if (neighbour->getLevel() < m_level) {
-                // if the left neighour cell in coarser, we have to interpolate
-                // its value to be comparable with the other values
-                phi = (phi+phi_this)/2;
-
-            } else if (neighbour->getChilds()) {
-                // the left neighbour is finer!
-                assert(g_dimension < 3);
-                static const std::array<u_char, 8> faces = {{ /*W(0)*/ 1, 3, /*E(1)*/ 0, 2, /*S(2)*/ 2, 3, /*N(3)*/ 0, 1}};
-                for (u_char face_pos = direction; face_pos < pow(2, g_dimension-1); ++face_pos) {
-                    phi = neighbour->getChild(faces[face_pos])->getPoint()->m_phi;
-                    phi = 2*phi-phi_this; // extrapolating
-                }
-            }
-            phi_neighbour[pos] = phi;
-        }
-
-        const real dx = g_span[dimX]/(1 << m_level);
-
-        m_point->m_flow = flowHelper(phi_this, phi_neighbour[direction-1], phi_neighbour[direction], dx, c_grid->dt);
+        m_point->collision(k);
     } else {
         #pragma omp parallel for if (m_level < g_level_fork)
         for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
-            node->updateFlow(direction);
+            node->collision(k);
         }
     }
 }
 
-void node_t::timeStep(const char direction)
+void node_t::streaming(const u_char k)
 {
-    if(isLeaf()) {
-        const real flow_this = m_point->m_flow;
+    using namespace g_lb;
 
-        real flow_income = 0;
-        // u_char level_diff_max = 0;
-        const node_t *neighbour = getNeighbour(direction-1);
-        /* as we work with graded trees, we can expect that the level of our
-           neighbours is either the same or one level smaller (coarser).
-        */
-        assert(abs(neighbour->getLevel() - m_level) < 2);
-        constexpr u_char dimensionFactor = 1 << (g_dimension - 1);
-        if (neighbour->getLevel() == m_level){
-            flow_income = neighbour->getPoint()->m_flow;
-        } else if (neighbour->getLevel() < m_level) {
-            // assert(m_position == 0);
-            // if the left neighour cell in coarser, we have to interpolate
-            // its value to be comparable with the other values
-            flow_income = neighbour->getPoint()->m_flow/dimensionFactor; // *2
-        }  else {
-            // gather flow from children
-            for (u_char pos = 0; pos < g_dimension; ++pos) {
-                flow_income += neighbour->getChild(direction+pos*2)->getPoint()->m_flow; // /2
-            }
+    if(isLeaf()) {
+        // compute index
+
+        const node_t *reference = this;
+
+        // assert((ex[k] == 0) ^ (ey[k] == 0)); // (direction center)
+
+        if (ex[k] > 0) {
+            reference = reference->getNeighbour(posE);
+        } else if (ex[k] < 0) {
+            reference = reference->getNeighbour(posW);
         }
 
-        flow_income = neighbour->getPoint()->m_flow;
-        const real dx = g_span[dimX]/(1 << m_level);
+        if (ey[k] > 0) {
+            reference = reference->getNeighbour(posN);
+        } else if (ey[k] < 0) {
+            reference = reference->getNeighbour(posS);
+        }
 
-        m_point->m_phi += timeStepHelperFlow(flow_this, flow_income, dx, c_grid->dt);
+        m_point->m_f[k] = reference->getPoint()->m_fbak;
     } else {
         #pragma omp parallel for if (m_level < g_level_fork)
         for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
-            node->timeStep(direction);
+            node->streaming(k);
+        }
+    }
+}
+
+void node_t::derivation()
+{
+    if(isLeaf()) {
+        m_point->derivateMacroVariables();
+        m_point->equilibriumHelper();
+    } else {
+        #pragma omp parallel for if (m_level < g_level_fork)
+        for (auto node = m_childs->begin(); node < m_childs->end(); ++node) {
+            node->derivation();
         }
     }
 }

@@ -1,9 +1,9 @@
 TEMPLATE = subdirs
 SUBDIRS  = \
-           # multires \
+           multires \
            monores \
            rawRunner \
-           # guiRunner \
+           guiRunner \
            # compaRunner
 
 # http://blog.rburchell.com/2013/10/every-time-you-configordered-kitten-dies.html
