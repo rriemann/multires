@@ -14,11 +14,18 @@ macx {
 contains( QMAKE_CC, gcc ) {
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=55805
     QMAKE_CXXFLAGS += -Wno-missing-field-initializers
-
-    # enable openmp
-    LIBS += -lgomp
-    QMAKE_CXXFLAGS += -fopenmp
 }
+
+# enable openmp
+QMAKE_CXXFLAGS += -fopenmp
+LIBS += -lgomp
+# LIBS += -L/usr/local/lib64 # -liomp5
+
+# to get openmp working with clang:
+# - compile llvm/clang from: http://clang-omp.github.io/#try-openmp-clang
+# to use the intel omp library instead of gomp with is provided by gcc
+# - compile libiomp5 (intels omp library) from: https://www.openmprtl.org/download
+#   (make sure that iomp5.so is somewhere in /usr/local/lib(64) and omp.h is in /usr/local/include)
 
 INCLUDEPATH += $$PWD
 DEPENDPATH  += $$PWD
