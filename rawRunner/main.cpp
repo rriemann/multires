@@ -36,6 +36,14 @@
 
 int main()
 {
+    #ifdef _OPENMP
+    const u_char num_procs = omp_get_num_procs(); //!< number of available processors
+    #else
+    const u_char num_procs = 1;
+    #endif
+    std::cerr << "processors in use: " << short(num_procs) << std::endl;
+
+
     // generation of childrens, e.g.: only root = 0, grand-children = 2
     // total number of nodes, including (childsbyDimension) boundary elements
 
