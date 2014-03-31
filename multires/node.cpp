@@ -237,12 +237,12 @@ bool node_t::remesh_analyse()
             set(flActive);
         }
 
-        /*
         // check if the residual of this node
+        // to limit this to the center cell, add:  && (m_position == g_childs-1)
+        if (m_position > 0) std::cerr << residual() << std::endl;
         if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
             set(flActive);
         }
-        */
 
         // check neighbours to keep the tree graded
         if (!has(flActive)) {
@@ -330,31 +330,61 @@ bool node_t::remesh_clean()
     return ret;
 }
 
-/*
-real node_t::interpolation() const
+g_lb::stancel_t node_t::interpolation(const char position) const
 {
-    real phi = m_point->m_phi;
-    for (size_t pos = 1; pos < g_childs; ++pos) {
-        const node_t *node_inter = this;
-        if (pos % 2 == 1) {
-            node_inter = node_inter->getNeighbour(posRight);
+    g_lb::stancel_t f = m_point->m_f;
+
+    if (position < g_childs-1) {
+        // two-point interpolation
+        const node_t *node;
+        if (position == posSE) {
+            node = getNeighbour(posE);
+        } else {
+            assert(position == posNW);
+            node = getNeighbour(posN);
         }
-        if (pos > 1) {
-            node_inter = node_inter->getNeighbour(posTop);
+
+        g_lb::stancel_t &f2 = node->m_point->m_f;
+        for (u_char k = 0; k < g_lb::Nl; ++k) {
+            f[k] = (f[k] + f2[k])/2;
         }
-        // phi-value interpolation
-        phi += node_inter->getPoint()->m_phi;
+    } else {
+        assert(position == posNE);
+        // center point uses four-point interpolation
+        const node_t *nodeN = getNeighbour(posN);
+        g_lb::stancel_t &fN = nodeN->m_point->m_f;
+        g_lb::stancel_t &fE = getNeighbour(posE)->m_point->m_f;
+        g_lb::stancel_t &fNE = nodeN->getNeighbour(posE)->m_point->m_f;
+
+        for (u_char k = 0; k < g_lb::Nl; ++k) {
+            f[k] = (f[k] + fN[k] + fE[k] + fNE[k])/4;
+        }
     }
 
-    return phi/g_childs;
+    return f;
 }
 
 real node_t::residual() const
 {
-    assert(m_position == g_childs-1);
-    return fabs(m_point->m_phi - m_parent->interpolation());
+    // the position node is inherited by the parent, thus deletion doesn't make sense
+    assert(m_position > 0);
+
+    // calculate the magnitude of the difference vector of the velocity between
+    // this node and its interpolation
+    g_lb::stancel_t f = m_parent->interpolation(m_position);
+    real rho; // rho interpolation
+    field_t U; // velocity interpolation
+
+    point_t::derivateMacroVariables(f, U, &rho);
+
+    // construct squared magnitude of difference vector
+    real mag2 = 0;
+    for (u_char i = 0; i < g_dimension; ++i) {
+        mag2 += pow(U[i] - m_point->m_U[i], 2);
+    }
+
+    return sqrt(mag2); // FIXME : if we compare residual with eps^2, we can save the root computation
 }
-*/
 
 void node_t::collision(const u_char k)
 {

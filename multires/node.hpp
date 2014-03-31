@@ -226,17 +226,18 @@ public:
 
 
     /*!
-       \brief interpolation
-       \return field value for the center position of this node
+       \brief interpolation of the distribution function f for the given position within this cell
+       \param position of the cell to interpolate
+       \return an array of type g_lb::stancel_t that keeps the distribution function values
      */
-    // real interpolation() const;
-    /*!
-       \brief residual
-       \return difference between the interpolated center of its parent and the current value of this node
+    g_lb::stancel_t interpolation(const char position) const;
 
-       \note This function is meant to be called only by nodes in the center position
+
+    /*!
+       \brief residual defined by the magnitude of the difference velocity vector of this point and its interpolation
+       \return the length of the difference vector
      */
-    // inline real residual() const;
+    real residual() const;
 
     void collision(const u_char k);
     void streaming(const u_char k);

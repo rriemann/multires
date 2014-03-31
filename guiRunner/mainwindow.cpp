@@ -115,7 +115,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level, g_level);
+    m_grid_multi = new multires_grid_t(g_level);
 
 
     replot();

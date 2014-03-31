@@ -56,7 +56,7 @@ typedef std::array<size_t, g_dimension> index_t; //!< type to save a point in sp
    and the actual value is computed. If it is lower than g_epsilon the node might
    be dismissed.
  */
-const real g_epsilon  = 4e-3;
+const real g_epsilon  = 1e-4;
 
 /*!
    \brief default grid level to derivate the number of grid points per dimension
@@ -64,7 +64,7 @@ const real g_epsilon  = 4e-3;
    The number of grid points is calculated by `N = (1 << g_level)` which gives you
    just the power go 2 to \ref g_level.
  */
-const size_t g_level  = 5;
+const size_t g_level  = 7;
 
 /*!
    \brief maschine accurancy for the chosen accurancy
@@ -102,6 +102,9 @@ namespace g_lb {
     const u_short Nx = (1 << g_level);
     const u_short Ny = Nx;
     const u_char  Nl = 9;
+
+    typedef std::array<real, Nl> stancel_t; //!< represents the values of the distribution function of a given point_t
+
     const u_short Length = Nx-1; //!< Length of the square computational domain in lattice units.
     const real Re = 10.0; //!< Reynolds number.
     const real tau = 0.65; //!< Relaxation time.
@@ -119,10 +122,9 @@ namespace g_lb {
     // const real i2s = 1; //!< index*i2s = space position (index to space)
     const real Ro = 1.0; //!< Initial fluid density in lattice and physical units.
 
-
     const real weight[9] = {4.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/9, 1.0/36, 1.0/36, 1.0/36, 1.0/36}; //!< Weighting factors.
-    const char ex[9] = {0, 1, -1, 0, 0, 1, -1, -1, 1}; //!< X-component of the particle velocity.
-    const char ey[9] = {0, 0, 0, 1, -1, 1, 1, -1, -1}; //!< Y-component of the particle velocity.
+    constexpr char ex[9] = {0, 1, -1, 0, 0, 1, -1, -1, 1}; //!< X-component of the particle velocity.
+    constexpr char ey[9] = {0, 0, 0, 1, -1, 1, 1, -1, -1}; //!< Y-component of the particle velocity.
 }
 
 

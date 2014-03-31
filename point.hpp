@@ -78,8 +78,9 @@ public:
     {
         f_eval(m_x, 0, m_U, &m_rho);
         equilibriumHelper();
-        std::copy(std::begin(m_feq), std::end(m_feq), std::begin(m_f));
-        // memcpy(m_f, m_feq, sizeof(m_feq)); // pure C
+        m_f = m_feq; // c++11 way if m_f and m_feq are std::array
+        // std::copy(std::begin(m_feq), std::end(m_feq), std::begin(m_f)); // c++11 way for c-arrays
+        // memcpy(m_f, m_feq, sizeof(m_feq)); // pure C way for c-arrays
     }
 
     real getUmag() const
@@ -120,8 +121,8 @@ public:
     index_t m_index; //!< index with respect to level_max in \ref point_t()
     location_t m_x; //!< point location in physical space
 
-    real m_f[g_lb::Nl]; //!< Particle distribution function.
-    real m_feq[g_lb::Nl]; //!< Particle equilibrium distribution function.
+    g_lb::stancel_t m_f; //!< Particle distribution function.
+    g_lb::stancel_t m_feq; //!< Particle equilibrium distribution function.
     real m_fbak;
 
     /*
@@ -141,18 +142,23 @@ public:
         }
     }
 
-    void derivateMacroVariables() {
+    static inline void derivateMacroVariables(const g_lb::stancel_t f, field_t &value, real *rho) {
         real rsum = 0; //!< Fluid density counter.
         real usum = 0; //!< Counter of the x-component of the fluid velocity.
         real vsum = 0; //!< Counter of the y-component of the fluid velocity.
         for (u_char k = 0; k < g_lb::Nl; ++k) {
-            rsum += m_f[k];
-            usum += m_f[k]*g_lb::ex[k];
-            vsum += m_f[k]*g_lb::ey[k];
+            rsum += f[k];
+            usum += f[k]*g_lb::ex[k];
+            vsum += f[k]*g_lb::ey[k];
         }
-        m_rho = rsum;
-        m_U[dimX] = usum/rsum;
-        m_U[dimY] = vsum/rsum;
+        *rho = rsum;
+        value[dimX] = usum/rsum;
+        value[dimY] = vsum/rsum;
+
+    }
+
+    void derivateMacroVariables() {
+        derivateMacroVariables(m_f, m_U, &m_rho);
     }
 
     inline void collision(const u_char k) {
