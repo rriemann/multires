@@ -44,7 +44,7 @@ const u_char g_level_fork = log(omp_get_num_procs())/log(g_childs); //!< tree le
 
 typedef double real; //!< determines the accurancy of the computations, e.g. double or float precision
 typedef std::array<real, g_dimension> location_t; //!< type to save a point in space
-typedef std::array<real, g_dimension> field_t;
+typedef std::array<real, g_dimension> field_t; //!< keeps the multidimensional vector field (picture domain), i.e. a velocity
 typedef std::vector<real> real_vector;
 typedef std::array<real, g_childs> environment_t; //!< type to keep all children of a node
 typedef std::array<size_t, g_dimension> index_t; //!< type to save a point in space by its indices

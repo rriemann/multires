@@ -61,19 +61,29 @@ public:
     }
 
     /*!
-       \brief constructor that initializes \ref m_index, he physical position in space \ref m_x and a field value \ref m_phi
+       \brief constructor that initializes \ref m_index, he physical position in space \ref m_x and the distribution function \ref m_f
        \param index of this node evaluated in the level level_max
        \param level_max
-       \param value to initialize \ref m_phi
+       \param value to initialize \ref m_f
 
        \sa point_t(index_t, const u_char)
+
+       \note the distribution function and the equilibrium distribution function will **not** be identical
      */
-    point_t(index_t index, u_char level_max, const field_t &U) :
+    point_t(index_t index, u_char level_max, const g_lb::stancel_t &f) :
         point_t(index, level_max)
     {
-        m_U = U;
+        m_f = f;
+        derivateMacroVariables();
+        equilibriumHelper();
     }
 
+    /*!
+       \brief updateValue is used during the initialization
+       \param f_eval function that provides an initial velocity \ref m_U and density \ref m_rho
+
+       \note the distribution function and the equilibrium distribution function will be identical
+     */
     void updateValue(field_generator_t f_eval)
     {
         f_eval(m_x, 0, m_U, &m_rho);
@@ -125,15 +135,14 @@ public:
     g_lb::stancel_t m_feq; //!< Particle equilibrium distribution function.
     real m_fbak;
 
-    /*
-    real Ux; //!< X-component of the fluid velocity in the computational domain.
-    real Uy; //!< Y-component of the fluid velocity in the computational domain.
-    */
-    field_t m_U;
+    field_t m_U; //!< fluid velocity in the computational domain.
     real m_rho; //!< Fluid density in the computational domain.
 
     point_t *m_next; //!< part of the forward-only linked list throughout all points in the grid
 
+    /*!
+       \brief equilibriumHelper uses \ref m_rho and \ref m_U to update the equilibrium distribution function \ref m_feq
+     */
     void equilibriumHelper() {
         real U2 = pow(m_U[dimX],2)+pow(m_U[dimY],2);
         for (u_char k = 0; k < g_lb::Nl; ++k) {

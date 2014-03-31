@@ -41,7 +41,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     spinBox = new QSpinBox(this);
     spinBox->setMinimum(1);
-    spinBox->setValue(100);
+    spinBox->setValue(1);
     spinBox->setMaximum(1000);
     ui->mainToolBar->addWidget(spinBox);
 
@@ -115,7 +115,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level);
+    m_grid_multi = new multires_grid_t(g_level, 0, 1e-4);
 
 
     replot();
@@ -151,8 +151,11 @@ void MainWindow::actionRun()
     }
     */
 
-    m_grid_multi->timeStep();
-    m_grid_mono->timeStep();
+    size_t iMax = spinBox->value();
+    for(size_t i = 0; i < iMax; ++i) {
+        m_grid_multi->timeStep();
+        m_grid_mono->timeStep();
+    }
 
     replot();
 }
@@ -196,8 +199,8 @@ void MainWindow::replot()
     statusBar()->showMessage(pack_rate_time);
     */
 
-    qDebug() << "moneres  L2 error:" << m_grid_mono->absL2Error();
-    qDebug() << "multires L2 error:" << m_grid_multi->absL2Error();
+    // qDebug() << "moneres  L2 error:" << m_grid_mono->absL2Error();
+    // qDebug() << "multires L2 error:" << m_grid_multi->absL2Error();
 
 }
 

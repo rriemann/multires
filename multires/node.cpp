@@ -239,7 +239,6 @@ bool node_t::remesh_analyse()
 
         // check if the residual of this node
         // to limit this to the center cell, add:  && (m_position == g_childs-1)
-        if (m_position > 0) std::cerr << residual() << std::endl;
         if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
             set(flActive);
         }
@@ -382,8 +381,9 @@ real node_t::residual() const
     for (u_char i = 0; i < g_dimension; ++i) {
         mag2 += pow(U[i] - m_point->m_U[i], 2);
     }
+    real mag = sqrt(mag2);
 
-    return sqrt(mag2); // FIXME : if we compare residual with eps^2, we can save the root computation
+    return mag; // FIXME : if we compare residual with eps^2, we can save the root computation
 }
 
 void node_t::collision(const u_char k)
