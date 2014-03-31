@@ -6,21 +6,30 @@ QMAKE_CXXFLAGS_RELEASE -= -O2
 QMAKE_CXXFLAGS_RELEASE += -O3
 QMAKE_CXXFLAGS_DEBUG   += -O0
 
-contains( QMAKE_CC, gcc ) {
+
+macx {
+  CONFIG += c++11
+  INCLUDEPATH += /usr/local/Cellar/boost/1.55.0_1/include/ # brew install boost
+}
+
+contains ( QMAKE_CXX, gcc ) {
     # http://gcc.gnu.org/bugzilla/show_bug.cgi?id=55805
     QMAKE_CXXFLAGS += -Wno-missing-field-initializers
 }
 
-# enable openmp
-QMAKE_CXXFLAGS += -fopenmp
-LIBS += -lgomp
-# LIBS += -L/usr/local/lib64 # -liomp5
+!isEmpty ( OPENMP ) {
+  # enable openmp
+  QMAKE_CXXFLAGS += -fopenmp
 
-# to get openmp working with clang:
-# - compile llvm/clang from: http://clang-omp.github.io/#try-openmp-clang
-# to use the intel omp library instead of gomp with is provided by gcc
-# - compile libiomp5 (intels omp library) from: https://www.openmprtl.org/download
-#   (make sure that iomp5.so is somewhere in /usr/local/lib(64) and omp.h is in /usr/local/include)
+  # OPENMP could be either iomp5 (clang) or gomp (gcc)
+  LIBS += -l$$OPENMP
+
+  # to get openmp working with clang:
+  # - compile llvm/clang from: http://clang-omp.github.io/#try-openmp-clang
+  # to use the intel omp library instead of gomp with is provided by gcc
+  # - compile libiomp5 (intels omp library) from: https://www.openmprtl.org/download
+  #   (make sure that iomp5.so is somewhere in /usr/local/lib(64) and omp.h is in /usr/local/include)
+}
 
 INCLUDEPATH += $$PWD
 DEPENDPATH  += $$PWD
