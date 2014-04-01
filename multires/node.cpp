@@ -173,7 +173,7 @@ void node_t::branch(size_t level)
                     // U-value interpolation
                     // real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
 
-                    point = new point_t(index_point, c_grid->m_level_max /*, U */);
+                    point = new point_t(index_point, c_grid->m_level_max, interpolation(pos));
                     getChild(pos)->setPoint(point);
                 } else {
                     // copy point for first child from parent (this)
@@ -381,9 +381,22 @@ real node_t::residual() const
     for (u_char i = 0; i < g_dimension; ++i) {
         mag2 += pow(U[i] - m_point->m_U[i], 2);
     }
-    real mag = sqrt(mag2);
+    real mag = sqrt(mag2)/m_point->getUmag();
 
-    return mag; // FIXME : if we compare residual with eps^2, we can save the root computation
+    std::cerr << mag << std::endl;
+    // std::cerr << m_point->getUmag() << std::endl;
+    /*
+    static real find_min = 100;
+    if(m_point->getUmag() < find_min ) find_min = m_point->getUmag();
+    static real find_max = 0;
+    if(m_point->getUmag() > find_max) find_max = m_point->getUmag();
+
+    std::cerr << find_min << " " << find_max << std::endl;
+    */
+    //real dU = fabs(0.000272868 - 0.00392754);
+    // return mag/(dU*10);
+
+     return mag; // FIXME : if we compare residual with eps^2, we can save the root computation
 }
 
 void node_t::collision(const u_char k)
