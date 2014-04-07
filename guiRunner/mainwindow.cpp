@@ -30,6 +30,19 @@
 #include "monores/monores_grid.hpp"
 #include "theory.hpp"
 
+#include "QImage"
+#include "QRgb"
+
+inline real f_lena(location_t x) {
+    static QImage *lena = 0;
+    if(!lena) {
+        // initalization of pixmap
+        lena = new QImage("/tmp/lena.ascii.pgm"); // 512*512
+    }
+    QRgb pixel = lena->pixel(floor(x[dimX]*511), floor((1-x[dimY])*511));
+    return real(qGray(pixel))/255;
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
   , ui(new Ui::MainWindow)
@@ -96,7 +109,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // initialize theory handler
-    m_theory = new theory_t(g_level);
+    m_theory = new theory_t(g_level, f_lena);
+
+    grid_t::setInitalizer(f_lena);
 
     initializeGrids();
     rescale();
@@ -114,7 +129,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level);
+    m_grid_multi = new multires_grid_t(g_level, 0, 0.01);
 
     replot();
 }
