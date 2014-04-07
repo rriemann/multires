@@ -114,6 +114,9 @@ MainWindow::MainWindow(QWidget *parent) :
     grid_t::setInitalizer(f_lena);
 
     initializeGrids();
+
+    // m_grid_multi->unfold(g_level);
+
     rescale();
 }
 
@@ -129,7 +132,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level, 0, 0.01);
+    m_grid_multi = new multires_grid_t(g_level, 0, 0.05);
 
     replot();
 }
@@ -159,10 +162,12 @@ void MainWindow::actionRun()
     }
     */
 
+    /*
     m_grid_multi->timeStep();
     m_grid_mono->timeStep();
 
     replot();
+    */
 }
 
 void MainWindow::replot()
