@@ -86,8 +86,12 @@ public:
     virtual iterator begin() = 0;
     virtual iterator end() = 0;
 
+    static void setInitalizer(const field_generator_t &f_eval)
+    { s_f_eval = f_eval; }
+
 protected:
     real m_time = 0; ///< global time
+    static field_generator_t s_f_eval;
 };
 
 #endif // GRID_HPP

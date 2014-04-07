@@ -17,7 +17,6 @@
 #include <assert.h>
 
 #include "monores_grid.hpp"
-#include "functions.h"
 
 monores_grid_t::monores_grid_t(const u_char level_max) :
     grid_t()
@@ -36,7 +35,7 @@ monores_grid_t::monores_grid_t(const u_char level_max) :
         for (size_t i = 0; i < N; ++i) { // x-direction
             assert(g_dimension == 2);
             index_t index({{i, j}});
-            const point_t point(index, level_max, g_f_eval);
+            const point_t point(index, level_max, s_f_eval);
             pointvector[N*j+i] = point;
         }
     }

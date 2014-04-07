@@ -15,6 +15,7 @@
  ****************************************************************************************/
 
 #include "grid.hpp"
+#include "functions.h"
 
 grid_t::grid_t()
 {
@@ -24,3 +25,5 @@ size_t grid_t::size()
 {
     return std::distance(begin(), end());
 }
+
+field_generator_t grid_t::s_f_eval = g_f_eval;

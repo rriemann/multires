@@ -37,15 +37,17 @@ class theory_t
 private:
     const size_t N; //!< number of grid points per dimension
     const location_t dx; //!< node size in one dimension
+    const field_generator_t m_f_eval;
 
 public:
     /*!
        \brief theory_t constructs a helper object to calculate theoretical field values
        \param level is the finest level of the corresponding grid
      */
-    theory_t(const size_t level = g_level) :
+    theory_t(const size_t level = g_level, const field_generator_t &f_eval = g_f_eval) :
         N(1 << level)
       , dx({{g_span[dimX]/N, g_span[dimY]/N}})
+      , m_f_eval(f_eval)
     {
     }
 
@@ -63,7 +65,7 @@ public:
             assert(tmp[dim] >= g_x0[dim] && tmp[dim] <= g_x1[dim]);
         }
 
-        const real value = g_f_eval(tmp);
+        const real value = m_f_eval(tmp);
         assert(value > -2 && value < 2);
         return value;
     }
