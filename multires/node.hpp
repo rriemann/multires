@@ -68,6 +68,8 @@ public:
         , posBottom           = 2
         , posNorth            = 3
         , posSouth            = 2
+        , posN  = 3
+        , posS  = 2
         , posSW = 0
         , posSE = 1
         , posNW = 2
@@ -225,9 +227,10 @@ public:
 
     /*!
        \brief interpolation
+       \param position to assume for the interpolated value
        \return field value for the center position of this node
      */
-    real interpolation() const;
+    real interpolation(char position) const;
     /*!
        \brief residual
        \return difference between the interpolated center of its parent and the current value of this node

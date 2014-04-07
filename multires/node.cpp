@@ -159,21 +159,21 @@ void node_t::branch(size_t level)
                     // create new point for position > 0
                     index_t index_point = m_point->m_index;
                     const size_t stepsize = pow(2, c_grid->m_level_max - (m_level+1));
-                    const node_t *node_inter = this;
+                    // const node_t *node_inter = this;
                     if (pos % 2 == 1) {
                         ++index_child[dimX];
                         index_point[dimX] += stepsize;
-                        node_inter = node_inter->getNeighbour(posRight);
+                        // node_inter = node_inter->getNeighbour(posRight);
                     }
                     if (pos > 1) {
                         ++index_child[dimY];
                         index_point[dimY] += stepsize;
-                        node_inter = node_inter->getNeighbour(posTop);
+                        // node_inter = node_inter->getNeighbour(posTop);
                     }
                     // phi-value interpolation
-                    real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
+                    // real phi = (m_point->m_phi + node_inter->getPoint()->m_phi)/2;
 
-                    point = new point_t(index_point, c_grid->m_level_max, phi);
+                    point = new point_t(index_point, c_grid->m_level_max, interpolation(pos));
                     getChild(pos)->setPoint(point);
                 } else {
                     // copy point for first child from parent (this)
@@ -184,7 +184,7 @@ void node_t::branch(size_t level)
             }
 
             // overwriting phi value for center cell
-            getChild(g_childs-1)->getPoint()->m_phi = interpolation();
+            // getChild(g_childs-1)->getPoint()->m_phi = interpolation(g_childs - 1);
 
             // put new child nodes into the next-chain of the points
             point_t *point = m_point->m_next;
@@ -238,7 +238,8 @@ bool node_t::remesh_analyse()
         }
 
         // check if the residual of this node
-        if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
+        // && (m_position == g_childs-1)
+        if (!has(flActive) && (m_position > 0) && (residual() > c_epsilon)) {
             set(flActive);
         }
 
@@ -328,7 +329,7 @@ bool node_t::remesh_clean()
     return ret;
 }
 
-real node_t::interpolation() const
+real node_t::interpolation(char position) const
 {
     /*
     real phi = 0;
@@ -341,25 +342,40 @@ real node_t::interpolation() const
     // return (m_parent->getPoint()->m_phi + getNeighbour(1)->getNeighbour(2)->getPoint()->m_phi)/2;
 
     real phi = m_point->m_phi;
-    for (size_t pos = 1; pos < g_childs; ++pos) {
-        const node_t *node_inter = this;
-        if (pos % 2 == 1) {
-            node_inter = node_inter->getNeighbour(posRight);
+
+    if (position == posSW) {
+        // don't do anything
+    }
+    else if (position == posNW) {
+        phi += getNeighbour(posN)->getPoint()->m_phi;
+        phi /= 2;
+    } else if (position == posSE) {
+        phi += getNeighbour(posE)->getPoint()->m_phi;
+        phi /= 2;
+    } else if (position == g_childs - 1) { // interpolation center node
+        for (size_t pos = 1; pos < g_childs-1; ++pos) {
+            const node_t *node_inter = this;
+            if (pos % 2 == 1) {
+                node_inter = node_inter->getNeighbour(posRight);
+            }
+            if (pos > 1) {
+                node_inter = node_inter->getNeighbour(posTop);
+            }
+            // phi-value interpolation
+            phi += node_inter->getPoint()->m_phi;
         }
-        if (pos > 1) {
-            node_inter = node_inter->getNeighbour(posTop);
-        }
-        // phi-value interpolation
-        phi += node_inter->getPoint()->m_phi;
+        phi /= g_childs - 1;
     }
 
-    return phi/g_childs;
+    return phi;
 }
 
 real node_t::residual() const
 {
-    assert(m_position == g_childs-1);
-    return fabs(m_point->m_phi - m_parent->interpolation());
+    // assert(m_position == g_childs-1);
+    real tmp = fabs(m_point->m_phi - m_parent->interpolation(m_position));
+    // std::cerr << tmp << std::endl;
+    return tmp;
 }
 
 void node_t::updateFlow(const char direction)
