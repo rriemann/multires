@@ -237,9 +237,9 @@ bool node_t::remesh_analyse()
             set(flActive);
         }
 
-        // check if the residual of this node
+        // check the residual of this node
         // to limit this to the center cell, add:  && (m_position == g_childs-1)
-        if (!has(flActive) && (m_position == g_childs-1) && (residual() > c_epsilon)) {
+        if (!has(flActive) && (m_position > 0) && (residual() > c_epsilon)) {
             set(flActive);
         }
 
@@ -349,14 +349,12 @@ g_lb::stancel_t node_t::interpolation(const char position) const
         }
     } else {
         assert(position == posNE);
-        // center point uses four-point interpolation
-        const node_t *nodeN = getNeighbour(posN);
-        g_lb::stancel_t &fN = nodeN->m_point->m_f;
+        // center point uses three-point interpolation
+        g_lb::stancel_t &fN = getNeighbour(posN)->m_point->m_f;
         g_lb::stancel_t &fE = getNeighbour(posE)->m_point->m_f;
-        g_lb::stancel_t &fNE = nodeN->getNeighbour(posE)->m_point->m_f;
 
         for (u_char k = 0; k < g_lb::Nl; ++k) {
-            f[k] = (f[k] + fN[k] + fE[k] + fNE[k])/4;
+            f[k] = (f[k] + fN[k] + fE[k] + getNeighbour(posE)->getNeighbour(posN)->m_point->m_f[k])/4;
         }
     }
 
@@ -371,6 +369,22 @@ real node_t::residual() const
     // calculate the magnitude of the difference vector of the velocity between
     // this node and its interpolation
     g_lb::stancel_t f = m_parent->interpolation(m_position);
+
+    real max = 0;
+    real f_max = 0;
+    for (char k = 0; k < g_lb::Nl; ++k) {
+        real diff = fabs(f[k] - m_point->m_f[k]);
+        if (diff > max) {
+            max = diff;
+        }
+
+        if (fabs(m_point->m_f[k]) > f_max) {
+            f_max = fabs(m_point->m_f[k]);
+        }
+    }
+    return max/f_max;
+
+    /*
     real rho; // rho interpolation
     field_t U; // velocity interpolation
 
@@ -382,8 +396,9 @@ real node_t::residual() const
         mag2 += pow(U[i] - m_point->m_U[i], 2);
     }
     real mag = sqrt(mag2)/m_point->getUmag();
+    */
 
-    std::cerr << mag << std::endl;
+     // std::cerr << mag << std::endl;
     // std::cerr << m_point->getUmag() << std::endl;
     /*
     static real find_min = 100;
@@ -396,7 +411,7 @@ real node_t::residual() const
     //real dU = fabs(0.000272868 - 0.00392754);
     // return mag/(dU*10);
 
-     return mag; // FIXME : if we compare residual with eps^2, we can save the root computation
+     // return mag; // FIXME : if we compare residual with eps^2, we can save the root computation
 }
 
 void node_t::collision(const u_char k)

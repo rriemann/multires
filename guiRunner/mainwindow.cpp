@@ -115,7 +115,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level, 0, 1e-4);
+    m_grid_multi = new multires_grid_t(g_level, 0, 1e-5);
 
 
     replot();
@@ -192,12 +192,10 @@ void MainWindow::replot()
     marker->replot();
 
     // statistics
-    /*
     size_t count_nodes_packed = m_grid_multi->size();
     QString pack_rate_time = QString("pack rate: %1/%2 = %3, time: %4").arg(count_nodes_packed).arg(N2).arg(real(count_nodes_packed)/N2).arg(m_grid_multi->getTime());
     qDebug() << pack_rate_time;
     statusBar()->showMessage(pack_rate_time);
-    */
 
     // qDebug() << "moneres  L2 error:" << m_grid_mono->absL2Error();
     // qDebug() << "multires L2 error:" << m_grid_multi->absL2Error();
