@@ -29,6 +29,19 @@
 
 #include "functions.h"
 
+#include <QImage>
+#include <QRgb>
+
+inline real f_lena(location_t x) {
+    static QImage *lena = 0;
+    if(!lena) {
+        // initalization of pixmap
+        lena = new QImage("/tmp/lena.ascii.pgm"); // 512*512
+    }
+    QRgb pixel = lena->pixel(floor(x[dimX]*511), floor((1-x[dimY])*511));
+    return real(qGray(pixel))/255;
+}
+
 
 int main()
 {
@@ -37,7 +50,10 @@ int main()
 #define MONORES_TEST
 #define MULTIRES_TEST
 
-    real simulationTime = g_span[dimX]/g_velocity; // 1 period
+    grid_t::setInitalizer(f_lena);
+
+    // real simulationTime = g_span[dimX]/g_velocity; // 1 period
+    real simulationTime = 0;
     // size_t loops_max = 100;
 
     std::array<real,6> steps_level;
@@ -47,7 +63,7 @@ int main()
 
     std::array<real,10> steps_epsilon;
     for(size_t i = 0; i < steps_epsilon.size(); ++i) {
-         steps_epsilon[i] = 0.00001*pow(2,0.5*i);
+         steps_epsilon[i] = 0.01*pow(2,0.5*i);
     }
 
     /*
@@ -100,9 +116,9 @@ int main()
         {
 
             monores_grid_t grid(level);
-            do {
+            while (grid.getTime() < simulationTime) {
                 grid.timeStep();
-            } while(grid.getTime() < simulationTime);
+            }
             /*
             for (size_t loops = 0; loops < loops_max; ++loops) {
                 grid.timeStep();
@@ -145,9 +161,9 @@ int main()
             const real epsilon = steps_epsilon[i_epsilon];
 
             multires_grid_t grid(level, 0, epsilon);
-            do {
+            while (grid.getTime() < simulationTime) {
                 grid.timeStep();
-            } while(grid.getTime() < simulationTime);
+            }
             /*
             for (size_t loops = 0; loops < loops_max; ++loops) {
                 grid.timeStep();

@@ -30,8 +30,8 @@
 #include "monores/monores_grid.hpp"
 #include "theory.hpp"
 
-#include "QImage"
-#include "QRgb"
+#include <QImage>
+#include <QRgb>
 
 inline real f_lena(location_t x) {
     static QImage *lena = 0;

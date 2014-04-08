@@ -1,3 +1,7 @@
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+
 TEMPLATE = app
 
 TARGET   = compaRunner
@@ -7,7 +11,8 @@ include(../common.pri)
 
 CONFIG += console
 CONFIG -= app_bundle
-CONFIG -= qt
+
+
 
 SOURCES += main.cpp
 
