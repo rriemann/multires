@@ -232,8 +232,15 @@ bool node_t::remesh_analyse()
             }
         }
 
+        /*
         // respect minimum level
         if (m_level <= c_grid->m_level_min) {
+            set(flActive);
+        }
+        */
+
+        u_char level_min = ((m_point->m_x[dimX] > 0.5) && (m_point->m_x[dimY] > 0.5)) ? c_grid->m_level_min : (c_grid->m_level_min-1);
+        if (m_level < level_min) {
             set(flActive);
         }
 
