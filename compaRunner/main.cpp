@@ -32,7 +32,7 @@
 #include <QImage>
 #include <QRgb>
 
-inline real f_lena(location_t x) {
+inline real f_eval_lena(location_t x) {
     static QImage *lena = 0;
     if(!lena) {
         // initalization of pixmap
@@ -50,20 +50,20 @@ int main()
 #define MONORES_TEST
 #define MULTIRES_TEST
 
-    grid_t::setInitalizer(f_lena);
+    grid_t::setInitalizer(f_eval_lena);
 
     // real simulationTime = g_span[dimX]/g_velocity; // 1 period
     real simulationTime = 0;
     // size_t loops_max = 100;
 
-    std::array<real,6> steps_level;
+    std::array<real,7> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
-         steps_level[i] = 3+i;
+         steps_level[i] = 4+i;
     }
 
     std::array<real,10> steps_epsilon;
     for(size_t i = 0; i < steps_epsilon.size(); ++i) {
-         steps_epsilon[i] = 0.01*pow(2,0.5*i);
+         steps_epsilon[i] = 0.004*pow(2,0.25*i);
     }
 
     /*
@@ -101,7 +101,7 @@ int main()
         const size_t N     = pow(1 << level,g_dimension);
 
         y_values_diff_norm[i_level][yTheory] = g_eps;
-        const theory_t theory(level);
+        const theory_t theory(level, f_eval_lena);
 
         // output row for theory
         // format: level N epsilon norm
