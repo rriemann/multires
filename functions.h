@@ -65,6 +65,27 @@ inline real f_eval_hat(location_t x) {
     }
 }
 
+
+/*!
+   \brief f_eval_box implements a 2-level box function, which is rotated by 30 degrees (can be changed in code)
+   \param x location in space
+   \return field value
+ */
+inline real f_eval_box(location_t x) {
+    location_t tmp = x;
+    real rad = 8*atan(1)*(30.0/360.0);
+    x[dimX] = (tmp[dimX]-0.5)*cos(rad)+(tmp[dimY]-0.5)*sin(rad) + 0.5;
+    x[dimY] = (tmp[dimY]-0.5)*cos(rad)-(tmp[dimX]-0.5)*sin(rad) + 0.5;
+
+    if ((fabs(x[dimX]-0.5) < 0.125) && (fabs(x[dimY]-0.5) < 0.125)) {
+        return 1;
+    } else if ((fabs(x[dimX]-0.5) < 0.25) && (fabs(x[dimY]-0.5) < 0.25)) {
+        return 0.5;
+    } else {
+        return 0;
+    }
+}
+
 const field_generator_t g_f_eval = f_eval_gauss; //!< default initializer
 // const field_generator_t g_f_eval = f_eval_square;
 

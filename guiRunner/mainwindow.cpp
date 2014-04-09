@@ -35,7 +35,7 @@
 
 inline real f_lena(location_t x) {
     static QImage *lena = 0;
-    if(!lena) {
+    if (!lena) {
         // initalization of pixmap
         lena = new QImage("/tmp/lena.ascii.pgm"); // 512*512
     }
@@ -109,9 +109,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // initialize theory handler
-    m_theory = new theory_t(g_level, f_lena);
+    m_theory = new theory_t(g_level, f_eval_box);
 
-    grid_t::setInitalizer(f_lena);
+    grid_t::setInitalizer(f_eval_box);
 
     initializeGrids();
 
@@ -132,7 +132,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level, 0, 0.05);
+    m_grid_multi = new multires_grid_t(g_level, 0, 0.001);
 
     replot();
 }
