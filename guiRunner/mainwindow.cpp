@@ -109,9 +109,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // initialize theory handler
-    m_theory = new theory_t(g_level, f_eval_box);
+    m_theory = new theory_t(g_level, g_f_eval);
 
-    grid_t::setInitalizer(f_eval_box);
+    grid_t::setInitalizer(g_f_eval);
 
     initializeGrids();
 

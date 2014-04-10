@@ -46,24 +46,24 @@ inline real f_eval_lena(location_t x) {
 int main()
 {
     ///////////// CONFIG //////////////////////
-#define NORM_L_INF // uncomment to use L_1 norm
+// #define NORM_L_INF // uncomment to use L_1 norm
 #define MONORES_TEST
 #define MULTIRES_TEST
 
-    grid_t::setInitalizer(f_eval_lena);
+    grid_t::setInitalizer(g_f_eval);
 
     // real simulationTime = g_span[dimX]/g_velocity; // 1 period
     real simulationTime = 0;
     // size_t loops_max = 100;
 
-    std::array<real,7> steps_level;
+    std::array<real,6> steps_level;
     for(size_t i = 0; i < steps_level.size(); ++i) {
-         steps_level[i] = 4+i;
+         steps_level[i] = 5+i;
     }
 
-    std::array<real,10> steps_epsilon;
+    std::array<real,20> steps_epsilon;
     for(size_t i = 0; i < steps_epsilon.size(); ++i) {
-         steps_epsilon[i] = 0.004*pow(2,0.25*i);
+         steps_epsilon[i] = 0.005*pow(2,0.5*i);
     }
 
     /*
@@ -101,7 +101,7 @@ int main()
         const size_t N     = pow(1 << level,g_dimension);
 
         y_values_diff_norm[i_level][yTheory] = g_eps;
-        const theory_t theory(level, f_eval_lena);
+        const theory_t theory(level, g_f_eval);
 
         // output row for theory
         // format: level N epsilon norm
@@ -131,7 +131,7 @@ int main()
             y_values_diff_norm[i_level][yGridRegular] = 0;
 #endif
             for (const point_t &point: grid) {
-                real diff = std::fabs(theory.at(point.m_index, grid.getTime()) - point.m_phi);
+                real diff = std::fabs(theory.at(point.m_x, grid.getTime()) - point.m_phi);
 #ifdef NORM_L_INF
                 if(y_values_diff_norm[i_level][yGridRegular] < diff) {
                     y_values_diff_norm[i_level][yGridRegular] = diff;

@@ -2,7 +2,7 @@
 # kate: hl gnuplot;
 
 f(x) = m*x + n
-fit f(x) '< grep "regular" < /tmp/output.dat' using (log($2)):(log($4)) via m,n
+# fit f(x) '< grep "regular" < /tmp/output.dat' using (log($2)):(log($4)) via m,n
 # plot '< grep "regular" < data/output_regular_triangle.dat' using (log($2)):(log($4)), f(x) with lines
 # print m
 # print n
@@ -34,11 +34,12 @@ set xlabel "N" # offset -3,-2
 set ylabel "epsilon" # offset 3,-2
 set zlabel "norm" # offset -5
 
-set dgrid3d 20,6 splines
+set dgrid3d 20,7 splines
 set style data lines
 
 # splot '/tmp/output.dat' using (log($2)):(log($3)):(log($4))
-splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4)), \
-      '< grep "regular" < /tmp/output.dat' using 1:(log($3)):(log($4))
+# splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4)), \
+#      '< grep "regular" < /tmp/output.dat' using 1:(log($3)):(log($4))
+splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4))
 
 pause -1
