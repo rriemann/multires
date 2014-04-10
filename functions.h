@@ -86,6 +86,19 @@ inline real f_eval_box(location_t x) {
     }
 }
 
+/*!
+   \brief f_eval_1D implements a 1D step function
+   \param x location in space
+   \return field value
+ */
+inline real f_eval_1D(location_t x) {
+    if (fabs(x[dimX] - 0.5) < 0.2) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
 const field_generator_t g_f_eval = f_eval_gauss; //!< default initializer
 // const field_generator_t g_f_eval = f_eval_square;
 
