@@ -34,12 +34,12 @@ set xlabel "N" # offset -3,-2
 set ylabel "epsilon" # offset 3,-2
 set zlabel "norm" # offset -5
 
-set dgrid3d 20,7 splines
+set dgrid3d 35,4 splines
 set style data lines
 
 # splot '/tmp/output.dat' using (log($2)):(log($3)):(log($4))
 # splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4)), \
-#      '< grep "regular" < /tmp/output.dat' using 1:(log($3)):(log($4))
-splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4))
+#       '< grep "regular" < /tmp/output.dat' using 1:(log($3)):(log($4))
+splot '< grep "multires" < /tmp/output.dat' using 1:(log($3)):(log($4)), y
 
 pause -1

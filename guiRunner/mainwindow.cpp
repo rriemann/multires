@@ -33,7 +33,7 @@
 #include <QImage>
 #include <QRgb>
 
-inline real f_lena(location_t x) {
+inline real f_eval_lena(location_t x) {
     static QImage *lena = 0;
     if (!lena) {
         // initalization of pixmap
@@ -109,9 +109,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 
     // initialize theory handler
-    m_theory = new theory_t(g_level, g_f_eval);
+    m_theory = new theory_t(g_level, f_eval_lena);
 
-    grid_t::setInitalizer(g_f_eval);
+    grid_t::setInitalizer(f_eval_lena);
 
     initializeGrids();
 
@@ -132,7 +132,7 @@ void MainWindow::initializeGrids()
     deleteGrids();
 
     m_grid_mono  = new monores_grid_t(g_level);
-    m_grid_multi = new multires_grid_t(g_level, 0, 0.001);
+    m_grid_multi = new multires_grid_t(g_level, 0, 0.1);
 
     replot();
 }
@@ -172,13 +172,6 @@ void MainWindow::actionRun()
 
 void MainWindow::replot()
 {
-    // update data mono
-    for (const point_t &point: *m_grid_mono) {
-
-        sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
-    }
-
-
     // update data multi and marker
     QVector<real> xvalues, yvalues;
     for (const point_t &point: *m_grid_multi) {
@@ -188,6 +181,17 @@ void MainWindow::replot()
     }
     marker->graph(0)->setData(xvalues, yvalues);
 
+    // update data mono
+    m_grid_multi->unfold(g_level);
+    for (const point_t &point: *m_grid_multi) {
+
+        // diff plot (just for debugging)
+        sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], fabs(m_theory->at(point.m_x, m_grid_multi->getTime()) - point.m_phi)/0.1);
+
+        // original
+        // sets[plMono].map->data()->setCell(point.m_index[dimX], point.m_index[dimY], point.m_phi);
+    }
+
     // update data theory
     for (size_t i = 0; i < N; ++i) {
         for (size_t j = 0; j < N; ++j) {
@@ -196,6 +200,8 @@ void MainWindow::replot()
             sets[plTheory].map->data()->setCell(i, j, val);
         }
     }
+
+    rescale();
 
     for (CPlotSet &set: sets) {
         set.plot->replot();
@@ -215,7 +221,7 @@ void MainWindow::rescale()
     for (CPlotSet &set: sets) {
         set.plot->rescaleAxes();
     }
-    replot();
+    // replot();
 }
 
 void MainWindow::autoPlayToggled(bool checked)

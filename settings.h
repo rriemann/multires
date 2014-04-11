@@ -63,7 +63,7 @@ const real g_epsilon  = 4e-3;
    The number of grid points is calculated by `N = (1 << g_level)` which gives you
    just the power go 2 to \ref g_level.
  */
-const size_t g_level  = 7;
+const size_t g_level  = 9;
 
 /*!
    \brief maschine accurancy for the chosen accurancy
