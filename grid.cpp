@@ -40,3 +40,5 @@ real grid_t::absL2Error()
     // calculate absolute error in L^2 norm and output
     return sqrt(esum/size());
 }
+
+field_generator_t grid_t::s_f_eval = g_f_eval;

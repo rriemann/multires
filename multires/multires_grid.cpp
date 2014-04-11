@@ -17,7 +17,6 @@
 #include "multires_grid.hpp"
 #include "node.hpp"
 #include "point.hpp"
-#include "functions.h"
 
 
 multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min, real epsilon)
@@ -58,7 +57,7 @@ multires_grid_t::multires_grid_t(const u_char level_max, const u_char level_min,
         }
         */
         for(point_t &point: *this) {
-            point.updateValue(g_f_eval);
+            point.updateValue(s_f_eval);
         }
         remesh();
         size_new = size();
