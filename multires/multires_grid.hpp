@@ -64,7 +64,12 @@ private:
     node_t *m_root_node; //!< pointer to the root node of the underlying tree
     point_t *m_root_point; //!< pointer to the point_t in the lower left edge (root point)
 
-    void remesh(); //!< update the mesh
+    /*!
+       \brief remesh adopts the local granularity of the mesh
+
+       \see node_t::remesh_analyse(), node_t::remesh_savety(), node_t::remesh_clean()
+     */
+    void remesh();
 
 
     friend class node_t;

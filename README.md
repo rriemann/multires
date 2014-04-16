@@ -4,7 +4,8 @@ Multi Resolution Grid {#mainpage}
 This software project consists of numerical modules meant to compiled into libs:
 
 - monores_grid_t (folder monores) to provide a regular grid
-- multires_grid_t (folder multires) to provide a multi resolution grid to perform multi resolution analysis
+- multires_grid_t (folder multires) to provide a multi resolution grid to perform
+  multi resolution analysis
 - an abstract class grid_t to define a common interface for both resolution modules
 - a theory helper theory_t to setup initial conditions and allow error analysis
 
@@ -26,7 +27,8 @@ Additionally there are some global header files:
 ## Compiling
 
 This project uses the tools provided by the [Qt project](http://qt-project.org/)
-for developing and building the source, namely the [Qt Creator](http://qt-project.org/wiki/Category:Tools::QtCreator)
+for developing and building the source, namely the
+[Qt Creator](http://qt-project.org/wiki/Category:Tools::QtCreator)
 and [QMake](http://qt-project.org/doc/qt-4.8/qmake-manual.html).
 
 Although this project takes advantage of Qt tools, Qt itself is only a dependency for
@@ -46,11 +48,63 @@ The configuration is done by editing the header files settings.h and functions.h
 and as well by providing some defines to the C precompiler.
 
 - define `REGULAR` to make rawRunner build against the regular grid instead of the multi resolution grid
-- define `_OMP` is set automatically by openmp if compilation is done with GCC compiler
+- define `OPENMP` to activate openmp, e.g. `OPENMP=iomp5`or `OPENMP=`gomp`
+  (You might need to add something like
+
+      LIBS+=-L/usr/local/lib64 OPENMP=iomp5 QMAKE_CXX=/usr/local/bin/clang++ QMAKE_LINK=/usr/local/bin/clang++
+
+  to the qmake configuration/call.)
 - define `LIMITER` can be set to enable the limiter for derivatives in the flow calculation
 
 ## Generation of Documentation
 
 The documentation is generated from the source using [Doxygen](http://www.stack.nl/~dimitri/doxygen/).
 Navigate to the repository root directory and run: `doxygen doc/Doxyfile`
+
+## Program Flow
+
+To give an idea of how the program is supposed to work, let's go into details
+what happens if you run `rawRunner` compiled against the multiresolution module.
+
+1. Initialization:
+   call the constructor of multires_grid_t
+  1. set multires_grid_t::m_level_min and multires_grid_t::m_level_max and
+     calculate multires_grid_t::m_level_start and multires_grid_t::dt
+  2. assign a global (static) node_t::c_epsilon thresholding value to all nodes grid
+  3. create a root point multires_grid_t::m_root_point and a root node
+     multires_grid_t::m_root_node
+  4. recursively create new node_t (with dedicated point_t) using node_t::branch()
+     until we reached multires_grid_t::m_level_start
+  5. optimization of the initial grid starts: loop with initialization of all point_t and
+     multires_grid_t::remesh() (includes creation of savety zone) until the number
+     of points in the grid is stable
+2. as long as the grid_t::getTime() did not advance until a given time,
+   multires_grid_t::timeStep() is executed (see below)
+3. Finalization:
+   interpolate all points to the finest grid using multires_grid_t::unfold() to
+   ease data output, comparision, etc.
+
+What happens in a multires_grid_t::timeStep() highly depends on the underlying
+algorithm to do advance in time. In this very simple example, we use a finite volume
+method (FVM) based direction-splitting scheme.
+So we first update the flow using node_t::updateFlow() on the intersection to a
+temporary variable point_t::m_flow. In the next step we use this value to update
+the field property point_t::m_phi using node_t::timeStep(). Both functions have
+in common that they recursively walk through the tree and only touch the values
+of node_t::m_point of nodes that node_t::isLeaf().
+After all point_t have been altered accordingly, the geometry of the grid will
+be adapted using multires_grid_t::remesh(). Finally the internal grid_t::m_time
+is increased.
+
+1. update recursively all point_t; the step might include multiple tree traversals
+   to respect data dependencies between the point_t
+2. multires_grid_t::remesh()
+  1. node_t::remesh_analyse() sets recursively the active status (node_t::flag_t)
+     to all nodes
+  2. node_t::remesh_savety() will assure that all active nodes have children
+     with status savety zone
+  3. node_t::remesh_clean() will delete all nodes that do not have an active or
+     savety zone status; the status of all nodes will be reset at the same time
+3. increase grid_t::m_time
+
 

@@ -191,7 +191,10 @@ public:
      */
     node_array_t *getChilds() const;
 
-    inline bool isLeaf() const //!< is true if this node doesn't have children
+    /*!
+       \brief isLeaf is true if this node does not have children
+     */
+    inline bool isLeaf() const
     { return !m_childs; }
 
     /*!
